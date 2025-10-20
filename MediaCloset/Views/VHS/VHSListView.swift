@@ -16,17 +16,19 @@ struct VHSListView: View {
         NavigationStack {
             List {
                 ForEach(vm.items) { item in
-                    HStack(spacing: 12) {
-                        AsyncCover(url: item.coverUrl)
-                        VStack(alignment: .leading) {
-                            Text(item.title).font(.headline)
-                            Text([
-                                (item.director?.isEmpty == false ? item.director : nil),
-                                item.year.map(String.init),
-                                item.genre
-                            ].compactMap { $0 }.joined(separator: " · "))
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                    NavigationLink(value: item) {
+                        HStack(spacing: 12) {
+                            AsyncCover(url: item.coverUrl)
+                            VStack(alignment: .leading) {
+                                Text(item.title).font(.headline)
+                                Text([
+                                    (item.director?.isEmpty == false ? item.director : nil),
+                                    item.year.map(String.init),
+                                    item.genre
+                                ].compactMap { $0 }.joined(separator: " · "))
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            }
                         }
                     }
                 }
@@ -43,11 +45,15 @@ struct VHSListView: View {
             .onSubmit(of: .search) {
                 Task { await vm.load() }
             }
+            .overlay { if vm.isLoading { ProgressView() } }
             .navigationTitle("VHS")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { showNew = true } label: { Image(systemName: "plus") }
                 }
+            }
+            .navigationDestination(for: VHSListItem.self) { item in
+                VHSDetailView(vhsId: item.id)
             }
             .sheet(isPresented: $showNew) {
                 VHSFormView { Task { await vm.load() } }
