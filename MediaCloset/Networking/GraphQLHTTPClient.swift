@@ -8,52 +8,39 @@ import Foundation
 
 final class GraphQLHTTPClient {
     static let shared = GraphQLHTTPClient()
-    private struct Config {
-        static var env: [String: String] { ProcessInfo.processInfo.environment }
+    private let secretsManager = SecretsManager.shared
 
-        static func string(for key: String) -> String? {
-            env[key]?.trimmingCharacters(in: .whitespacesAndNewlines)
-        }
-
-        static var graphqlEndpoint: URL? {
-            guard
-                let raw = string(for: "GRAPHQL_ENDPOINT"),
-                let url = URL(string: raw)
-            else {
-                #if DEBUG
-                print("[GraphQLHTTPClient] Missing or invalid GRAPHQL_ENDPOINT in environment.")
-                #endif
-                return nil
+    var endpointURL: URL {
+        guard let url = secretsManager.graphqlEndpoint else {
+            #if DEBUG
+            print("[GraphQLHTTPClient] ERROR: No GraphQL endpoint available. Secrets status:")
+            let status = secretsManager.secretsStatus
+            for (key, value) in status {
+                print("  \(key): \(value)")
             }
-            return url
+            assertionFailure("GRAPHQL_ENDPOINT must be configured. Please set up xcconfig files properly.")
+            #endif
+            // This will crash in debug, which is intentional to catch configuration issues
+            fatalError("GRAPHQL_ENDPOINT not configured")
         }
-
-        static var hasuraAdminSecret: String? {
-            string(for: "HASURA_ADMIN_SECRET").flatMap { $0.isEmpty ? nil : $0 }
-        }
+        return url
     }
 
-    var endpointURL: URL = {
-        if let url = Config.graphqlEndpoint {
-            return url
-        }
-        assertionFailure("Missing or invalid GRAPHQL_ENDPOINT")
-        return URL(string: "https://example.invalid/graphql")!
-    }()
-
-    var extraHeaders: [String:String] = {
+    var extraHeaders: [String:String] {
         var headers: [String:String] = [
             "Content-Type": "application/json"
         ]
-        if let secret = Config.hasuraAdminSecret, !secret.isEmpty {
+        if let secret = secretsManager.hasuraAdminSecret, !secret.isEmpty {
             headers["x-hasura-admin-secret"] = secret
         } else {
             #if DEBUG
             print("[GraphQLHTTPClient] Warning: HASURA_ADMIN_SECRET not set; proceeding without admin header.")
             #endif
+            // For the demo endpoint, we can proceed without the admin secret
+            // as it's a public demo instance
         }
         return headers
-    }()
+    }
 
     struct Response { let data: [String: Any]?; let errors: [[String: Any]]? }
 
