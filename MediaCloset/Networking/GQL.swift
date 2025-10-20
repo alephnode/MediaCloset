@@ -107,10 +107,32 @@ enum GQL {
     }
     """
 
+    // VHS UPDATE
+    static let updateVHS = """
+    mutation UpdateVHS($id: uuid!, $set: vhs_set_input!) {
+      update_vhs_by_pk(pk_columns: {id: $id}, _set: $set) { id }
+    }
+    """
+
     // VHS DELETE
     static let deleteVHS = """
     mutation DeleteVHS($id: uuid!) {
       delete_vhs_by_pk(id: $id) { id }
+    }
+    """
+
+    // VHS DETAIL
+    static let vhsDetail = """
+    query VHSDetail($id: uuid!) {
+      vhs_by_pk(id: $id) {
+        id
+        title
+        director
+        year
+        genre
+        cover_url
+        notes
+      }
     }
     """
 
