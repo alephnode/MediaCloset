@@ -1,0 +1,156 @@
+# ----------------------------
+# macOS
+# ----------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon (legacy HFS quirk)
+Icon
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP shares
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# ----------------------------
+# Xcode
+# ----------------------------
+
+## Build artifacts
+build/
+Build/
+DerivedData/
+*.build/
+
+## Xcode user settings and state (never commit)
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.pbxuser
+*.xccheckout
+*.moved-aside
+*.xcuserstate
+*.xcscmblueprint
+*.xcsettings
+
+## Xcode workspace/project user data (keep shared schemes tracked)
+*.xcworkspace/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+
+## Xcode Cloud / CI artifacts
+xcshareddata/ci.xcscmblueprint
+
+# ----------------------------
+# Swift Package Manager
+# ----------------------------
+.swiftpm/
+.build/
+# We commit Package.resolved for reproducible builds:
+# (If you prefer floating deps, see the note at the bottom.)
+# Package.resolved is intentionally NOT ignored.
+
+# Xcode SPM artifacts cache (Xcode 15+)
+SourcePackages/
+# .xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved  <-- do not ignore if committing
+
+# ----------------------------
+# Dependency Managers (optional)
+# ----------------------------
+
+# Carthage
+Carthage/Build/
+
+# CocoaPods
+Pods/
+# If you commit Pods/, remove the line above and consider ignoring local state:
+# Podfile.lock
+# *.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
+
+# ----------------------------
+# Archives and Symbols
+# ----------------------------
+*.ipa
+*.dSYM
+*.dSYM.zip
+*.xcarchive
+
+# ----------------------------
+# Playgrounds
+# ----------------------------
+timeline.xctimeline
+playground.xcworkspace
+
+# ----------------------------
+# Logs and temporary files
+# ----------------------------
+*.log
+*.tmp
+*.swp
+*.swo
+
+# ----------------------------
+# Coverage
+# ----------------------------
+*.gcno
+*.gcda
+*.profraw
+*.profdata
+
+# ----------------------------
+# Secrets and local configuration
+# ----------------------------
+Configurations/Local.secrets.xcconfig
+*.secrets.xcconfig
+*.env
+.env.*
+*.private.json
+*.local.json
+*.user.xcconfig
+
+# ----------------------------
+# Optional tool caches
+# ----------------------------
+.swiftlint.tmp/
+.swiftlint_cache/
+
+# ----------------------------
+# SwiftData / Core Data generated bundles (if generated outside Sources)
+# ----------------------------
+*.momd
+*.mom
+*.mappingmodel
+
+# ----------------------------
+# Simulator/runtime descriptors (never commit)
+# ----------------------------
+*.simdevicetype
+*.simruntime
+
+# ----------------------------
+# Notes or local scratch space
+# ----------------------------
+Notes
+
+# ----------------------------
+# GraphQL
+# ----------------------------
+# Commit your *.graphql sources.
+# If you generate Swift from GraphQL and DO NOT commit generated code,
+# ignore that output directory here (adjust path to your project):
+# Apollo/Generated/
