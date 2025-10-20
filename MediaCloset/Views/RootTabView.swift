@@ -14,6 +14,11 @@ struct RootTabView: View {
 
             VHSListView()
                 .tabItem { Label("VHS", systemImage: "film") }
+            
+            #if DEBUG
+            SecretsTestView()
+                .tabItem { Label("Debug", systemImage: "wrench.and.screwdriver") }
+            #endif
         }
     }
 }

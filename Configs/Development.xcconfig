@@ -1,0 +1,12 @@
+//
+//  Development.xcconfig
+//  MediaCloset
+//
+//  Development environment configuration
+//
+
+#include "Local.secrets.xcconfig"
+
+// Development-specific overrides
+PRODUCT_NAME = MediaCloset-Dev
+BUNDLE_IDENTIFIER = com.alephnode.MediaCloset.dev

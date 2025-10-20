@@ -116,12 +116,19 @@ playground.xcworkspace
 # Secrets and local configuration
 # ----------------------------
 Configurations/Local.secrets.xcconfig
+Configs/Local.secrets.xcconfig
 *.secrets.xcconfig
 *.env
 .env.*
 *.private.json
 *.local.json
 *.user.xcconfig
+
+# Additional secrets patterns
+**/Local.secrets.xcconfig
+**/*.secrets.xcconfig
+secrets/
+.secrets/
 
 # ----------------------------
 # Optional tool caches

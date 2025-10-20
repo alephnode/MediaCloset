@@ -1,0 +1,12 @@
+//
+//  Production.xcconfig
+//  MediaCloset
+//
+//  Production environment configuration
+//
+
+#include "Production.secrets.xcconfig"
+
+// Production-specific overrides
+PRODUCT_NAME = MediaCloset
+BUNDLE_IDENTIFIER = com.alephnode.MediaCloset
