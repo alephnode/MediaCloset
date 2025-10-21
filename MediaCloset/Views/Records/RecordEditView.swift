@@ -23,6 +23,7 @@ struct RecordEditView: View {
 
     @State private var isLoading = false
     @State private var isSaving = false
+    @State private var isFetchingArt = false
 
     var body: some View {
         NavigationStack {
@@ -35,7 +36,17 @@ struct RecordEditView: View {
                 }
                 Section("Metadata") {
                     TextField("Genres (comma-separated)", text: $genresCSV)
-                    TextField("Cover URL (optional)", text: $coverURL)
+                    HStack {
+                        TextField("Cover URL (optional)", text: $coverURL)
+                        Button("Fetch Art") {
+                            Task { await fetchAlbumArt() }
+                        }
+                        .disabled(artist.isEmpty || album.isEmpty || isFetchingArt)
+                        if isFetchingArt {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                        }
+                    }
                     TextField("Notes", text: $notes, axis: .vertical)
                         .lineLimit(3...6)
                 }
@@ -55,6 +66,21 @@ struct RecordEditView: View {
             }
         }
         .task { await load() }
+    }
+    
+    private func fetchAlbumArt() async {
+        guard !artist.isEmpty && !album.isEmpty else { return }
+        
+        isFetchingArt = true
+        defer { isFetchingArt = false }
+        
+        if let coverUrl = await MusicBrainzService.fetchAlbumArtURL(
+            artist: artist,
+            album: album,
+            timeout: 3.0
+        ) {
+            coverURL = coverUrl
+        }
     }
 
     // Load current values from Hasura

@@ -14,55 +14,95 @@ struct RecordDetailView: View {
     var body: some View {
         ScrollView {
             if let obj = recordJSON {
-                VStack(alignment: .leading, spacing: 12) {
-                    AsyncCover(url: obj["cover_url"] as? String)
-                        .frame(height: 220)
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-
-                    Text("\(obj["artist"] as? String ?? "")")
-                        .font(.title.bold())
-                    
-                    Text("\(obj["album"] as? String ?? "")")
-
-                    if let y = normalizedYear(from: obj["year"]) {
-                        // fixes formatting with commas
-                        Text(y, format: .number.grouping(.never))
-                            .font(.headline)
+                VStack(alignment: .leading, spacing: 16) {
+                    // Large album art spanning across the view with padding
+                    AsyncImage(url: URL(string: obj["cover_url"] as? String ?? "")) { phase in
+                        switch phase {
+                        case .empty:
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color.gray.opacity(0.15))
+                                    .aspectRatio(1, contentMode: .fit)
+                                ProgressView()
+                                    .scaleEffect(1.5)
+                            }
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFit()
+                                .clipShape(RoundedRectangle(cornerRadius: 16))
+                        case .failure:
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color.gray.opacity(0.15))
+                                    .aspectRatio(1, contentMode: .fit)
+                                Image(systemName: "photo")
+                                    .font(.system(size: 60))
+                                    .foregroundColor(.gray)
+                            }
+                        @unknown default:
+                            EmptyView()
+                        }
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 16)
 
-                    if let genres = obj["genres"] as? [String], !genres.isEmpty {
-                        Text(genres.joined(separator: ", "))
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("\(obj["artist"] as? String ?? "")")
+                            .font(.title.bold())
+                        
+                        Text("\(obj["album"] as? String ?? "")")
+                            .font(.title2)
 
-                    if let notes = obj["notes"] as? String, !notes.isEmpty {
-                        Text(notes)
+                        if let y = normalizedYear(from: obj["year"]) {
+                            // fixes formatting with commas
+                            Text(y, format: .number.grouping(.never))
+                                .font(.headline)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        if let genres = obj["genres"] as? [String], !genres.isEmpty {
+                            Text(genres.joined(separator: ", "))
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        if let notes = obj["notes"] as? String, !notes.isEmpty {
+                            Text(notes)
+                                .padding(.top, 8)
+                        }
                     }
+                    .padding(.horizontal, 16)
 
                     if let tracks = obj["tracks"] as? [[String: Any]], !tracks.isEmpty {
                         Divider()
-                        Text("Tracks").font(.headline)
+                            .padding(.horizontal, 16)
+                        
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Tracks").font(.headline)
+                                .padding(.horizontal, 16)
 
-                        // Sort then enumerate so we have a stable Identifiable key (offset)
-                        let sorted = tracks.sorted {
-                            ( $0["track_no"] as? Int ?? 0 ) < ( $1["track_no"] as? Int ?? 0 )
-                        }
+                            // Sort then enumerate so we have a stable Identifiable key (offset)
+                            let sorted = tracks.sorted {
+                                ( $0["track_no"] as? Int ?? 0 ) < ( $1["track_no"] as? Int ?? 0 )
+                            }
 
-                        ForEach(Array(sorted.enumerated()), id: \.offset) { _, t in
-                            HStack {
-                                Text("\(t["track_no"] as? Int ?? 0).").bold()
-                                Text(t["title"] as? String ?? "")
-                                Spacer()
-                                if let d = t["duration_sec"] as? Int {
-                                    Text("\(d/60):\(String(format: "%02d", d%60))")
-                                        .monospacedDigit()
+                            ForEach(Array(sorted.enumerated()), id: \.offset) { _, t in
+                                HStack {
+                                    Text("\(t["track_no"] as? Int ?? 0).").bold()
+                                    Text(t["title"] as? String ?? "")
+                                    Spacer()
+                                    if let d = t["duration_sec"] as? Int {
+                                        Text("\(d/60):\(String(format: "%02d", d%60))")
+                                            .monospacedDigit()
+                                            .foregroundStyle(.secondary)
+                                    }
                                 }
+                                .padding(.horizontal, 16)
                             }
                         }
                     }
                 }
-                .padding()
             } else {
                 ProgressView()
             }

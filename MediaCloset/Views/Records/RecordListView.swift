@@ -48,7 +48,29 @@ struct RecordListView: View {
                 vm.search = searchText
                 Task { await vm.load() }
             }
-            .overlay { if vm.isLoading { ProgressView() } }
+            .overlay { 
+                if vm.isLoading { 
+                    ProgressView() 
+                } else if let errorMessage = vm.errorMessage {
+                    VStack(spacing: 16) {
+                        Image(systemName: "exclamationmark.triangle")
+                            .font(.largeTitle)
+                            .foregroundColor(.orange)
+                        Text("Connection Error")
+                            .font(.headline)
+                        Text(errorMessage)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                        Button("Retry") {
+                            Task { await vm.load() }
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                    .padding()
+                }
+            }
             .navigationTitle("Records")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

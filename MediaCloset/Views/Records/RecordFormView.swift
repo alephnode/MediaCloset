@@ -14,6 +14,7 @@ struct RecordFormView: View {
     @State private var color = ""
     @State private var genres = ""
     @State private var tracks: [TrackRow] = []
+    @State private var isSaving = false
 
     var onSaved: () -> Void
 
@@ -42,14 +43,44 @@ struct RecordFormView: View {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                   Button("Save") { Task { await save() } }
-                    .disabled(artist.isEmpty || album.isEmpty)
+                    .disabled(artist.isEmpty || album.isEmpty || isSaving)
                 }
             }
             .navigationTitle("New Record")
+            .overlay {
+                if isSaving {
+                    ZStack {
+                        Color.black.opacity(0.3)
+                            .ignoresSafeArea()
+                        VStack(spacing: 16) {
+                            ProgressView()
+                                .scaleEffect(1.2)
+                            Text("Saving album...")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            Text("Fetching album art")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.8))
+                        }
+                        .padding()
+                        .background(Color.black.opacity(0.7))
+                        .cornerRadius(12)
+                    }
+                }
+            }
         }
     }
 
     func save() async {
+        isSaving = true
+        
+        // Fetch album art URL from MusicBrainz (with 3-second timeout)
+        let coverUrl = await MusicBrainzService.fetchAlbumArtURL(
+            artist: artist,
+            album: album,
+            timeout: 3.0
+        )
+        
         // Map UI -> snake_case object for Hasura
         let trackObjects: [[String: Any]]? = tracks.isEmpty ? nil : tracks.map {
             [
@@ -67,9 +98,7 @@ struct RecordFormView: View {
             "genres": genres
                 .split(separator: ",")
                 .map { $0.trimmingCharacters(in: .whitespaces) },
-            // TODO add optional fields
-            // "cover_url": NSNull(),
-            // "notes": NSNull(),
+            "cover_url": coverUrl ?? NSNull(),
             // Nested tracks insert
             "tracks": trackObjects == nil ? NSNull() : [ "data": trackObjects! ]
         ]
@@ -85,6 +114,8 @@ struct RecordFormView: View {
         } catch {
             print("save err", error)
         }
+        
+        isSaving = false
     }
 
 

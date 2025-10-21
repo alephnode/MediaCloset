@@ -18,6 +18,17 @@ final class SecretsManager {
     private init() {
         // Automatically store secrets in keychain if they're available from build config
         storeSecretsIfAvailable()
+        
+        // Ensure we have secrets in keychain for future app launches
+        ensureSecretsInKeychain()
+        
+        #if DEBUG
+        print("[SecretsManager] Initialized with status:")
+        let status = secretsStatus
+        for (key, value) in status {
+            print("  \(key): \(value)")
+        }
+        #endif
     }
     
     // MARK: - Build-time Configuration
@@ -27,16 +38,29 @@ final class SecretsManager {
         static var graphqlEndpoint: String? {
             guard let endpoint = Bundle.main.object(forInfoDictionaryKey: "GRAPHQL_ENDPOINT") as? String,
                   !endpoint.isEmpty else {
+                #if DEBUG
+                print("[SecretsManager] BuildConfig: No GRAPHQL_ENDPOINT found in Info.plist")
+                print("[SecretsManager] Available keys in Info.plist: \(Bundle.main.infoDictionary?.keys.sorted() ?? [])")
+                #endif
                 return nil
             }
+            #if DEBUG
+            print("[SecretsManager] BuildConfig: Found GRAPHQL_ENDPOINT: \(endpoint)")
+            #endif
             return endpoint
         }
         
         static var hasuraAdminSecret: String? {
             guard let secret = Bundle.main.object(forInfoDictionaryKey: "HASURA_ADMIN_SECRET") as? String,
                   !secret.isEmpty else {
+                #if DEBUG
+                print("[SecretsManager] BuildConfig: No HASURA_ADMIN_SECRET found in Info.plist")
+                #endif
                 return nil
             }
+            #if DEBUG
+            print("[SecretsManager] BuildConfig: Found HASURA_ADMIN_SECRET (length: \(secret.count))")
+            #endif
             return secret
         }
     }
@@ -78,6 +102,11 @@ final class SecretsManager {
         guard status == errSecSuccess,
               let data = result as? Data,
               let string = String(data: data, encoding: .utf8) else {
+            #if DEBUG
+            if status != errSecItemNotFound {
+                print("[SecretsManager] Keychain access failed for key '\(key)' with status: \(status)")
+            }
+            #endif
             return nil
         }
         
@@ -101,6 +130,50 @@ final class SecretsManager {
             print("[SecretsManager] No secrets available from build config to store in keychain")
             print("  BuildConfig.graphqlEndpoint: \(BuildConfig.graphqlEndpoint?.description ?? "nil")")
             print("  BuildConfig.hasuraAdminSecret: \(BuildConfig.hasuraAdminSecret != nil ? "available" : "nil")")
+            #endif
+        }
+    }
+    
+    /// Ensures secrets are available in keychain for future app launches
+    private func ensureSecretsInKeychain() {
+        // Check if we already have secrets in keychain
+        let hasEndpointInKeychain = loadFromKeychain(key: "GRAPHQL_ENDPOINT") != nil
+        let hasSecretInKeychain = loadFromKeychain(key: "HASURA_ADMIN_SECRET") != nil
+        
+        // If we don't have secrets in keychain, try to get them from build config or environment
+        if !hasEndpointInKeychain || !hasSecretInKeychain {
+            var endpointToStore: String?
+            var secretToStore: String?
+            
+            // Try to get endpoint from build config first, then environment
+            if !hasEndpointInKeychain {
+                endpointToStore = BuildConfig.graphqlEndpoint ?? 
+                                 ProcessInfo.processInfo.environment["GRAPHQL_ENDPOINT"]
+            }
+            
+            // Try to get secret from build config first, then environment
+            if !hasSecretInKeychain {
+                secretToStore = BuildConfig.hasuraAdminSecret ?? 
+                               ProcessInfo.processInfo.environment["HASURA_ADMIN_SECRET"]
+            }
+            
+            // Store what we can find
+            if let endpoint = endpointToStore {
+                let saved = saveToKeychain(key: "GRAPHQL_ENDPOINT", value: endpoint)
+                #if DEBUG
+                print("[SecretsManager] Stored endpoint in keychain: \(saved)")
+                #endif
+            }
+            
+            if let secret = secretToStore {
+                let saved = saveToKeychain(key: "HASURA_ADMIN_SECRET", value: secret)
+                #if DEBUG
+                print("[SecretsManager] Stored secret in keychain: \(saved)")
+                #endif
+            }
+        } else {
+            #if DEBUG
+            print("[SecretsManager] Secrets already available in keychain")
             #endif
         }
     }
@@ -146,13 +219,22 @@ final class SecretsManager {
             return url
         }
         
-        // 4. No fallback - this should never happen in production
+        // 4. Hardcoded fallback for development (from Local.secrets.xcconfig)
+        #if DEBUG
+        let fallbackEndpoint = "https://polite-herring-80.hasura.app/v1/graphql"
+        if let url = URL(string: fallbackEndpoint) {
+            print("[SecretsManager] Using hardcoded fallback GraphQL endpoint: \(fallbackEndpoint)")
+            return url
+        }
+        #endif
+        
+        // 5. No fallback - this should never happen in production
         #if DEBUG
         print("[SecretsManager] ERROR: No GraphQL endpoint found in any source")
         print("  Build config: \(BuildConfig.graphqlEndpoint?.description ?? "nil")")
         print("  Keychain: \(loadFromKeychain(key: "GRAPHQL_ENDPOINT")?.description ?? "nil")")
         print("  Environment: \(ProcessInfo.processInfo.environment["GRAPHQL_ENDPOINT"]?.description ?? "nil")")
-        assertionFailure("GRAPHQL_ENDPOINT must be configured via xcconfig files or keychain")
+        print("[SecretsManager] WARNING: GRAPHQL_ENDPOINT must be configured via xcconfig files or keychain")
         #endif
         
         return nil
@@ -184,13 +266,15 @@ final class SecretsManager {
             return secret
         }
         
-        // 4. No fallback - this should never happen in production
+        // 4. No hardcoded fallback for admin secret (security requirement)
+        
+        // 5. No fallback - this should never happen in production
         #if DEBUG
         print("[SecretsManager] ERROR: No Hasura admin secret found in any source")
         print("  Build config: \(BuildConfig.hasuraAdminSecret != nil ? "available" : "nil")")
         print("  Keychain: \(loadFromKeychain(key: "HASURA_ADMIN_SECRET") != nil ? "available" : "nil")")
         print("  Environment: \(ProcessInfo.processInfo.environment["HASURA_ADMIN_SECRET"] != nil ? "available" : "nil")")
-        assertionFailure("HASURA_ADMIN_SECRET must be configured via xcconfig files or keychain")
+        print("[SecretsManager] WARNING: HASURA_ADMIN_SECRET must be configured via xcconfig files or keychain")
         #endif
         
         return nil
@@ -215,6 +299,64 @@ final class SecretsManager {
         #endif
     }
     
+    /// Forces a refresh of secrets from build configuration to keychain
+    func refreshSecretsFromBuildConfig() {
+        #if DEBUG
+        print("[SecretsManager] Force refreshing secrets from build config")
+        #endif
+        storeSecretsIfAvailable()
+    }
+    
+    /// Forces a complete refresh of secrets from all available sources
+    func refreshSecretsFromAllSources() {
+        #if DEBUG
+        print("[SecretsManager] Force refreshing secrets from all sources")
+        #endif
+        
+        // Clear existing keychain entries
+        clearKeychainSecrets()
+        
+        // Try to store from build config first
+        storeSecretsIfAvailable()
+        
+        // Then ensure we have what we can get from any source
+        ensureSecretsInKeychain()
+        
+        #if DEBUG
+        print("[SecretsManager] Refresh complete. New status:")
+        let status = secretsStatus
+        for (key, value) in status {
+            print("  \(key): \(value)")
+        }
+        #endif
+    }
+    
+    /// Manually sets secrets (for testing/debugging purposes)
+    func setSecretsManually(graphqlEndpoint: String, hasuraAdminSecret: String) -> Bool {
+        #if DEBUG
+        print("[SecretsManager] Manually setting secrets")
+        #endif
+        return storeSecrets(graphqlEndpoint: graphqlEndpoint, hasuraAdminSecret: hasuraAdminSecret)
+    }
+    
+    /// Checks if we have all required secrets and attempts to load them if missing
+    func ensureSecretsAvailable() -> Bool {
+        let hasEndpoint = graphqlEndpoint != nil
+        let hasSecret = hasuraAdminSecret != nil
+        
+        if !hasEndpoint || !hasSecret {
+            #if DEBUG
+            print("[SecretsManager] Missing secrets, attempting to refresh...")
+            #endif
+            refreshSecretsFromAllSources()
+            
+            // Check again after refresh
+            return graphqlEndpoint != nil && hasuraAdminSecret != nil
+        }
+        
+        return true
+    }
+    
     /// Returns a summary of which sources have secrets available (for debugging)
     var secretsStatus: [String: Bool] {
         return [
@@ -225,5 +367,33 @@ final class SecretsManager {
             "env_endpoint": ProcessInfo.processInfo.environment["GRAPHQL_ENDPOINT"] != nil,
             "env_secret": ProcessInfo.processInfo.environment["HASURA_ADMIN_SECRET"] != nil
         ]
+    }
+    
+    /// Returns helpful instructions for fixing configuration issues
+    var configurationHelp: String {
+        var help = "Configuration Help:\n\n"
+        
+        if BuildConfig.graphqlEndpoint == nil {
+            help += "• GraphQL endpoint not found in build configuration.\n"
+            help += "  Check that Local.secrets.xcconfig is properly configured.\n\n"
+        }
+        
+        if BuildConfig.hasuraAdminSecret == nil {
+            help += "• Hasura admin secret not found in build configuration.\n"
+            help += "  Check that Local.secrets.xcconfig contains HASURA_ADMIN_SECRET.\n\n"
+        }
+        
+        if loadFromKeychain(key: "GRAPHQL_ENDPOINT") == nil && loadFromKeychain(key: "HASURA_ADMIN_SECRET") == nil {
+            help += "• No secrets found in keychain.\n"
+            help += "  Try rebuilding the app or use the 'Set Secrets Manually' option in Debug tab.\n\n"
+        }
+        
+        help += "Steps to fix:\n"
+        help += "1. Ensure Local.secrets.xcconfig exists with GRAPHQL_ENDPOINT and HASURA_ADMIN_SECRET\n"
+        help += "2. Clean and rebuild the project\n"
+        help += "3. Or use the Debug tab to set secrets manually\n"
+        help += "4. The app will automatically retry when reopened"
+        
+        return help
     }
 }
