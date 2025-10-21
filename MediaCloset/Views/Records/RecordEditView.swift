@@ -31,7 +31,7 @@ struct RecordEditView: View {
                 Section("Main") {
                     TextField("Artist", text: $artist)
                     TextField("Album", text: $album)
-                    TextField("Year", value: $year, format: .number)
+                    TextField("Year", value: $year, format: .number.grouping(.never))
                     TextField("Color variant", text: $colorVariant)
                 }
                 Section("Metadata") {
