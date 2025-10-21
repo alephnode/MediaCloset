@@ -13,6 +13,7 @@ struct SecretsTestView: View {
     @State private var secretPreview: String = "Loading..."
     @State private var manualEndpoint: String = ""
     @State private var manualSecret: String = ""
+    @State private var manualOMDBKey: String = ""
     @State private var showingManualInput = false
     @State private var showingConnectionAlert = false
     @State private var connectionMessage = ""
@@ -35,6 +36,20 @@ struct SecretsTestView: View {
                         Text(secretPreview)
                             .font(.system(.body, design: .monospaced))
                             .foregroundColor(.secondary)
+                    }
+                    
+                    HStack {
+                        Text("OMDB API Key:")
+                        Spacer()
+                        if let omdbKey = SecretsManager.shared.omdbApiKey {
+                            Text(String(omdbKey.prefix(8)) + "...")
+                                .font(.system(.body, design: .monospaced))
+                                .foregroundColor(.secondary)
+                        } else {
+                            Text("Not available")
+                                .font(.system(.body, design: .monospaced))
+                                .foregroundColor(.red)
+                        }
                     }
                 }
                 
@@ -60,6 +75,16 @@ struct SecretsTestView: View {
                                 .foregroundColor(.green)
                         } else {
                             Text("❌ No admin secret available")
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundColor(.red)
+                        }
+                        
+                        if SecretsManager.shared.omdbApiKey != nil {
+                            Text("✅ OMDB API key available")
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundColor(.green)
+                        } else {
+                            Text("❌ No OMDB API key available")
                                 .font(.system(.caption, design: .monospaced))
                                 .foregroundColor(.red)
                         }
@@ -93,6 +118,19 @@ struct SecretsTestView: View {
                     Button("Test API Connection") {
                         testAPIConnection()
                     }
+                    
+                    Button("Set OMDB Key Only") {
+                        // User needs to enter their API key manually
+                        showingManualInput = true
+                        refreshStatus()
+                    }
+                    
+                    Button("Test OMDB API") {
+                        Task {
+                            let vhsVM = VHSVM()
+                            await vhsVM.testOMDBAPI()
+                        }
+                    }
                 }
             }
             .navigationTitle("Secrets Test")
@@ -109,6 +147,11 @@ struct SecretsTestView: View {
                         
                         Section("Hasura Admin Secret") {
                             SecureField("Enter admin secret", text: $manualSecret)
+                                .textFieldStyle(.roundedBorder)
+                        }
+                        
+                        Section("OMDB API Key") {
+                            TextField("Enter OMDB API key", text: $manualOMDBKey)
                                 .textFieldStyle(.roundedBorder)
                         }
                     }
@@ -178,10 +221,15 @@ struct SecretsTestView: View {
             hasuraAdminSecret: manualSecret
         )
         
+        if !manualOMDBKey.isEmpty {
+            _ = SecretsManager.shared.storeOMDBKey(manualOMDBKey)
+        }
+        
         if success {
             print("✅ Successfully stored manual secrets in keychain")
             manualEndpoint = ""
             manualSecret = ""
+            manualOMDBKey = ""
         } else {
             print("❌ Failed to store manual secrets in keychain")
         }

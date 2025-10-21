@@ -63,6 +63,20 @@ final class SecretsManager {
             #endif
             return secret
         }
+        
+        static var omdbApiKey: String? {
+            guard let key = Bundle.main.object(forInfoDictionaryKey: "OMDB_API_KEY") as? String,
+                  !key.isEmpty else {
+                #if DEBUG
+                print("[SecretsManager] BuildConfig: No OMDB_API_KEY found in Info.plist")
+                #endif
+                return nil
+            }
+            #if DEBUG
+            print("[SecretsManager] BuildConfig: Found OMDB_API_KEY (length: \(key.count))")
+            #endif
+            return key
+        }
     }
     
     // MARK: - Keychain Management
@@ -117,21 +131,30 @@ final class SecretsManager {
     
     /// Automatically stores secrets in keychain if they're available from build config
     private func storeSecretsIfAvailable() {
-        if let endpoint = BuildConfig.graphqlEndpoint,
-           let secret = BuildConfig.hasuraAdminSecret {
-            let endpointSaved = saveToKeychain(key: "GRAPHQL_ENDPOINT", value: endpoint)
-            let secretSaved = saveToKeychain(key: "HASURA_ADMIN_SECRET", value: secret)
-            
-            #if DEBUG
-            print("[SecretsManager] Auto-stored secrets in keychain: endpoint=\(endpointSaved), secret=\(secretSaved)")
-            #endif
+        var storedSecrets: [String: Bool] = [:]
+        
+        if let endpoint = BuildConfig.graphqlEndpoint {
+            storedSecrets["endpoint"] = saveToKeychain(key: "GRAPHQL_ENDPOINT", value: endpoint)
+        }
+        
+        if let secret = BuildConfig.hasuraAdminSecret {
+            storedSecrets["secret"] = saveToKeychain(key: "HASURA_ADMIN_SECRET", value: secret)
+        }
+        
+        if let omdbKey = BuildConfig.omdbApiKey {
+            storedSecrets["omdb"] = saveToKeychain(key: "OMDB_API_KEY", value: omdbKey)
+        }
+        
+        #if DEBUG
+        if !storedSecrets.isEmpty {
+            print("[SecretsManager] Auto-stored secrets in keychain: \(storedSecrets)")
         } else {
-            #if DEBUG
             print("[SecretsManager] No secrets available from build config to store in keychain")
             print("  BuildConfig.graphqlEndpoint: \(BuildConfig.graphqlEndpoint?.description ?? "nil")")
             print("  BuildConfig.hasuraAdminSecret: \(BuildConfig.hasuraAdminSecret != nil ? "available" : "nil")")
-            #endif
+            print("  BuildConfig.omdbApiKey: \(BuildConfig.omdbApiKey != nil ? "available" : "nil")")
         }
+        #endif
     }
     
     /// Ensures secrets are available in keychain for future app launches
@@ -139,11 +162,13 @@ final class SecretsManager {
         // Check if we already have secrets in keychain
         let hasEndpointInKeychain = loadFromKeychain(key: "GRAPHQL_ENDPOINT") != nil
         let hasSecretInKeychain = loadFromKeychain(key: "HASURA_ADMIN_SECRET") != nil
+        let hasOmdbKeyInKeychain = loadFromKeychain(key: "OMDB_API_KEY") != nil
         
         // If we don't have secrets in keychain, try to get them from build config or environment
-        if !hasEndpointInKeychain || !hasSecretInKeychain {
+        if !hasEndpointInKeychain || !hasSecretInKeychain || !hasOmdbKeyInKeychain {
             var endpointToStore: String?
             var secretToStore: String?
+            var omdbKeyToStore: String?
             
             // Try to get endpoint from build config first, then environment
             if !hasEndpointInKeychain {
@@ -155,6 +180,12 @@ final class SecretsManager {
             if !hasSecretInKeychain {
                 secretToStore = BuildConfig.hasuraAdminSecret ?? 
                                ProcessInfo.processInfo.environment["HASURA_ADMIN_SECRET"]
+            }
+            
+            // Try to get OMDB key from build config first, then environment
+            if !hasOmdbKeyInKeychain {
+                omdbKeyToStore = BuildConfig.omdbApiKey ?? 
+                                ProcessInfo.processInfo.environment["OMDB_API_KEY"]
             }
             
             // Store what we can find
@@ -169,6 +200,13 @@ final class SecretsManager {
                 let saved = saveToKeychain(key: "HASURA_ADMIN_SECRET", value: secret)
                 #if DEBUG
                 print("[SecretsManager] Stored secret in keychain: \(saved)")
+                #endif
+            }
+            
+            if let omdbKey = omdbKeyToStore {
+                let saved = saveToKeychain(key: "OMDB_API_KEY", value: omdbKey)
+                #if DEBUG
+                print("[SecretsManager] Stored OMDB key in keychain: \(saved)")
                 #endif
             }
         } else {
@@ -188,6 +226,17 @@ final class SecretsManager {
         #endif
         
         return endpointSaved && secretSaved
+    }
+    
+    /// Stores OMDB API key in the iOS Keychain for offline access
+    func storeOMDBKey(_ apiKey: String) -> Bool {
+        let saved = saveToKeychain(key: "OMDB_API_KEY", value: apiKey)
+        
+        #if DEBUG
+        print("[SecretsManager] Stored OMDB key in keychain: \(saved)")
+        #endif
+        
+        return saved
     }
     
     /// Retrieves the GraphQL endpoint from the most appropriate source
@@ -280,9 +329,49 @@ final class SecretsManager {
         return nil
     }
     
+    /// Retrieves the OMDB API key from the most appropriate source
+    var omdbApiKey: String? {
+        // 1. Try build-time configuration first
+        if let key = BuildConfig.omdbApiKey {
+            #if DEBUG
+            print("[SecretsManager] Using OMDB API key from build config")
+            #endif
+            return key
+        }
+        
+        // 2. Fall back to keychain
+        if let key = loadFromKeychain(key: "OMDB_API_KEY") {
+            #if DEBUG
+            print("[SecretsManager] Using OMDB API key from keychain")
+            #endif
+            return key
+        }
+        
+        // 3. Fall back to environment variable (for development)
+        if let key = ProcessInfo.processInfo.environment["OMDB_API_KEY"] {
+            #if DEBUG
+            print("[SecretsManager] Using OMDB API key from environment")
+            #endif
+            return key
+        }
+        
+        // 4. No hardcoded fallback for API key (security requirement)
+        
+        // 5. No fallback - this should never happen in production
+        #if DEBUG
+        print("[SecretsManager] ERROR: No OMDB API key found in any source")
+        print("  Build config: \(BuildConfig.omdbApiKey != nil ? "available" : "nil")")
+        print("  Keychain: \(loadFromKeychain(key: "OMDB_API_KEY") != nil ? "available" : "nil")")
+        print("  Environment: \(ProcessInfo.processInfo.environment["OMDB_API_KEY"] != nil ? "available" : "nil")")
+        print("[SecretsManager] WARNING: OMDB_API_KEY must be configured via xcconfig files or keychain")
+        #endif
+        
+        return nil
+    }
+    
     /// Clears all stored secrets from the keychain
     func clearKeychainSecrets() {
-        let keys = ["GRAPHQL_ENDPOINT", "HASURA_ADMIN_SECRET"]
+        let keys = ["GRAPHQL_ENDPOINT", "HASURA_ADMIN_SECRET", "OMDB_API_KEY"]
         
         for key in keys {
             let query: [String: Any] = [
@@ -343,15 +432,16 @@ final class SecretsManager {
     func ensureSecretsAvailable() -> Bool {
         let hasEndpoint = graphqlEndpoint != nil
         let hasSecret = hasuraAdminSecret != nil
+        let hasOmdbKey = omdbApiKey != nil
         
-        if !hasEndpoint || !hasSecret {
+        if !hasEndpoint || !hasSecret || !hasOmdbKey {
             #if DEBUG
             print("[SecretsManager] Missing secrets, attempting to refresh...")
             #endif
             refreshSecretsFromAllSources()
             
             // Check again after refresh
-            return graphqlEndpoint != nil && hasuraAdminSecret != nil
+            return graphqlEndpoint != nil && hasuraAdminSecret != nil && omdbApiKey != nil
         }
         
         return true
@@ -362,10 +452,13 @@ final class SecretsManager {
         return [
             "buildConfig_endpoint": BuildConfig.graphqlEndpoint != nil,
             "buildConfig_secret": BuildConfig.hasuraAdminSecret != nil,
+            "buildConfig_omdb": BuildConfig.omdbApiKey != nil,
             "keychain_endpoint": loadFromKeychain(key: "GRAPHQL_ENDPOINT") != nil,
             "keychain_secret": loadFromKeychain(key: "HASURA_ADMIN_SECRET") != nil,
+            "keychain_omdb": loadFromKeychain(key: "OMDB_API_KEY") != nil,
             "env_endpoint": ProcessInfo.processInfo.environment["GRAPHQL_ENDPOINT"] != nil,
-            "env_secret": ProcessInfo.processInfo.environment["HASURA_ADMIN_SECRET"] != nil
+            "env_secret": ProcessInfo.processInfo.environment["HASURA_ADMIN_SECRET"] != nil,
+            "env_omdb": ProcessInfo.processInfo.environment["OMDB_API_KEY"] != nil
         ]
     }
     
@@ -383,13 +476,18 @@ final class SecretsManager {
             help += "  Check that Local.secrets.xcconfig contains HASURA_ADMIN_SECRET.\n\n"
         }
         
-        if loadFromKeychain(key: "GRAPHQL_ENDPOINT") == nil && loadFromKeychain(key: "HASURA_ADMIN_SECRET") == nil {
+        if BuildConfig.omdbApiKey == nil {
+            help += "• OMDB API key not found in build configuration.\n"
+            help += "  Check that Local.secrets.xcconfig contains OMDB_API_KEY.\n\n"
+        }
+        
+        if loadFromKeychain(key: "GRAPHQL_ENDPOINT") == nil && loadFromKeychain(key: "HASURA_ADMIN_SECRET") == nil && loadFromKeychain(key: "OMDB_API_KEY") == nil {
             help += "• No secrets found in keychain.\n"
             help += "  Try rebuilding the app or use the 'Set Secrets Manually' option in Debug tab.\n\n"
         }
         
         help += "Steps to fix:\n"
-        help += "1. Ensure Local.secrets.xcconfig exists with GRAPHQL_ENDPOINT and HASURA_ADMIN_SECRET\n"
+        help += "1. Ensure Local.secrets.xcconfig exists with GRAPHQL_ENDPOINT, HASURA_ADMIN_SECRET, and OMDB_API_KEY\n"
         help += "2. Clean and rebuild the project\n"
         help += "3. Or use the Debug tab to set secrets manually\n"
         help += "4. The app will automatically retry when reopened"

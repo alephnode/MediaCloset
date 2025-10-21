@@ -20,17 +20,45 @@ struct VHSDetailView: View {
             } else if let vhs = vhs {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-                        // Cover Image
+                        // Large cover art spanning across the view with padding
                         if let coverUrl = vhs.coverUrl {
-                            AsyncCover(url: coverUrl)
-                                .frame(height: 300)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                            AsyncImage(url: URL(string: coverUrl)) { phase in
+                                switch phase {
+                                case .empty:
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .fill(Color.gray.opacity(0.15))
+                                            .aspectRatio(1, contentMode: .fit)
+                                        ProgressView()
+                                            .scaleEffect(1.5)
+                                    }
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .scaledToFit()
+                                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                                case .failure:
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .fill(Color.gray.opacity(0.15))
+                                            .aspectRatio(1, contentMode: .fit)
+                                        Image(systemName: "photo")
+                                            .font(.system(size: 60))
+                                            .foregroundColor(.gray)
+                                    }
+                                @unknown default:
+                                    EmptyView()
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.horizontal, 16)
                         }
                         
                         // Title
                         Text(vhs.title)
                             .font(.largeTitle)
                             .fontWeight(.bold)
+                            .padding(.horizontal, 16)
                         
                         // Details
                         VStack(alignment: .leading, spacing: 8) {
@@ -50,6 +78,7 @@ struct VHSDetailView: View {
                                 DetailRow(label: "Notes", value: notes)
                             }
                         }
+                        .padding(.horizontal, 16)
                         
                         Spacer()
                     }
