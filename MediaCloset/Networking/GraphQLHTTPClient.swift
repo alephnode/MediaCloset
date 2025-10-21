@@ -6,11 +6,17 @@
 //
 import Foundation
 
+enum GraphQLError: Error {
+    case configurationError(String)
+    case networkError(Error)
+    case parsingError(String)
+}
+
 final class GraphQLHTTPClient {
     static let shared = GraphQLHTTPClient()
     private let secretsManager = SecretsManager.shared
 
-    var endpointURL: URL {
+    var endpointURL: URL? {
         guard let url = secretsManager.graphqlEndpoint else {
             #if DEBUG
             print("[GraphQLHTTPClient] ERROR: No GraphQL endpoint available. Secrets status:")
@@ -18,10 +24,9 @@ final class GraphQLHTTPClient {
             for (key, value) in status {
                 print("  \(key): \(value)")
             }
-            assertionFailure("GRAPHQL_ENDPOINT must be configured. Please set up xcconfig files properly.")
+            print("[GraphQLHTTPClient] WARNING: GRAPHQL_ENDPOINT must be configured. Please set up xcconfig files properly.")
             #endif
-            // This will crash in debug, which is intentional to catch configuration issues
-            fatalError("GRAPHQL_ENDPOINT not configured")
+            return nil
         }
         return url
     }
@@ -35,9 +40,8 @@ final class GraphQLHTTPClient {
         } else {
             #if DEBUG
             print("[GraphQLHTTPClient] Warning: HASURA_ADMIN_SECRET not set; proceeding without admin header.")
+            print("[GraphQLHTTPClient] This may cause authentication errors if the endpoint requires admin access.")
             #endif
-            // For the demo endpoint, we can proceed without the admin secret
-            // as it's a public demo instance
         }
         return headers
     }
@@ -48,7 +52,11 @@ final class GraphQLHTTPClient {
                  query: String,
                  variables: [String: Any]? = nil) async throws -> Response {
 
-        var req = URLRequest(url: endpointURL)
+        guard let url = endpointURL else {
+            throw GraphQLError.configurationError("GraphQL endpoint not configured")
+        }
+        
+        var req = URLRequest(url: url)
         req.httpMethod = "POST"
         for (k,v) in extraHeaders { req.addValue(v, forHTTPHeaderField: k) }
 
@@ -59,12 +67,16 @@ final class GraphQLHTTPClient {
         ]
         req.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, _) = try await URLSession.shared.data(for: req)
-        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-        let errors = json?["errors"] as? [[String: Any]]
-        if let errors, !errors.isEmpty {
-            print("GraphQL errors:", errors)
+        do {
+            let (data, _) = try await URLSession.shared.data(for: req)
+            let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+            let errors = json?["errors"] as? [[String: Any]]
+            if let errors, !errors.isEmpty {
+                print("GraphQL errors:", errors)
+            }
+            return Response(data: json?["data"] as? [String: Any], errors: errors)
+        } catch {
+            throw GraphQLError.networkError(error)
         }
-        return Response(data: json?["data"] as? [String: Any], errors: errors)
     }
 }

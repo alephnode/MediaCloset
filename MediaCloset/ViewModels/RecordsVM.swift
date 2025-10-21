@@ -5,15 +5,54 @@
 //  Created by Stephen Ward on 10/11/25.
 //
 import Foundation
+import UIKit
 
 @MainActor
 final class RecordsVM: ObservableObject {
     @Published var items: [RecordListItem] = []
     @Published var search = ""
     @Published var isLoading = false
+    @Published var errorMessage: String? = nil
+    
+    init() {
+        // Listen for app becoming active to retry loading if there was a configuration error
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            // Always retry loading when app becomes active, especially if there was an error
+            Task {
+                await self?.retryLoadWithSecretRefresh()
+            }
+        }
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    /// Retries loading with secret refresh if there was a configuration error
+    private func retryLoadWithSecretRefresh() async {
+        // Always ensure secrets are available before retrying
+        let secretsAvailable = SecretsManager.shared.ensureSecretsAvailable()
+        
+        #if DEBUG
+        if !secretsAvailable {
+            print("[RecordsVM] Secrets still not available after refresh attempt")
+        } else {
+            print("[RecordsVM] Secrets are now available, retrying load...")
+        }
+        #endif
+        
+        // Always retry loading
+        await load()
+    }
 
     func load() async {
-        isLoading = true; defer { isLoading = false }
+        isLoading = true; 
+        errorMessage = nil
+        defer { isLoading = false }
 
         // Always send a non-null pattern; "%%" matches all
         let pattern = search.isEmpty ? "%%" : "%\(search)%"
@@ -44,6 +83,11 @@ final class RecordsVM: ObservableObject {
             }
         } catch {
             print("Records fetch error:", error)
+            if case GraphQLError.configurationError(let message) = error {
+                errorMessage = "Configuration Error: \(message)"
+            } else {
+                errorMessage = "Failed to load records: \(error.localizedDescription)"
+            }
         }
     }
 

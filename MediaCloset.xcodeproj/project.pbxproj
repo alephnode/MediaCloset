@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		42D72CB42E9AF79E00EA0F43 /* MediaClosetApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42D72CB32E9AF79E00EA0F43 /* MediaClosetApp.swift */; };
+		42D72CB62E9AF79E00EA0F43 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 42D72CB52E9AF79E00EA0F43 /* LaunchScreen.storyboard */; };
 		42D72CB82E9AF79F00EA0F43 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 42D72CB72E9AF79F00EA0F43 /* Assets.xcassets */; };
 		42D72CBC2E9AF79F00EA0F43 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 42D72CBB2E9AF79F00EA0F43 /* Preview Assets.xcassets */; };
 		42D72CC62E9AF79F00EA0F43 /* MediaClosetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42D72CC52E9AF79F00EA0F43 /* MediaClosetTests.swift */; };
@@ -44,6 +45,7 @@
 /* Begin PBXFileReference section */
 		42D72CB02E9AF79E00EA0F43 /* MediaCloset.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MediaCloset.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		42D72CB32E9AF79E00EA0F43 /* MediaClosetApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaClosetApp.swift; sourceTree = "<group>"; };
+		42D72CB52E9AF79E00EA0F43 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		42D72CB72E9AF79F00EA0F43 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		42D72CB92E9AF79F00EA0F43 /* MediaCloset.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MediaCloset.entitlements; sourceTree = "<group>"; };
 		42D72CBB2E9AF79F00EA0F43 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -118,6 +120,7 @@
 				42322CFB2E9B0F6D00615173 /* Networking */,
 				42322CF62E9B0F2A00615173 /* Views */,
 				42D72CB32E9AF79E00EA0F43 /* MediaClosetApp.swift */,
+				42D72CB52E9AF79E00EA0F43 /* LaunchScreen.storyboard */,
 				42D72CB72E9AF79F00EA0F43 /* Assets.xcassets */,
 				42D72CB92E9AF79F00EA0F43 /* MediaCloset.entitlements */,
 				42D72CBA2E9AF79F00EA0F43 /* Preview Content */,
@@ -277,6 +280,7 @@
 				42F66FF02EA5F070006F32FF /* Secrets.xcconfig in Resources */,
 				42F66FF12EA5F070006F32FF /* Local.secrets.xcconfig in Resources */,
 				42D72CB82E9AF79F00EA0F43 /* Assets.xcassets in Resources */,
+				42D72CB62E9AF79E00EA0F43 /* LaunchScreen.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -481,6 +485,8 @@
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchStoryboardName[sdk=iphoneos*]" = LaunchScreen;
+				"INFOPLIST_KEY_UILaunchStoryboardName[sdk=iphonesimulator*]" = LaunchScreen;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -521,6 +527,8 @@
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchStoryboardName[sdk=iphoneos*]" = LaunchScreen;
+				"INFOPLIST_KEY_UILaunchStoryboardName[sdk=iphonesimulator*]" = LaunchScreen;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
