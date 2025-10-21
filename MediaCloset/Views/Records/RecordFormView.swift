@@ -15,12 +15,32 @@ struct RecordFormView: View {
     @State private var genres = ""
     @State private var tracks: [TrackRow] = []
     @State private var isSaving = false
+    @State private var showingBarcodeScanner = false
+    @State private var isFetchingBarcodeData = false
 
     var onSaved: () -> Void
 
     var body: some View {
         NavigationStack {
             Form {
+                Section("Barcode Scanner") {
+                    Button("Scan Barcode") {
+                        showingBarcodeScanner = true
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .frame(maxWidth: .infinity)
+                    
+                    if isFetchingBarcodeData {
+                        HStack {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                            Text("Looking up barcode data...")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                
                 Section("Main") {
                     TextField("Artist", text: $artist)
                     TextField("Album", text: $album)
@@ -47,6 +67,13 @@ struct RecordFormView: View {
                 }
             }
             .navigationTitle("New Record")
+            .sheet(isPresented: $showingBarcodeScanner) {
+                BarcodeScannerView { barcode in
+                    Task {
+                        await handleBarcodeScanned(barcode)
+                    }
+                }
+            }
             .overlay {
                 if isSaving {
                     ZStack {
@@ -117,6 +144,43 @@ struct RecordFormView: View {
         
         isSaving = false
     }
-
+    
+    func handleBarcodeScanned(_ barcode: String) async {
+        isFetchingBarcodeData = true
+        
+        // Look up album information from barcode
+        if let albumData = await BarcodeService.lookupAlbumByBarcode(barcode) {
+            // Populate form fields with fetched data
+            if let fetchedArtist = albumData["artist"] as? String, artist.isEmpty {
+                artist = fetchedArtist
+            }
+            if let fetchedAlbum = albumData["album"] as? String, album.isEmpty {
+                album = fetchedAlbum
+            }
+            if let fetchedYear = albumData["year"] as? Int, year == nil {
+                year = fetchedYear
+            }
+            if let fetchedLabel = albumData["label"] as? String, color.isEmpty {
+                color = fetchedLabel
+            }
+            
+            // Handle UPC Database specific fields (fallback data)
+            if let title = albumData["Title"] as? String, album.isEmpty {
+                album = title // Use UPC title as album name
+            }
+            if let brand = albumData["Brand"] as? String, artist.isEmpty {
+                artist = brand // Use UPC brand as artist name
+            }
+            if let description = albumData["Description"] as? String, album.isEmpty {
+                album = description // Use UPC description as album name
+            }
+            
+            #if DEBUG
+            print("[RecordFormView] Populated form with barcode data: \(albumData)")
+            #endif
+        }
+        
+        isFetchingBarcodeData = false
+    }
 
 }
