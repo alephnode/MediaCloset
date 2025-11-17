@@ -17,6 +17,8 @@ struct RecordFormView: View {
     @State private var isSaving = false
     @State private var showingBarcodeScanner = false
     @State private var isFetchingBarcodeData = false
+    @State private var barcodeErrorMessage: String? = nil
+    @State private var showBarcodeResult = false
 
     var onSaved: () -> Void
 
@@ -34,7 +36,27 @@ struct RecordFormView: View {
                         HStack {
                             ProgressView()
                                 .scaleEffect(0.8)
-                            Text("Looking up barcode data...")
+                            Text("Looking up album information...")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    
+                    if let errorMessage = barcodeErrorMessage {
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.orange)
+                            Text(errorMessage)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    
+                    if showBarcodeResult && !artist.isEmpty {
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                            Text("Album information found and populated")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -146,41 +168,67 @@ struct RecordFormView: View {
     }
     
     func handleBarcodeScanned(_ barcode: String) async {
-        isFetchingBarcodeData = true
+        await MainActor.run {
+            isFetchingBarcodeData = true
+            barcodeErrorMessage = nil
+            showBarcodeResult = false
+        }
         
-        // Look up album information from barcode
-        if let albumData = await BarcodeService.lookupAlbumByBarcode(barcode) {
-            // Populate form fields with fetched data
-            if let fetchedArtist = albumData["artist"] as? String, artist.isEmpty {
-                artist = fetchedArtist
-            }
-            if let fetchedAlbum = albumData["album"] as? String, album.isEmpty {
-                album = fetchedAlbum
-            }
-            if let fetchedYear = albumData["year"] as? Int, year == nil {
-                year = fetchedYear
-            }
-            if let fetchedLabel = albumData["label"] as? String, color.isEmpty {
-                color = fetchedLabel
-            }
-            
-            // Handle UPC Database specific fields (fallback data)
-            if let title = albumData["Title"] as? String, album.isEmpty {
-                album = title // Use UPC title as album name
-            }
-            if let brand = albumData["Brand"] as? String, artist.isEmpty {
-                artist = brand // Use UPC brand as artist name
-            }
-            if let description = albumData["Description"] as? String, album.isEmpty {
-                album = description // Use UPC description as album name
+        // Use improved barcode service for better music data
+        if let albumData = await ImprovedBarcodeService.lookupAlbumByBarcode(barcode) {
+            // Populate form fields with structured data
+            await MainActor.run {
+                var fieldsPopulated = 0
+                
+                if let fetchedArtist = albumData.artist, artist.isEmpty {
+                    artist = fetchedArtist
+                    fieldsPopulated += 1
+                }
+                if let fetchedAlbum = albumData.album, album.isEmpty {
+                    album = fetchedAlbum
+                    fieldsPopulated += 1
+                }
+                if let fetchedYear = albumData.year, year == nil {
+                    year = fetchedYear
+                    fieldsPopulated += 1
+                }
+                if let fetchedLabel = albumData.label, color.isEmpty {
+                    color = fetchedLabel // Using color field for label info
+                    fieldsPopulated += 1
+                }
+                if let fetchedGenres = albumData.genres, genres.isEmpty {
+                    genres = fetchedGenres.joined(separator: ", ")
+                    fieldsPopulated += 1
+                }
+                
+                showBarcodeResult = fieldsPopulated > 0
+                
+                if fieldsPopulated == 0 {
+                    barcodeErrorMessage = "Album found but no new information could be added to empty fields"
+                }
             }
             
             #if DEBUG
-            print("[RecordFormView] Populated form with barcode data: \(albumData)")
+            print("[RecordFormView] Populated form with improved barcode data:")
+            print("  Artist: \(albumData.artist ?? "nil")")
+            print("  Album: \(albumData.album ?? "nil")")
+            print("  Year: \(albumData.year?.description ?? "nil")")
+            print("  Label: \(albumData.label ?? "nil")")
+            print("  Genres: \(albumData.genres?.joined(separator: ", ") ?? "nil")")
             #endif
+        } else {
+            #if DEBUG
+            print("[RecordFormView] No album data found for barcode: \(barcode)")
+            #endif
+            
+            await MainActor.run {
+                barcodeErrorMessage = "Album not found in music databases. Try entering details manually."
+            }
         }
         
-        isFetchingBarcodeData = false
+        await MainActor.run {
+            isFetchingBarcodeData = false
+        }
     }
 
 }
