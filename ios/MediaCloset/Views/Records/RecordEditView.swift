@@ -57,59 +57,54 @@ struct RecordEditView: View {
         .task { await load() }
     }
 
-    // Load current values from Hasura
+    // Load current values from MediaCloset API
     private func load() async {
         isLoading = true
         defer { isLoading = false }
         do {
-            let res = try await GraphQLHTTPClient.shared.execute(
-                operationName: "Record",
-                query: GQL.recordDetail,
-                variables: ["id": recordId]
-            )
-            guard let r = res.data?["records_by_pk"] as? [String: Any] else { return }
-            artist = (r["artist"] as? String) ?? ""
-            album  = (r["album"] as? String) ?? ""
-            year   = r["year"] as? Int
-            colorVariant = (r["color_variant"] as? String) ?? ""
-            coverURL = (r["cover_url"] as? String) ?? ""
-            notes   = (r["notes"] as? String) ?? ""
-            if let arr = r["genres"] as? [String] { genresCSV = arr.joined(separator: ", ") }
+            guard let record = try await MediaClosetAPIClient.shared.fetchAlbum(id: recordId) else {
+                print("[RecordEditView] Album not found")
+                return
+            }
+            artist = record.artist
+            album  = record.album
+            year   = record.year
+            colorVariant = "" // Not returned by API
+            coverURL = record.coverURL ?? ""
+            notes = "" // Not returned by API
+            if let genres = record.genres {
+                genresCSV = genres.joined(separator: ", ")
+            }
         } catch {
-            print("edit load err:", error)
+            print("[RecordEditView] Load error:", error)
         }
     }
 
-    // Save updates using Hasura's _set
+    // Save updates using MediaCloset API
     private func save() async {
         isSaving = true
         defer { isSaving = false }
-        let trimmedGenres = genresCSV
-            .split(separator: ",")
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.isEmpty }
-
-        var set: [String: Any] = [
-            "artist": artist,
-            "album": album,
-            "year": year as Any,
-            "genres": trimmedGenres
-        ]
-        // Only send optional fields if user provided something
-        set["color_variant"] = colorVariant.isEmpty ? NSNull() : colorVariant
-        set["notes"] = notes.isEmpty ? NSNull() : notes
-        set["cover_url"] = coverURL.isEmpty ? NSNull() : coverURL
 
         do {
-            _ = try await GraphQLHTTPClient.shared.execute(
-                operationName: "UpdateRecord",
-                query: GQL.updateRecord,
-                variables: ["id": recordId, "set": set]
+            let response = try await MediaClosetAPIClient.shared.updateAlbum(
+                id: recordId,
+                artist: artist,
+                album: album,
+                year: year,
+                label: nil, // Not editable in this view
+                genre: nil, // Using genres array instead
+                coverUrl: coverURL.isEmpty ? nil : coverURL
             )
-            onSaved()
-            dismiss()
+
+            if response.success {
+                onSaved()
+                dismiss()
+            } else {
+                let errorMsg = response.error ?? "Unknown error"
+                print("[RecordEditView] Failed to update album: \(errorMsg)")
+            }
         } catch {
-            print("edit save err:", error)
+            print("[RecordEditView] Save error:", error)
         }
     }
 }

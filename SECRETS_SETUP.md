@@ -38,9 +38,12 @@ If you prefer to set up manually:
 2. **Edit your secrets:**
    Open `Configs/Local.secrets.xcconfig` and fill in your actual values:
    ```xcconfig
-   GRAPHQL_ENDPOINT = https://your-hasura-instance.hasura.app/v1/graphql
-   HASURA_ADMIN_SECRET = your-actual-admin-secret-here
+   MEDIACLOSET_API_ENDPOINT = http://localhost:8080/query
+   MEDIACLOSET_API_KEY = your-secure-api-key-here
    ```
+
+   > **Note**: All data access now goes through the MediaCloset Go API proxy.
+   > Direct Hasura access has been removed for security.
 
 3. **Add xcconfig files to Xcode project:**
    - Open `MediaCloset.xcodeproj` in Xcode
@@ -63,8 +66,8 @@ Configs/
 
 MediaCloset/
 └── Networking/
-    ├── SecretsManager.swift      # Secrets management logic
-    └── GraphQLHTTPClient.swift   # Updated to use SecretsManager
+    ├── SecretsManager.swift         # Secrets management logic
+    └── MediaClosetAPIClient.swift   # API client for Go backend proxy
 ```
 
 ## How It Works

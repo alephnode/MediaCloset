@@ -154,13 +154,19 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	SaveMovie(ctx context.Context, input model.SaveMovieInput) (*model.SaveMovieResponse, error)
+	UpdateMovie(ctx context.Context, id string, input model.UpdateMovieInput) (*model.UpdateMovieResponse, error)
+	DeleteMovie(ctx context.Context, id string) (*model.DeleteResponse, error)
 	SaveAlbum(ctx context.Context, input model.SaveAlbumInput) (*model.SaveAlbumResponse, error)
+	UpdateAlbum(ctx context.Context, id string, input model.UpdateAlbumInput) (*model.UpdateAlbumResponse, error)
+	DeleteAlbum(ctx context.Context, id string) (*model.DeleteResponse, error)
 }
 type QueryResolver interface {
 	MovieByTitle(ctx context.Context, title string, director *string, year *int) (*model.MovieData, error)
 	MovieByBarcode(ctx context.Context, barcode string) (*model.MovieData, error)
+	Movie(ctx context.Context, id string) (*model.Movie, error)
 	AlbumByArtistAndTitle(ctx context.Context, artist string, album string) (*model.AlbumData, error)
 	AlbumByBarcode(ctx context.Context, barcode string) (*model.AlbumData, error)
+	Album(ctx context.Context, id string) (*model.Album, error)
 	Movies(ctx context.Context) ([]*model.Movie, error)
 	Albums(ctx context.Context) ([]*model.Album, error)
 	Health(ctx context.Context) (*model.Health, error)

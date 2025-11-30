@@ -123,15 +123,36 @@ struct RecordDetailView: View {
 
     func load() async {
         do {
-            let res = try await GraphQLHTTPClient.shared.execute(
-                operationName: "Record",
-                query: GQL.recordDetail,
-                variables: ["id": recordId]
-            )
-            if let dict = res.data?["records_by_pk"] as? [String: Any] {
+            if let album = try await MediaClosetAPIClient.shared.fetchAlbum(id: recordId) {
+                // Convert Album to dictionary format for the view
+                var dict: [String: Any] = [
+                    "id": album.id,
+                    "artist": album.artist,
+                    "album": album.album
+                ]
+                if let year = album.year {
+                    dict["year"] = year
+                }
+                if let label = album.label {
+                    dict["label"] = label
+                }
+                if let genres = album.genres {
+                    dict["genres"] = genres
+                }
+                if let coverURL = album.coverURL {
+                    dict["cover_url"] = coverURL
+                }
+                if let createdAt = album.createdAt {
+                    dict["created_at"] = createdAt
+                }
+                if let updatedAt = album.updatedAt {
+                    dict["updated_at"] = updatedAt
+                }
                 recordJSON = dict
             }
-        } catch { print("detail err", error) }
+        } catch {
+            print("[RecordDetailView] Load error:", error)
+        }
     }
 
     // helper to coerce whatever we get into a plain Int year

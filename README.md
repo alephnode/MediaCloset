@@ -102,11 +102,9 @@ cd ios
 cp Configs/Secrets.xcconfig Configs/Local.secrets.xcconfig
 
 # 2. Edit Local.secrets.xcconfig with your keys:
-# OMDB_API_KEY = your_key_here
-# DISCOGS_TOKEN = your_token_here
-# HASURA_ENDPOINT = your_hasura_url
-# HASURA_ADMIN_SECRET = your_secret
 # MEDIACLOSET_API_ENDPOINT = http://localhost:8080/query
+# MEDIACLOSET_API_KEY = your-secure-api-key-here
+# Note: All data access now goes through the Go API proxy
 
 # 3. Open in Xcode
 open MediaCloset.xcodeproj

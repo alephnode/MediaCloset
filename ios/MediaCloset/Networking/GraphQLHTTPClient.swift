@@ -4,46 +4,34 @@
 //
 //  Created by Stephen Ward on 10/11/25.
 //
+//  DEPRECATED: This file is no longer used.
+//  All GraphQL operations now go through MediaClosetAPIClient
+//  which proxies requests through the Go API backend.
+//
+//  Direct Hasura access has been removed for security.
+//
+//  Operations that need to be re-implemented in the Go API:
+//  - Delete mutations (deleteVHS, deleteRecord)
+//  - Update mutations (updateVHS, updateRecord)
+//  - Detail queries (vhsDetail, recordDetail)
+
 import Foundation
 
+@available(*, deprecated, message: "Use MediaClosetAPIClient instead. Direct Hasura access has been removed.")
 enum GraphQLError: Error {
-    case configurationError(String)
-    case networkError(Error)
-    case parsingError(String)
+    case deprecated
 }
 
+@available(*, deprecated, message: "Use MediaClosetAPIClient instead. Direct Hasura access has been removed.")
 final class GraphQLHTTPClient {
     static let shared = GraphQLHTTPClient()
-    private let secretsManager = SecretsManager.shared
 
     var endpointURL: URL? {
-        guard let url = secretsManager.graphqlEndpoint else {
-            #if DEBUG
-            print("[GraphQLHTTPClient] ERROR: No GraphQL endpoint available. Secrets status:")
-            let status = secretsManager.secretsStatus
-            for (key, value) in status {
-                print("  \(key): \(value)")
-            }
-            print("[GraphQLHTTPClient] WARNING: GRAPHQL_ENDPOINT must be configured. Please set up xcconfig files properly.")
-            #endif
-            return nil
-        }
-        return url
+        return nil
     }
 
     var extraHeaders: [String:String] {
-        var headers: [String:String] = [
-            "Content-Type": "application/json"
-        ]
-        if let secret = secretsManager.hasuraAdminSecret, !secret.isEmpty {
-            headers["x-hasura-admin-secret"] = secret
-        } else {
-            #if DEBUG
-            print("[GraphQLHTTPClient] Warning: HASURA_ADMIN_SECRET not set; proceeding without admin header.")
-            print("[GraphQLHTTPClient] This may cause authentication errors if the endpoint requires admin access.")
-            #endif
-        }
-        return headers
+        return [:]
     }
 
     struct Response { let data: [String: Any]?; let errors: [[String: Any]]? }
@@ -51,32 +39,6 @@ final class GraphQLHTTPClient {
     func execute(operationName: String,
                  query: String,
                  variables: [String: Any]? = nil) async throws -> Response {
-
-        guard let url = endpointURL else {
-            throw GraphQLError.configurationError("GraphQL endpoint not configured")
-        }
-        
-        var req = URLRequest(url: url)
-        req.httpMethod = "POST"
-        for (k,v) in extraHeaders { req.addValue(v, forHTTPHeaderField: k) }
-
-        let body: [String: Any] = [
-            "operationName": operationName,
-            "query": query,
-            "variables": variables ?? [:]
-        ]
-        req.httpBody = try JSONSerialization.data(withJSONObject: body)
-
-        do {
-            let (data, _) = try await URLSession.shared.data(for: req)
-            let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-            let errors = json?["errors"] as? [[String: Any]]
-            if let errors, !errors.isEmpty {
-                print("GraphQL errors:", errors)
-            }
-            return Response(data: json?["data"] as? [String: Any], errors: errors)
-        } catch {
-            throw GraphQLError.networkError(error)
-        }
+        throw GraphQLError.deprecated
     }
 }

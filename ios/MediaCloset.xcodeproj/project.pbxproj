@@ -479,8 +479,6 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "";
-				INFOPLIST_KEY_GRAPHQL_ENDPOINT = "$(GRAPHQL_ENDPOINT)";
-				INFOPLIST_KEY_HASURA_ADMIN_SECRET = "$(HASURA_ADMIN_SECRET)";
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs camera access to scan barcodes for quick data entry of records and VHS tapes.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
@@ -524,8 +522,6 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "";
-				INFOPLIST_KEY_GRAPHQL_ENDPOINT = "$(GRAPHQL_ENDPOINT)";
-				INFOPLIST_KEY_HASURA_ADMIN_SECRET = "$(HASURA_ADMIN_SECRET)";
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs camera access to scan barcodes for quick data entry of records and VHS tapes.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;

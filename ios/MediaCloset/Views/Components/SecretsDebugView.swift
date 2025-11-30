@@ -11,10 +11,7 @@ import SwiftUI
 struct SecretsDebugView: View {
     @State private var secretsStatus: [String: Bool] = [:]
     @State private var showingClearAlert = false
-    @State private var manualEndpoint = ""
-    @State private var manualSecret = ""
-    @State private var showingManualInput = false
-    
+
     var body: some View {
         NavigationView {
             List {
@@ -29,35 +26,31 @@ struct SecretsDebugView: View {
                         }
                     }
                 }
-                
+
                 Section("Actions") {
                     Button("Refresh Status") {
                         refreshStatus()
                     }
-                    
+
                     Button("Refresh Secrets from Build Config") {
                         SecretsManager.shared.refreshSecretsFromBuildConfig()
                         refreshStatus()
                     }
-                    
+
                     Button("Refresh from All Sources") {
                         SecretsManager.shared.refreshSecretsFromAllSources()
                         refreshStatus()
-                    }
-                    
-                    Button("Set Secrets Manually") {
-                        showingManualInput = true
                     }
 
                     Button("Clear Keychain Secrets", role: .destructive) {
                         showingClearAlert = true
                     }
                 }
-                
+
                 Section("Current Values") {
-                    if let endpoint = SecretsManager.shared.graphqlEndpoint {
+                    if let endpoint = SecretsManager.shared.mediaClosetAPIEndpoint {
                         VStack(alignment: .leading) {
-                            Text("GraphQL Endpoint")
+                            Text("MediaCloset API Endpoint")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                             Text(endpoint.absoluteString)
@@ -65,21 +58,27 @@ struct SecretsDebugView: View {
                                 .lineLimit(nil)
                         }
                     }
-                    
-                    if let secret = SecretsManager.shared.hasuraAdminSecret {
+
+                    if let key = SecretsManager.shared.mediaClosetAPIKey {
                         VStack(alignment: .leading) {
-                            Text("Hasura Admin Secret")
+                            Text("MediaCloset API Key")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
-                            Text(String(secret.prefix(8)) + "...")
+                            Text(String(key.prefix(8)) + "...")
                                 .font(.system(.body, design: .monospaced))
                         }
                     }
                 }
-                
+
                 Section("Configuration Help") {
                     Text(SecretsManager.shared.configurationHelp)
                         .font(.system(.caption, design: .monospaced))
+                        .foregroundColor(.secondary)
+                }
+
+                Section {
+                    Text("Note: All data access now goes through the MediaCloset Go API proxy. Direct Hasura access has been removed for security.")
+                        .font(.caption)
                         .foregroundColor(.secondary)
                 }
             }
@@ -96,27 +95,9 @@ struct SecretsDebugView: View {
             } message: {
                 Text("This will remove all secrets from the iOS Keychain. The app will need to be rebuilt to restore secrets from the xcconfig files.")
             }
-            .alert("Set Secrets Manually", isPresented: $showingManualInput) {
-                TextField("GraphQL Endpoint", text: $manualEndpoint)
-                SecureField("Hasura Admin Secret", text: $manualSecret)
-                Button("Cancel", role: .cancel) { }
-                Button("Set") {
-                    if !manualEndpoint.isEmpty && !manualSecret.isEmpty {
-                        _ = SecretsManager.shared.setSecretsManually(
-                            graphqlEndpoint: manualEndpoint,
-                            hasuraAdminSecret: manualSecret
-                        )
-                    }
-                    refreshStatus()
-                    manualEndpoint = ""
-                    manualSecret = ""
-                }
-            } message: {
-                Text("Enter the GraphQL endpoint and Hasura admin secret manually for testing. All secrets will be stored securely in the keychain.")
-            }
         }
     }
-    
+
     private func refreshStatus() {
         secretsStatus = SecretsManager.shared.secretsStatus
     }

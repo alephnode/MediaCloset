@@ -311,6 +311,271 @@ func (r *queryResolver) Albums(ctx context.Context) ([]*model.Album, error) {
 	return albums, nil
 }
 
+// UpdateMovie is the resolver for the updateMovie field.
+func (r *mutationResolver) UpdateMovie(ctx context.Context, id string, input model.UpdateMovieInput) (*model.UpdateMovieResponse, error) {
+	// Build updates map
+	updates := make(map[string]interface{})
+
+	if input.Title != nil {
+		updates["title"] = *input.Title
+	}
+	if input.Director != nil {
+		updates["director"] = *input.Director
+	}
+	if input.Year != nil {
+		updates["year"] = *input.Year
+	}
+	if input.Genre != nil {
+		updates["genre"] = *input.Genre
+	}
+	if input.CoverURL != nil {
+		updates["cover_url"] = *input.CoverURL
+	}
+
+	// Update in Hasura
+	movieData, err := r.HasuraClient.UpdateMovie(ctx, id, updates)
+	if err != nil {
+		return &model.UpdateMovieResponse{
+			Success: false,
+			Error:   &[]string{fmt.Sprintf("Failed to update movie: %v", err)}[0],
+		}, nil
+	}
+
+	// Convert to model.Movie
+	movie := &model.Movie{}
+	if movieID, ok := movieData["id"].(string); ok {
+		movie.ID = movieID
+	}
+	if title, ok := movieData["title"].(string); ok {
+		movie.Title = title
+	}
+	if director, ok := movieData["director"].(string); ok {
+		movie.Director = &director
+	}
+	if year, ok := movieData["year"].(float64); ok {
+		yearInt := int(year)
+		movie.Year = &yearInt
+	}
+	if genre, ok := movieData["genre"].(string); ok {
+		movie.Genre = &genre
+	}
+	if coverURL, ok := movieData["cover_url"].(string); ok {
+		movie.CoverURL = &coverURL
+	}
+	if createdAt, ok := movieData["created_at"].(string); ok {
+		movie.CreatedAt = &createdAt
+	}
+	if updatedAt, ok := movieData["updated_at"].(string); ok {
+		movie.UpdatedAt = &updatedAt
+	}
+
+	return &model.UpdateMovieResponse{
+		Success: true,
+		Movie:   movie,
+	}, nil
+}
+
+// DeleteMovie is the resolver for the deleteMovie field.
+func (r *mutationResolver) DeleteMovie(ctx context.Context, id string) (*model.DeleteResponse, error) {
+	err := r.HasuraClient.DeleteMovie(ctx, id)
+	if err != nil {
+		return &model.DeleteResponse{
+			Success: false,
+			Error:   &[]string{fmt.Sprintf("Failed to delete movie: %v", err)}[0],
+		}, nil
+	}
+
+	return &model.DeleteResponse{
+		Success: true,
+	}, nil
+}
+
+// UpdateAlbum is the resolver for the updateAlbum field.
+func (r *mutationResolver) UpdateAlbum(ctx context.Context, id string, input model.UpdateAlbumInput) (*model.UpdateAlbumResponse, error) {
+	// Build updates map
+	updates := make(map[string]interface{})
+
+	if input.Artist != nil {
+		updates["artist"] = *input.Artist
+	}
+	if input.Album != nil {
+		updates["album"] = *input.Album
+	}
+	if input.Year != nil {
+		updates["year"] = *input.Year
+	}
+	if input.Label != nil {
+		updates["label"] = *input.Label
+	}
+	if input.Genre != nil {
+		updates["genre"] = *input.Genre
+	}
+	if input.CoverURL != nil {
+		updates["cover_url"] = *input.CoverURL
+	}
+
+	// Update in Hasura
+	albumData, err := r.HasuraClient.UpdateAlbum(ctx, id, updates)
+	if err != nil {
+		return &model.UpdateAlbumResponse{
+			Success: false,
+			Error:   &[]string{fmt.Sprintf("Failed to update album: %v", err)}[0],
+		}, nil
+	}
+
+	// Convert to model.Album
+	album := &model.Album{}
+	if albumID, ok := albumData["id"].(string); ok {
+		album.ID = albumID
+	}
+	if artist, ok := albumData["artist"].(string); ok {
+		album.Artist = artist
+	}
+	if albumName, ok := albumData["album"].(string); ok {
+		album.Album = albumName
+	}
+	if year, ok := albumData["year"].(float64); ok {
+		yearInt := int(year)
+		album.Year = &yearInt
+	}
+	if label, ok := albumData["label"].(string); ok {
+		album.Label = &label
+	}
+	if genres, ok := albumData["genres"].([]interface{}); ok {
+		genreStrs := make([]string, 0, len(genres))
+		for _, g := range genres {
+			if genreStr, ok := g.(string); ok {
+				genreStrs = append(genreStrs, genreStr)
+			}
+		}
+		if len(genreStrs) > 0 {
+			album.Genres = genreStrs
+		}
+	}
+	if coverURL, ok := albumData["cover_url"].(string); ok {
+		album.CoverURL = &coverURL
+	}
+	if createdAt, ok := albumData["created_at"].(string); ok {
+		album.CreatedAt = &createdAt
+	}
+	if updatedAt, ok := albumData["updated_at"].(string); ok {
+		album.UpdatedAt = &updatedAt
+	}
+
+	return &model.UpdateAlbumResponse{
+		Success: true,
+		Album:   album,
+	}, nil
+}
+
+// DeleteAlbum is the resolver for the deleteAlbum field.
+func (r *mutationResolver) DeleteAlbum(ctx context.Context, id string) (*model.DeleteResponse, error) {
+	err := r.HasuraClient.DeleteAlbum(ctx, id)
+	if err != nil {
+		return &model.DeleteResponse{
+			Success: false,
+			Error:   &[]string{fmt.Sprintf("Failed to delete album: %v", err)}[0],
+		}, nil
+	}
+
+	return &model.DeleteResponse{
+		Success: true,
+	}, nil
+}
+
+// Movie is the resolver for the movie field.
+func (r *queryResolver) Movie(ctx context.Context, id string) (*model.Movie, error) {
+	movieData, err := r.HasuraClient.GetMovieByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch movie: %w", err)
+	}
+	if movieData == nil {
+		return nil, nil
+	}
+
+	// Convert to model.Movie
+	movie := &model.Movie{}
+	if movieID, ok := movieData["id"].(string); ok {
+		movie.ID = movieID
+	}
+	if title, ok := movieData["title"].(string); ok {
+		movie.Title = title
+	}
+	if director, ok := movieData["director"].(string); ok {
+		movie.Director = &director
+	}
+	if year, ok := movieData["year"].(float64); ok {
+		yearInt := int(year)
+		movie.Year = &yearInt
+	}
+	if genre, ok := movieData["genre"].(string); ok {
+		movie.Genre = &genre
+	}
+	if coverURL, ok := movieData["cover_url"].(string); ok {
+		movie.CoverURL = &coverURL
+	}
+	if createdAt, ok := movieData["created_at"].(string); ok {
+		movie.CreatedAt = &createdAt
+	}
+	if updatedAt, ok := movieData["updated_at"].(string); ok {
+		movie.UpdatedAt = &updatedAt
+	}
+
+	return movie, nil
+}
+
+// Album is the resolver for the album field.
+func (r *queryResolver) Album(ctx context.Context, id string) (*model.Album, error) {
+	albumData, err := r.HasuraClient.GetAlbumByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch album: %w", err)
+	}
+	if albumData == nil {
+		return nil, nil
+	}
+
+	// Convert to model.Album
+	album := &model.Album{}
+	if albumID, ok := albumData["id"].(string); ok {
+		album.ID = albumID
+	}
+	if artist, ok := albumData["artist"].(string); ok {
+		album.Artist = artist
+	}
+	if albumName, ok := albumData["album"].(string); ok {
+		album.Album = albumName
+	}
+	if year, ok := albumData["year"].(float64); ok {
+		yearInt := int(year)
+		album.Year = &yearInt
+	}
+	if label, ok := albumData["label"].(string); ok {
+		album.Label = &label
+	}
+	if genres, ok := albumData["genres"].([]interface{}); ok {
+		genreStrs := make([]string, 0, len(genres))
+		for _, g := range genres {
+			if genreStr, ok := g.(string); ok {
+				genreStrs = append(genreStrs, genreStr)
+			}
+		}
+		if len(genreStrs) > 0 {
+			album.Genres = genreStrs
+		}
+	}
+	if coverURL, ok := albumData["cover_url"].(string); ok {
+		album.CoverURL = &coverURL
+	}
+	if createdAt, ok := albumData["created_at"].(string); ok {
+		album.CreatedAt = &createdAt
+	}
+	if updatedAt, ok := albumData["updated_at"].(string); ok {
+		album.UpdatedAt = &updatedAt
+	}
+
+	return album, nil
+}
+
 // Health is the resolver for the health field.
 func (r *queryResolver) Health(ctx context.Context) (*model.Health, error) {
 	uptime := int(time.Since(r.ServerStartTime).Seconds())

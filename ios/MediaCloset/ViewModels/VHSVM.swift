@@ -87,14 +87,18 @@ final class VHSVM: ObservableObject {
 
     func delete(id: String) async {
         do {
-            _ = try await GraphQLHTTPClient.shared.execute(
-                operationName: "DeleteVHS",
-                query: GQL.deleteVHS,
-                variables: ["id": id]
-            )
-            self.items.removeAll { $0.id == id }
+            let response = try await MediaClosetAPIClient.shared.deleteMovie(id: id)
+            if response.success {
+                self.items.removeAll { $0.id == id }
+                #if DEBUG
+                print("[VHSVM] Successfully deleted movie \(id)")
+                #endif
+            } else {
+                let errorMsg = response.error ?? "Unknown error"
+                print("[VHSVM] Failed to delete movie: \(errorMsg)")
+            }
         } catch {
-            print("Delete VHS error:", error)
+            print("[VHSVM] Delete VHS error:", error)
         }
     }
 }

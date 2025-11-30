@@ -90,14 +90,18 @@ final class RecordsVM: ObservableObject {
 
     func delete(id: String) async {
         do {
-            _ = try await GraphQLHTTPClient.shared.execute(
-                operationName: "DeleteRecord",
-                query: GQL.deleteRecord,
-                variables: ["id": id] as [String: Any]
-            )
-            items.removeAll { $0.id == id }
+            let response = try await MediaClosetAPIClient.shared.deleteAlbum(id: id)
+            if response.success {
+                items.removeAll { $0.id == id }
+                #if DEBUG
+                print("[RecordsVM] Successfully deleted album \(id)")
+                #endif
+            } else {
+                let errorMsg = response.error ?? "Unknown error"
+                print("[RecordsVM] Failed to delete album: \(errorMsg)")
+            }
         } catch {
-            print("Delete error:", error)
+            print("[RecordsVM] Delete album error:", error)
         }
     }
 }

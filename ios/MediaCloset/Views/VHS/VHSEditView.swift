@@ -67,28 +67,25 @@ struct VHSEditView: View {
     private func save() async {
         isSaving = true
 
-        let object: [String: Any] = [
-            "title": title,
-            "director": director.isEmpty ? NSNull() : director,
-            "year": year as Any,
-            "genre": genre.isEmpty ? NSNull() : genre,
-            "notes": notes.isEmpty ? NSNull() : notes,
-            "cover_url": coverURL.isEmpty ? NSNull() : coverURL
-        ]
-        
         do {
-            _ = try await GraphQLHTTPClient.shared.execute(
-                operationName: "UpdateVHS",
-                query: GQL.updateVHS,
-                variables: [
-                    "id": vhs.id,
-                    "set": object
-                ]
+            let response = try await MediaClosetAPIClient.shared.updateMovie(
+                id: vhs.id,
+                title: title,
+                director: director.isEmpty ? nil : director,
+                year: year,
+                genre: genre.isEmpty ? nil : genre,
+                coverUrl: coverURL.isEmpty ? nil : coverURL
             )
-            onSaved()
-            dismiss()
+
+            if response.success {
+                onSaved()
+                dismiss()
+            } else {
+                let errorMsg = response.error ?? "Unknown error"
+                print("[VHSEditView] Failed to update movie: \(errorMsg)")
+            }
         } catch {
-            print("Update VHS error:", error)
+            print("[VHSEditView] Update VHS error:", error)
         }
 
         isSaving = false

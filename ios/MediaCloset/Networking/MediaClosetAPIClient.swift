@@ -566,6 +566,284 @@ final class MediaClosetAPIClient {
         return response.albums
     }
 
+    /// Fetches a single movie by ID
+    /// - Parameter id: The movie ID
+    /// - Returns: Movie if found, nil otherwise
+    func fetchMovie(id: String) async throws -> Movie? {
+        struct Response: Decodable {
+            let movie: Movie?
+        }
+
+        let query = """
+        query GetMovie($id: String!) {
+          movie(id: $id) {
+            id
+            title
+            director
+            year
+            genre
+            coverUrl
+            createdAt
+            updatedAt
+          }
+        }
+        """
+
+        let variables: [String: Any] = ["id": id]
+
+        let response: Response = try await execute(
+            operationName: "GetMovie",
+            query: query,
+            variables: variables
+        )
+
+        return response.movie
+    }
+
+    /// Fetches a single album by ID
+    /// - Parameter id: The album ID
+    /// - Returns: Album if found, nil otherwise
+    func fetchAlbum(id: String) async throws -> Album? {
+        struct Response: Decodable {
+            let album: Album?
+        }
+
+        let query = """
+        query GetAlbum($id: String!) {
+          album(id: $id) {
+            id
+            artist
+            album
+            year
+            label
+            genres
+            coverUrl
+            createdAt
+            updatedAt
+          }
+        }
+        """
+
+        let variables: [String: Any] = ["id": id]
+
+        let response: Response = try await execute(
+            operationName: "GetAlbum",
+            query: query,
+            variables: variables
+        )
+
+        return response.album
+    }
+
+    /// Updates an existing movie
+    /// - Parameters:
+    ///   - id: The movie ID
+    ///   - title: Optional new title
+    ///   - director: Optional new director
+    ///   - year: Optional new year
+    ///   - genre: Optional new genre
+    ///   - coverUrl: Optional new cover URL
+    /// - Returns: UpdateMovieResponse with success status and updated movie data
+    func updateMovie(id: String, title: String? = nil, director: String? = nil, year: Int? = nil, genre: String? = nil, coverUrl: String? = nil) async throws -> UpdateMovieResponse {
+        struct Response: Decodable {
+            let updateMovie: UpdateMovieResponse
+        }
+
+        let query = """
+        mutation UpdateMovie($id: String!, $input: UpdateMovieInput!) {
+          updateMovie(id: $id, input: $input) {
+            success
+            movie {
+              id
+              title
+              director
+              year
+              genre
+              coverUrl
+              createdAt
+              updatedAt
+            }
+            error
+          }
+        }
+        """
+
+        var input: [String: Any] = [:]
+        if let title = title {
+            input["title"] = title
+        }
+        if let director = director {
+            input["director"] = director
+        }
+        if let year = year {
+            input["year"] = year
+        }
+        if let genre = genre {
+            input["genre"] = genre
+        }
+        if let coverUrl = coverUrl {
+            input["coverUrl"] = coverUrl
+        }
+
+        let variables: [String: Any] = [
+            "id": id,
+            "input": input
+        ]
+
+        let response: Response = try await execute(
+            operationName: "UpdateMovie",
+            query: query,
+            variables: variables
+        )
+
+        return response.updateMovie
+    }
+
+    /// Response from updateMovie mutation
+    struct UpdateMovieResponse: Decodable {
+        let success: Bool
+        let movie: Movie?
+        let error: String?
+    }
+
+    /// Updates an existing album
+    /// - Parameters:
+    ///   - id: The album ID
+    ///   - artist: Optional new artist
+    ///   - album: Optional new album title
+    ///   - year: Optional new year
+    ///   - label: Optional new label
+    ///   - genre: Optional new genre
+    ///   - coverUrl: Optional new cover URL
+    /// - Returns: UpdateAlbumResponse with success status and updated album data
+    func updateAlbum(id: String, artist: String? = nil, album: String? = nil, year: Int? = nil, label: String? = nil, genre: String? = nil, coverUrl: String? = nil) async throws -> UpdateAlbumResponse {
+        struct Response: Decodable {
+            let updateAlbum: UpdateAlbumResponse
+        }
+
+        let query = """
+        mutation UpdateAlbum($id: String!, $input: UpdateAlbumInput!) {
+          updateAlbum(id: $id, input: $input) {
+            success
+            album {
+              id
+              artist
+              album
+              year
+              label
+              genres
+              coverUrl
+              createdAt
+              updatedAt
+            }
+            error
+          }
+        }
+        """
+
+        var input: [String: Any] = [:]
+        if let artist = artist {
+            input["artist"] = artist
+        }
+        if let album = album {
+            input["album"] = album
+        }
+        if let year = year {
+            input["year"] = year
+        }
+        if let label = label {
+            input["label"] = label
+        }
+        if let genre = genre {
+            input["genre"] = genre
+        }
+        if let coverUrl = coverUrl {
+            input["coverUrl"] = coverUrl
+        }
+
+        let variables: [String: Any] = [
+            "id": id,
+            "input": input
+        ]
+
+        let response: Response = try await execute(
+            operationName: "UpdateAlbum",
+            query: query,
+            variables: variables
+        )
+
+        return response.updateAlbum
+    }
+
+    /// Response from updateAlbum mutation
+    struct UpdateAlbumResponse: Decodable {
+        let success: Bool
+        let album: Album?
+        let error: String?
+    }
+
+    /// Deletes a movie by ID
+    /// - Parameter id: The movie ID
+    /// - Returns: DeleteResponse with success status
+    func deleteMovie(id: String) async throws -> DeleteResponse {
+        struct Response: Decodable {
+            let deleteMovie: DeleteResponse
+        }
+
+        let query = """
+        mutation DeleteMovie($id: String!) {
+          deleteMovie(id: $id) {
+            success
+            error
+          }
+        }
+        """
+
+        let variables: [String: Any] = ["id": id]
+
+        let response: Response = try await execute(
+            operationName: "DeleteMovie",
+            query: query,
+            variables: variables
+        )
+
+        return response.deleteMovie
+    }
+
+    /// Deletes an album by ID
+    /// - Parameter id: The album ID
+    /// - Returns: DeleteResponse with success status
+    func deleteAlbum(id: String) async throws -> DeleteResponse {
+        struct Response: Decodable {
+            let deleteAlbum: DeleteResponse
+        }
+
+        let query = """
+        mutation DeleteAlbum($id: String!) {
+          deleteAlbum(id: $id) {
+            success
+            error
+          }
+        }
+        """
+
+        let variables: [String: Any] = ["id": id]
+
+        let response: Response = try await execute(
+            operationName: "DeleteAlbum",
+            query: query,
+            variables: variables
+        )
+
+        return response.deleteAlbum
+    }
+
+    /// Response from delete mutations
+    struct DeleteResponse: Decodable {
+        let success: Bool
+        let error: String?
+    }
+
     /// Checks if the API is healthy and reachable
     /// - Returns: true if the API is healthy, false otherwise
     func checkHealth() async -> Bool {

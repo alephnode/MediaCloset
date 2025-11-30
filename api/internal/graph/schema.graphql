@@ -5,10 +5,12 @@ type Query {
   # Movie/VHS lookups
   movieByTitle(title: String!, director: String, year: Int): MovieData
   movieByBarcode(barcode: String!): MovieData
+  movie(id: String!): Movie  # Get movie by ID
 
   # Album/Record lookups
   albumByArtistAndTitle(artist: String!, album: String!): AlbumData
   albumByBarcode(barcode: String!): AlbumData
+  album(id: String!): Album  # Get album by ID
 
   # List all movies/albums from database
   movies: [Movie!]!
@@ -22,8 +24,20 @@ type Mutation {
   # Save movie/VHS (auto-fetches poster if missing)
   saveMovie(input: SaveMovieInput!): SaveMovieResponse!
 
+  # Update existing movie/VHS
+  updateMovie(id: String!, input: UpdateMovieInput!): UpdateMovieResponse!
+
+  # Delete movie/VHS
+  deleteMovie(id: String!): DeleteResponse!
+
   # Save album/record (auto-fetches cover if missing)
   saveAlbum(input: SaveAlbumInput!): SaveAlbumResponse!
+
+  # Update existing album/record
+  updateAlbum(id: String!, input: UpdateAlbumInput!): UpdateAlbumResponse!
+
+  # Delete album/record
+  deleteAlbum(id: String!): DeleteResponse!
 }
 
 type MovieData {
@@ -68,6 +82,14 @@ input SaveMovieInput {
   coverUrl: String  # Optional - will be auto-fetched if missing
 }
 
+input UpdateMovieInput {
+  title: String
+  director: String
+  year: Int
+  genre: String
+  coverUrl: String
+}
+
 input SaveAlbumInput {
   artist: String!
   album: String!
@@ -75,6 +97,15 @@ input SaveAlbumInput {
   label: String
   genre: String
   coverUrl: String  # Optional - will be auto-fetched if missing
+}
+
+input UpdateAlbumInput {
+  artist: String
+  album: String
+  year: Int
+  label: String
+  genre: String
+  coverUrl: String
 }
 
 # Response types for mutations
@@ -85,10 +116,27 @@ type SaveMovieResponse {
   error: String
 }
 
+type UpdateMovieResponse {
+  success: Boolean!
+  movie: Movie
+  error: String
+}
+
 type SaveAlbumResponse {
   success: Boolean!
   id: Int
   album: SavedAlbum
+  error: String
+}
+
+type UpdateAlbumResponse {
+  success: Boolean!
+  album: Album
+  error: String
+}
+
+type DeleteResponse {
+  success: Boolean!
   error: String
 }
 

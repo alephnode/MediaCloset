@@ -268,3 +268,247 @@ func (h *HasuraClient) GetAllAlbums(ctx context.Context) ([]map[string]interface
 
 	return albums, nil
 }
+
+// GetMovieByID fetches a single movie by ID from Hasura
+func (h *HasuraClient) GetMovieByID(ctx context.Context, id string) (map[string]interface{}, error) {
+	query := `
+		query GetMovieByID($id: uuid!) {
+			vhs_by_pk(id: $id) {
+				id
+				title
+				director
+				year
+				genre
+				cover_url
+				created_at
+				updated_at
+			}
+		}
+	`
+
+	req := GraphQLRequest{
+		Query:         query,
+		OperationName: "GetMovieByID",
+		Variables: map[string]interface{}{
+			"id": id,
+		},
+	}
+
+	resp, err := h.Execute(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+
+	// Extract vhs_by_pk from response
+	movieData, ok := resp.Data["vhs_by_pk"]
+	if !ok || movieData == nil {
+		return nil, nil // Movie not found
+	}
+
+	movie, ok := movieData.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("unexpected movie data type")
+	}
+
+	return movie, nil
+}
+
+// GetAlbumByID fetches a single album by ID from Hasura
+func (h *HasuraClient) GetAlbumByID(ctx context.Context, id string) (map[string]interface{}, error) {
+	query := `
+		query GetAlbumByID($id: uuid!) {
+			records_by_pk(id: $id) {
+				id
+				artist
+				album
+				year
+				label
+				genres
+				cover_url
+				created_at
+				updated_at
+			}
+		}
+	`
+
+	req := GraphQLRequest{
+		Query:         query,
+		OperationName: "GetAlbumByID",
+		Variables: map[string]interface{}{
+			"id": id,
+		},
+	}
+
+	resp, err := h.Execute(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+
+	// Extract records_by_pk from response
+	albumData, ok := resp.Data["records_by_pk"]
+	if !ok || albumData == nil {
+		return nil, nil // Album not found
+	}
+
+	album, ok := albumData.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("unexpected album data type")
+	}
+
+	return album, nil
+}
+
+// UpdateMovie updates an existing movie in Hasura
+func (h *HasuraClient) UpdateMovie(ctx context.Context, id string, updates map[string]interface{}) (map[string]interface{}, error) {
+	query := `
+		mutation UpdateMovie($id: uuid!, $updates: vhs_set_input!) {
+			update_vhs_by_pk(pk_columns: {id: $id}, _set: $updates) {
+				id
+				title
+				director
+				year
+				genre
+				cover_url
+				created_at
+				updated_at
+			}
+		}
+	`
+
+	req := GraphQLRequest{
+		Query:         query,
+		OperationName: "UpdateMovie",
+		Variables: map[string]interface{}{
+			"id":      id,
+			"updates": updates,
+		},
+	}
+
+	resp, err := h.Execute(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute mutation: %w", err)
+	}
+
+	// Extract update_vhs_by_pk from response
+	movieData, ok := resp.Data["update_vhs_by_pk"]
+	if !ok || movieData == nil {
+		return nil, fmt.Errorf("movie not found or update failed")
+	}
+
+	movie, ok := movieData.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("unexpected movie data type")
+	}
+
+	return movie, nil
+}
+
+// UpdateAlbum updates an existing album in Hasura
+func (h *HasuraClient) UpdateAlbum(ctx context.Context, id string, updates map[string]interface{}) (map[string]interface{}, error) {
+	query := `
+		mutation UpdateAlbum($id: uuid!, $updates: records_set_input!) {
+			update_records_by_pk(pk_columns: {id: $id}, _set: $updates) {
+				id
+				artist
+				album
+				year
+				label
+				genres
+				cover_url
+				created_at
+				updated_at
+			}
+		}
+	`
+
+	req := GraphQLRequest{
+		Query:         query,
+		OperationName: "UpdateAlbum",
+		Variables: map[string]interface{}{
+			"id":      id,
+			"updates": updates,
+		},
+	}
+
+	resp, err := h.Execute(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute mutation: %w", err)
+	}
+
+	// Extract update_records_by_pk from response
+	albumData, ok := resp.Data["update_records_by_pk"]
+	if !ok || albumData == nil {
+		return nil, fmt.Errorf("album not found or update failed")
+	}
+
+	album, ok := albumData.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("unexpected album data type")
+	}
+
+	return album, nil
+}
+
+// DeleteMovie deletes a movie from Hasura
+func (h *HasuraClient) DeleteMovie(ctx context.Context, id string) error {
+	query := `
+		mutation DeleteMovie($id: uuid!) {
+			delete_vhs_by_pk(id: $id) {
+				id
+			}
+		}
+	`
+
+	req := GraphQLRequest{
+		Query:         query,
+		OperationName: "DeleteMovie",
+		Variables: map[string]interface{}{
+			"id": id,
+		},
+	}
+
+	resp, err := h.Execute(ctx, req)
+	if err != nil {
+		return fmt.Errorf("failed to execute mutation: %w", err)
+	}
+
+	// Check if deletion was successful
+	deleteData, ok := resp.Data["delete_vhs_by_pk"]
+	if !ok || deleteData == nil {
+		return fmt.Errorf("movie not found or delete failed")
+	}
+
+	return nil
+}
+
+// DeleteAlbum deletes an album from Hasura
+func (h *HasuraClient) DeleteAlbum(ctx context.Context, id string) error {
+	query := `
+		mutation DeleteAlbum($id: uuid!) {
+			delete_records_by_pk(id: $id) {
+				id
+			}
+		}
+	`
+
+	req := GraphQLRequest{
+		Query:         query,
+		OperationName: "DeleteAlbum",
+		Variables: map[string]interface{}{
+			"id": id,
+		},
+	}
+
+	resp, err := h.Execute(ctx, req)
+	if err != nil {
+		return fmt.Errorf("failed to execute mutation: %w", err)
+	}
+
+	// Check if deletion was successful
+	deleteData, ok := resp.Data["delete_records_by_pk"]
+	if !ok || deleteData == nil {
+		return fmt.Errorf("album not found or delete failed")
+	}
+
+	return nil
+}

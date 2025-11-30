@@ -113,19 +113,31 @@ struct VHSDetailView: View {
     private func loadVHS() async {
         isLoading = true
         defer { isLoading = false }
-        
+
         do {
-            let response = try await GraphQLHTTPClient.shared.execute(
-                operationName: "VHSDetail",
-                query: GQL.vhsDetail,
-                variables: ["id": vhsId]
-            )
-            
-            if let data = response.data?["vhs_by_pk"] as? [String: Any] {
+            if let movie = try await MediaClosetAPIClient.shared.fetchMovie(id: vhsId) {
+                // Convert MediaClosetAPIClient.Movie to dictionary for VHSDetail
+                var data: [String: Any] = [
+                    "id": movie.id,
+                    "title": movie.title
+                ]
+                if let director = movie.director {
+                    data["director"] = director
+                }
+                if let year = movie.year {
+                    data["year"] = year
+                }
+                if let genre = movie.genre {
+                    data["genre"] = genre
+                }
+                if let coverURL = movie.coverURL {
+                    data["cover_url"] = coverURL
+                }
+
                 vhs = VHSDetail(from: data)
             }
         } catch {
-            print("Error loading VHS detail:", error)
+            print("[VHSDetailView] Error loading VHS detail:", error)
         }
     }
 }

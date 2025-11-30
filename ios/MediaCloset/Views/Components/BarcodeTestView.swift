@@ -64,9 +64,10 @@ struct BarcodeTestView: View {
 
         let result = await ImprovedBarcodeService.lookupAlbumByBarcode(testBarcode)
 
-        if let data = result {
+        if let albumData = result {
             testResult = "Success! Found album data:\n\n"
-            for (key, value) in data {
+            let dict = albumData.toDictionary()
+            for (key, value) in dict {
                 testResult += "\(key): \(value)\n"
             }
         } else {
