@@ -25,6 +25,11 @@ type AlbumData struct {
 	Source   string       `json:"source"`
 }
 
+type DeleteResponse struct {
+	Success bool    `json:"success"`
+	Error   *string `json:"error,omitempty"`
+}
+
 type Health struct {
 	Status  string `json:"status"`
 	Version string `json:"version"`
@@ -114,20 +119,6 @@ type TrackData struct {
 	DurationSeconds *int   `json:"durationSeconds,omitempty"`
 }
 
-type UpdateMovieInput struct {
-	Title    *string `json:"title,omitempty"`
-	Director *string `json:"director,omitempty"`
-	Year     *int    `json:"year,omitempty"`
-	Genre    *string `json:"genre,omitempty"`
-	CoverURL *string `json:"coverUrl,omitempty"`
-}
-
-type UpdateMovieResponse struct {
-	Success bool    `json:"success"`
-	Movie   *Movie  `json:"movie,omitempty"`
-	Error   *string `json:"error,omitempty"`
-}
-
 type UpdateAlbumInput struct {
 	Artist   *string `json:"artist,omitempty"`
 	Album    *string `json:"album,omitempty"`
@@ -143,7 +134,16 @@ type UpdateAlbumResponse struct {
 	Error   *string `json:"error,omitempty"`
 }
 
-type DeleteResponse struct {
+type UpdateMovieInput struct {
+	Title    *string `json:"title,omitempty"`
+	Director *string `json:"director,omitempty"`
+	Year     *int    `json:"year,omitempty"`
+	Genre    *string `json:"genre,omitempty"`
+	CoverURL *string `json:"coverUrl,omitempty"`
+}
+
+type UpdateMovieResponse struct {
 	Success bool    `json:"success"`
+	Movie   *Movie  `json:"movie,omitempty"`
 	Error   *string `json:"error,omitempty"`
 }
