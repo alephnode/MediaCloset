@@ -40,10 +40,21 @@ final class MediaClosetAPIClient {
 
     /// Headers for MediaCloset API requests
     private var headers: [String: String] {
-        return [
+        var headers = [
             "Content-Type": "application/json",
             "User-Agent": "MediaCloset-iOS/1.0"
         ]
+
+        // Add API key if available
+        if let apiKey = secretsManager.mediaClosetAPIKey {
+            headers["X-API-Key"] = apiKey
+        } else {
+            #if DEBUG
+            print("[MediaClosetAPIClient] WARNING: No MediaCloset API key available, request may fail")
+            #endif
+        }
+
+        return headers
     }
 
     // MARK: - GraphQL Response Types

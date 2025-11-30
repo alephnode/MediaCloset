@@ -16,6 +16,7 @@ type Config struct {
 	HasuraAdminSecret string
 
 	// API Keys
+	APIKey          string // API key for client authentication
 	OMDBAPIKey      string
 	DiscogsKey      string
 	DiscogsSecret   string
@@ -54,6 +55,7 @@ func Load() *Config {
 		Environment:       viper.GetString("ENVIRONMENT"),
 		HasuraEndpoint:    viper.GetString("HASURA_ENDPOINT"),
 		HasuraAdminSecret: viper.GetString("HASURA_ADMIN_SECRET"),
+		APIKey:            viper.GetString("API_KEY"),
 		OMDBAPIKey:        viper.GetString("OMDB_API_KEY"),
 		DiscogsKey:        viper.GetString("DISCOGS_CONSUMER_KEY"),
 		DiscogsSecret:     viper.GetString("DISCOGS_CONSUMER_SECRET"),
@@ -63,6 +65,9 @@ func Load() *Config {
 	}
 
 	// Validate required keys
+	if cfg.APIKey == "" {
+		log.Fatal("API_KEY is required")
+	}
 	if cfg.OMDBAPIKey == "" {
 		log.Fatal("OMDB_API_KEY is required")
 	}
