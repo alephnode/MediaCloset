@@ -61,9 +61,9 @@ struct BarcodeTestView: View {
     func testAlbumLookup() async {
         isTesting = true
         testResult = ""
-        
-        let result = await BarcodeService.lookupAlbumByBarcode(testBarcode)
-        
+
+        let result = await ImprovedBarcodeService.lookupAlbumByBarcode(testBarcode)
+
         if let data = result {
             testResult = "Success! Found album data:\n\n"
             for (key, value) in data {
@@ -72,7 +72,7 @@ struct BarcodeTestView: View {
         } else {
             testResult = "No album data found for barcode: \(testBarcode)"
         }
-        
+
         isTesting = false
     }
 }
