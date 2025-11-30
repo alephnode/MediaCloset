@@ -45,10 +45,29 @@ func (s *BarcodeService) LookupAlbum(ctx context.Context, barcode string) (*mode
 	services := []struct {
 		name string
 		fn   func(context.Context, string) (*model.AlbumData, error)
-	}{
-		{"Discogs", s.tryDiscogs},
-		{"iTunes", s.tryITunes},
-		{"MusicBrainz", s.tryMusicBrainz},
+	}{}
+
+	if s.discogs != nil {
+		services = append(services, struct {
+			name string
+			fn   func(context.Context, string) (*model.AlbumData, error)
+		}{"Discogs", s.tryDiscogs})
+	}
+	if s.itunes != nil {
+		services = append(services, struct {
+			name string
+			fn   func(context.Context, string) (*model.AlbumData, error)
+		}{"iTunes", s.tryITunes})
+	}
+	if s.musicBrainz != nil {
+		services = append(services, struct {
+			name string
+			fn   func(context.Context, string) (*model.AlbumData, error)
+		}{"MusicBrainz", s.tryMusicBrainz})
+	}
+
+	if len(services) == 0 {
+		return nil, fmt.Errorf("no barcode services configured")
 	}
 
 	var lastErr error
@@ -88,6 +107,9 @@ func (s *BarcodeService) LookupMovie(ctx context.Context, barcode string) (*mode
 
 // tryDiscogs attempts to lookup via Discogs
 func (s *BarcodeService) tryDiscogs(ctx context.Context, barcode string) (*model.AlbumData, error) {
+	if s.discogs == nil {
+		return nil, fmt.Errorf("Discogs service unavailable")
+	}
 	if !s.discogs.IsConfigured() {
 		return nil, fmt.Errorf("Discogs not configured")
 	}
@@ -96,19 +118,18 @@ func (s *BarcodeService) tryDiscogs(ctx context.Context, barcode string) (*model
 
 // tryITunes attempts to lookup via iTunes
 func (s *BarcodeService) tryITunes(ctx context.Context, barcode string) (*model.AlbumData, error) {
+	if s.itunes == nil {
+		return nil, fmt.Errorf("iTunes service unavailable")
+	}
 	return s.itunes.SearchByBarcode(ctx, barcode)
 }
 
 // tryMusicBrainz attempts to lookup via MusicBrainz
 func (s *BarcodeService) tryMusicBrainz(ctx context.Context, barcode string) (*model.AlbumData, error) {
-	// MusicBrainz barcode search is more complex - we need to search releases by barcode
-	// then fetch additional metadata
-
-	// This is a simplified version - full implementation would search MusicBrainz
-	// release database by barcode and then fetch cover art
-
-	// For now, return nil to fall through to other services
-	return nil, fmt.Errorf("MusicBrainz barcode search not yet implemented")
+	if s.musicBrainz == nil {
+		return nil, fmt.Errorf("MusicBrainz service unavailable")
+	}
+	return s.musicBrainz.SearchByBarcode(ctx, barcode)
 }
 
 // cleanBarcode removes common formatting and leading zeros from barcodes

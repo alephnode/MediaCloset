@@ -189,13 +189,23 @@ struct RecordFormView: View {
             barcodeErrorMessage = nil
             showBarcodeResult = false
         }
-        
-        // Use improved barcode service for better music data
-        if let albumData = await ImprovedBarcodeService.lookupAlbumByBarcode(barcode) {
-            // Populate form fields with structured data
+
+        do {
+            let albumData = try await MediaClosetAPIClient.shared.fetchAlbumByBarcode(barcode: barcode)
+
+            guard let albumData else {
+                #if DEBUG
+                print("[RecordFormView] No album data found for barcode: \(barcode)")
+                #endif
+                await MainActor.run {
+                    barcodeErrorMessage = "Album not found in MediaCloset. Try entering details manually."
+                }
+                return
+            }
+
             await MainActor.run {
                 var fieldsPopulated = 0
-                
+
                 if let fetchedArtist = albumData.artist, artist.isEmpty {
                     artist = fetchedArtist
                     fieldsPopulated += 1
@@ -216,32 +226,31 @@ struct RecordFormView: View {
                     genres = fetchedGenres.joined(separator: ", ")
                     fieldsPopulated += 1
                 }
-                
+
                 showBarcodeResult = fieldsPopulated > 0
-                
+
                 if fieldsPopulated == 0 {
                     barcodeErrorMessage = "Album found but no new information could be added to empty fields"
                 }
             }
-            
+
             #if DEBUG
-            print("[RecordFormView] Populated form with improved barcode data:")
+            print("[RecordFormView] Populated form from MediaCloset API barcode lookup (source: \(albumData.source ?? "unknown"))")
             print("  Artist: \(albumData.artist ?? "nil")")
             print("  Album: \(albumData.album ?? "nil")")
             print("  Year: \(albumData.year?.description ?? "nil")")
             print("  Label: \(albumData.label ?? "nil")")
             print("  Genres: \(albumData.genres?.joined(separator: ", ") ?? "nil")")
             #endif
-        } else {
+        } catch {
             #if DEBUG
-            print("[RecordFormView] No album data found for barcode: \(barcode)")
+            print("[RecordFormView] Barcode lookup failed: \(error)")
             #endif
-            
             await MainActor.run {
-                barcodeErrorMessage = "Album not found in music databases. Try entering details manually."
+                barcodeErrorMessage = "Failed to fetch album: \(error.localizedDescription)"
             }
         }
-        
+
         await MainActor.run {
             isFetchingBarcodeData = false
         }

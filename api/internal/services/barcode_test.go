@@ -4,8 +4,11 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
+
+	"mediacloset/api/internal/ratelimit"
 )
 
 func TestCleanBarcode(t *testing.T) {
@@ -205,6 +208,84 @@ func TestBarcodeService_LookupAlbum_AllServicesFail(t *testing.T) {
 
 	if result != nil {
 		t.Errorf("Expected nil result, got %v", result)
+	}
+}
+
+func TestBarcodeService_LookupAlbum_FallbackToMusicBrainz(t *testing.T) {
+	discogsServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"results": []}`))
+	}))
+	defer discogsServer.Close()
+
+	itunesServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"resultCount": 0, "results": []}`))
+	}))
+	defer itunesServer.Close()
+
+	musicBrainzServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.HasPrefix(r.URL.Path, "/ws/2/release/"):
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{
+				"releases": [{
+					"id": "mb-release-1",
+					"title": "MB Album",
+					"date": "2020-05-01",
+					"artist-credit": [{
+						"artist": { "name": "MB Artist" }
+					}],
+					"label-info": [{
+						"label": { "name": "MB Label" }
+					}]
+				}]
+			}`))
+		case strings.HasPrefix(r.URL.Path, "/release/"):
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer musicBrainzServer.Close()
+
+	discogs := &DiscogsService{
+		client:         &http.Client{Timeout: 1 * time.Second},
+		consumerKey:    "test-key",
+		consumerSecret: "test-secret",
+		baseURL:        discogsServer.URL,
+	}
+
+	itunes := &ITunesService{
+		client:  &http.Client{Timeout: 1 * time.Second},
+		baseURL: itunesServer.URL,
+	}
+
+	limiter := ratelimit.NewServiceLimiter()
+	musicBrainz := &MusicBrainzService{
+		client:          musicBrainzServer.Client(),
+		limiter:         limiter,
+		baseURL:         musicBrainzServer.URL,
+		coverArtBaseURL: musicBrainzServer.URL,
+	}
+
+	barcodeService := NewBarcodeService(discogs, itunes, musicBrainz, nil)
+
+	result, err := barcodeService.LookupAlbum(context.Background(), "123456")
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if result == nil {
+		t.Fatal("Expected non-nil result")
+	}
+
+	if result.Source != "musicbrainz" {
+		t.Errorf("Source = %s, want musicbrainz", result.Source)
+	}
+
+	if result.Artist == nil || *result.Artist != "MB Artist" {
+		t.Errorf("Artist = %v, want MB Artist", result.Artist)
 	}
 }
 

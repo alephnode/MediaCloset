@@ -15,8 +15,10 @@ import (
 
 // MusicBrainzService handles requests to the MusicBrainz and Cover Art Archive APIs
 type MusicBrainzService struct {
-	client  *http.Client
-	limiter *ratelimit.ServiceLimiter
+	client          *http.Client
+	limiter         *ratelimit.ServiceLimiter
+	baseURL         string
+	coverArtBaseURL string
 }
 
 // NewMusicBrainzService creates a new MusicBrainz API client with rate limiting
@@ -25,7 +27,9 @@ func NewMusicBrainzService(limiter *ratelimit.ServiceLimiter) *MusicBrainzServic
 		client: &http.Client{
 			Timeout: 5 * time.Second,
 		},
-		limiter: limiter,
+		limiter:         limiter,
+		baseURL:         "https://musicbrainz.org",
+		coverArtBaseURL: "https://coverartarchive.org",
 	}
 }
 
@@ -45,6 +49,120 @@ type CoverArtArchiveResponse struct {
 		Types []string `json:"types"`
 		Front bool     `json:"front"`
 	} `json:"images"`
+}
+
+// MusicBrainzBarcodeSearchResponse represents the response for barcode lookups
+type MusicBrainzBarcodeSearchResponse struct {
+	Releases []struct {
+		ID           string `json:"id"`
+		Title        string `json:"title"`
+		Date         string `json:"date"`
+		Country      string `json:"country"`
+		Barcode      string `json:"barcode"`
+		ArtistCredit []struct {
+			Artist struct {
+				Name string `json:"name"`
+			} `json:"artist"`
+		} `json:"artist-credit"`
+		LabelInfo []struct {
+			Label struct {
+				Name string `json:"name"`
+			} `json:"label"`
+		} `json:"label-info"`
+	} `json:"releases"`
+}
+
+// SearchByBarcode searches MusicBrainz releases by barcode and returns album metadata
+func (s *MusicBrainzService) SearchByBarcode(ctx context.Context, barcode string) (*model.AlbumData, error) {
+	if err := s.limiter.WaitMusicBrainz(ctx); err != nil {
+		return nil, fmt.Errorf("rate limit wait failed: %w", err)
+	}
+
+	params := url.Values{}
+	params.Set("query", fmt.Sprintf("barcode:%s", barcode))
+	params.Set("fmt", "json")
+	params.Set("inc", "artists+labels+recordings")
+
+	apiURL := fmt.Sprintf("%s/ws/2/release/?%s", s.baseURL, params.Encode())
+
+	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("User-Agent", "MediaCloset/1.0 (Go API)")
+
+	resp, err := s.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, string(body))
+	}
+
+	var searchResp MusicBrainzBarcodeSearchResponse
+	if err := json.Unmarshal(body, &searchResp); err != nil {
+		return nil, fmt.Errorf("failed to parse JSON: %w", err)
+	}
+
+	if len(searchResp.Releases) == 0 {
+		return nil, fmt.Errorf("no releases found for barcode '%s'", barcode)
+	}
+
+	release := searchResp.Releases[0]
+
+	var artist *string
+	if len(release.ArtistCredit) > 0 {
+		if name := release.ArtistCredit[0].Artist.Name; name != "" {
+			artist = &name
+		}
+	}
+
+	var label *string
+	if len(release.LabelInfo) > 0 {
+		if name := release.LabelInfo[0].Label.Name; name != "" {
+			label = &name
+		}
+	}
+
+	var year *int
+	if len(release.Date) >= 4 {
+		var parsedYear int
+		if _, err := fmt.Sscanf(release.Date[:4], "%d", &parsedYear); err == nil {
+			year = &parsedYear
+		}
+	}
+
+	var albumTitle *string
+	if release.Title != "" {
+		albumTitle = &release.Title
+	}
+
+	var coverURL *string
+	if release.ID != "" {
+		if url, err := s.fetchCoverArtURL(ctx, release.ID); err == nil {
+			coverURL = url
+		} else {
+			fmt.Printf("Failed to fetch cover art for barcode release %s: %v\n", release.ID, err)
+		}
+	}
+
+	albumData := &model.AlbumData{
+		Artist:   artist,
+		Album:    albumTitle,
+		Year:     year,
+		Label:    label,
+		CoverURL: coverURL,
+		Source:   "musicbrainz",
+	}
+
+	return albumData, nil
 }
 
 // SearchAlbum searches for an album by artist and title, returns album metadata with cover art
@@ -91,7 +209,7 @@ func (s *MusicBrainzService) searchRelease(ctx context.Context, artist string, a
 	params.Set("query", query)
 	params.Set("fmt", "json")
 
-	apiURL := fmt.Sprintf("https://musicbrainz.org/ws/2/release/?%s", params.Encode())
+	apiURL := fmt.Sprintf("%s/ws/2/release/?%s", s.baseURL, params.Encode())
 
 	// Create request
 	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
@@ -137,7 +255,7 @@ func (s *MusicBrainzService) searchRelease(ctx context.Context, artist string, a
 // fetchCoverArtURL fetches the cover art URL for a given release ID
 func (s *MusicBrainzService) fetchCoverArtURL(ctx context.Context, releaseID string) (*string, error) {
 	// Try direct front cover URL first
-	directURL := fmt.Sprintf("https://coverartarchive.org/release/%s/front", releaseID)
+	directURL := fmt.Sprintf("%s/release/%s/front", s.coverArtBaseURL, releaseID)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", directURL, nil)
 	if err != nil {
@@ -164,7 +282,7 @@ func (s *MusicBrainzService) fetchCoverArtURL(ctx context.Context, releaseID str
 
 // fetchCoverArtFromMetadata fetches cover art from the metadata endpoint
 func (s *MusicBrainzService) fetchCoverArtFromMetadata(ctx context.Context, releaseID string) (*string, error) {
-	metadataURL := fmt.Sprintf("https://coverartarchive.org/release/%s", releaseID)
+	metadataURL := fmt.Sprintf("%s/release/%s", s.coverArtBaseURL, releaseID)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", metadataURL, nil)
 	if err != nil {
