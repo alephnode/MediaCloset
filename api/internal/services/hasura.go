@@ -169,3 +169,102 @@ func (h *HasuraClient) InsertRecord(ctx context.Context, record map[string]inter
 
 	return "", fmt.Errorf("failed to extract record ID from response")
 }
+
+// GetAllMovies fetches all VHS movies from Hasura
+func (h *HasuraClient) GetAllMovies(ctx context.Context) ([]map[string]interface{}, error) {
+	query := `
+		query GetAllMovies {
+			vhs(order_by: {created_at: desc}) {
+				id
+				title
+				director
+				year
+				genre
+				cover_url
+				created_at
+				updated_at
+			}
+		}
+	`
+
+	req := GraphQLRequest{
+		Query:         query,
+		OperationName: "GetAllMovies",
+	}
+
+	resp, err := h.Execute(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+
+	// Extract vhs array from response
+	vhsData, ok := resp.Data["vhs"]
+	if !ok {
+		return []map[string]interface{}{}, nil // No movies found
+	}
+
+	vhsList, ok := vhsData.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("unexpected vhs data type")
+	}
+
+	// Convert to []map[string]interface{}
+	movies := make([]map[string]interface{}, 0, len(vhsList))
+	for _, v := range vhsList {
+		if movie, ok := v.(map[string]interface{}); ok {
+			movies = append(movies, movie)
+		}
+	}
+
+	return movies, nil
+}
+
+// GetAllAlbums fetches all records/albums from Hasura
+func (h *HasuraClient) GetAllAlbums(ctx context.Context) ([]map[string]interface{}, error) {
+	query := `
+		query GetAllAlbums {
+			records(order_by: {created_at: desc}) {
+				id
+				artist
+				album
+				year
+				label
+				genres
+				cover_url
+				created_at
+				updated_at
+			}
+		}
+	`
+
+	req := GraphQLRequest{
+		Query:         query,
+		OperationName: "GetAllAlbums",
+	}
+
+	resp, err := h.Execute(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+
+	// Extract records array from response
+	recordsData, ok := resp.Data["records"]
+	if !ok {
+		return []map[string]interface{}{}, nil // No albums found
+	}
+
+	recordsList, ok := recordsData.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("unexpected records data type")
+	}
+
+	// Convert to []map[string]interface{}
+	albums := make([]map[string]interface{}, 0, len(recordsList))
+	for _, r := range recordsList {
+		if album, ok := r.(map[string]interface{}); ok {
+			albums = append(albums, album)
+		}
+	}
+
+	return albums, nil
+}

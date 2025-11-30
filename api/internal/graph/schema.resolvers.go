@@ -158,6 +158,115 @@ func (r *queryResolver) AlbumByBarcode(ctx context.Context, barcode string) (*mo
 	return r.BarcodeService.LookupAlbum(ctx, barcode)
 }
 
+// Movies is the resolver for the movies field.
+func (r *queryResolver) Movies(ctx context.Context) ([]*model.Movie, error) {
+	// Fetch all movies from Hasura
+	moviesData, err := r.HasuraClient.GetAllMovies(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch movies: %w", err)
+	}
+
+	// Convert to model.Movie
+	movies := make([]*model.Movie, 0, len(moviesData))
+	for _, m := range moviesData {
+		movie := &model.Movie{}
+
+		// Required fields
+		if id, ok := m["id"].(string); ok {
+			movie.ID = id
+		}
+		if title, ok := m["title"].(string); ok {
+			movie.Title = title
+		}
+
+		// Optional fields
+		if director, ok := m["director"].(string); ok {
+			movie.Director = &director
+		}
+		if year, ok := m["year"].(float64); ok {
+			yearInt := int(year)
+			movie.Year = &yearInt
+		}
+		if genre, ok := m["genre"].(string); ok {
+			movie.Genre = &genre
+		}
+		if coverURL, ok := m["cover_url"].(string); ok {
+			movie.CoverURL = &coverURL
+		}
+		if createdAt, ok := m["created_at"].(string); ok {
+			movie.CreatedAt = &createdAt
+		}
+		if updatedAt, ok := m["updated_at"].(string); ok {
+			movie.UpdatedAt = &updatedAt
+		}
+
+		movies = append(movies, movie)
+	}
+
+	fmt.Printf("[Movies] Fetched %d movies from Hasura\n", len(movies))
+	return movies, nil
+}
+
+// Albums is the resolver for the albums field.
+func (r *queryResolver) Albums(ctx context.Context) ([]*model.Album, error) {
+	// Fetch all albums from Hasura
+	albumsData, err := r.HasuraClient.GetAllAlbums(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch albums: %w", err)
+	}
+
+	// Convert to model.Album
+	albums := make([]*model.Album, 0, len(albumsData))
+	for _, a := range albumsData {
+		album := &model.Album{}
+
+		// Required fields
+		if id, ok := a["id"].(string); ok {
+			album.ID = id
+		}
+		if artist, ok := a["artist"].(string); ok {
+			album.Artist = artist
+		}
+		if albumName, ok := a["album"].(string); ok {
+			album.Album = albumName
+		}
+
+		// Optional fields
+		if year, ok := a["year"].(float64); ok {
+			yearInt := int(year)
+			album.Year = &yearInt
+		}
+		if label, ok := a["label"].(string); ok {
+			album.Label = &label
+		}
+		if genres, ok := a["genres"].([]interface{}); ok {
+			genreStrs := make([]string, 0, len(genres))
+			for _, g := range genres {
+				if genreStr, ok := g.(string); ok {
+					genreStrs = append(genreStrs, genreStr)
+				}
+			}
+			if len(genreStrs) > 0 {
+				album.Genres = genreStrs
+			}
+		}
+		if coverURL, ok := a["cover_url"].(string); ok {
+			album.CoverURL = &coverURL
+		}
+		if createdAt, ok := a["created_at"].(string); ok {
+			album.CreatedAt = &createdAt
+		}
+		if updatedAt, ok := a["updated_at"].(string); ok {
+			album.UpdatedAt = &updatedAt
+		}
+
+		albums = append(albums, album)
+	}
+
+	fmt.Printf("[Albums] Fetched %d albums from Hasura\n", len(albums))
+	return albums, nil
+}
+
 // Health is the resolver for the health field.
 func (r *queryResolver) Health(ctx context.Context) (*model.Health, error) {
 	uptime := int(time.Since(r.ServerStartTime).Seconds())

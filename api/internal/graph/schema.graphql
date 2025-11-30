@@ -10,6 +10,10 @@ type Query {
   albumByArtistAndTitle(artist: String!, album: String!): AlbumData
   albumByBarcode(barcode: String!): AlbumData
 
+  # List all movies/albums from database
+  movies: [Movie!]!
+  albums: [Album!]!
+
   # Health check
   health: Health!
 }
@@ -106,4 +110,28 @@ type SavedAlbum {
   label: String
   genre: String
   coverUrl: String
+}
+
+# Database list types (from Hasura queries)
+type Movie {
+  id: String!  # UUID from Hasura
+  title: String!
+  director: String
+  year: Int
+  genre: String
+  coverUrl: String
+  createdAt: String
+  updatedAt: String
+}
+
+type Album {
+  id: String!  # UUID from Hasura
+  artist: String!
+  album: String!
+  year: Int
+  label: String
+  genres: [String!]
+  coverUrl: String
+  createdAt: String
+  updatedAt: String
 }

@@ -2,6 +2,18 @@
 
 package model
 
+type Album struct {
+	ID        string   `json:"id"`
+	Artist    string   `json:"artist"`
+	Album     string   `json:"album"`
+	Year      *int     `json:"year,omitempty"`
+	Label     *string  `json:"label,omitempty"`
+	Genres    []string `json:"genres,omitempty"`
+	CoverURL  *string  `json:"coverUrl,omitempty"`
+	CreatedAt *string  `json:"createdAt,omitempty"`
+	UpdatedAt *string  `json:"updatedAt,omitempty"`
+}
+
 type AlbumData struct {
 	Artist   *string      `json:"artist,omitempty"`
 	Album    *string      `json:"album,omitempty"`
@@ -17,6 +29,17 @@ type Health struct {
 	Status  string `json:"status"`
 	Version string `json:"version"`
 	Uptime  int    `json:"uptime"`
+}
+
+type Movie struct {
+	ID        string  `json:"id"`
+	Title     string  `json:"title"`
+	Director  *string `json:"director,omitempty"`
+	Year      *int    `json:"year,omitempty"`
+	Genre     *string `json:"genre,omitempty"`
+	CoverURL  *string `json:"coverUrl,omitempty"`
+	CreatedAt *string `json:"createdAt,omitempty"`
+	UpdatedAt *string `json:"updatedAt,omitempty"`
 }
 
 type MovieData struct {
