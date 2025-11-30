@@ -14,6 +14,25 @@ import (
 
 // SaveMovie is the resolver for the saveMovie field.
 func (r *mutationResolver) SaveMovie(ctx context.Context, input model.SaveMovieInput) (*model.SaveMovieResponse, error) {
+	// Validate required fields
+	if input.Title == "" {
+		return &model.SaveMovieResponse{
+			Success: false,
+			Error:   &[]string{"Title is required"}[0],
+		}, nil
+	}
+
+	// Validate year if provided
+	if input.Year != nil {
+		year := *input.Year
+		if year < 1800 || year > 2100 {
+			return &model.SaveMovieResponse{
+				Success: false,
+				Error:   &[]string{"Year must be between 1800 and 2100"}[0],
+			}, nil
+		}
+	}
+
 	// Get cover URL if not provided
 	coverURL := ""
 	if input.CoverURL != nil && *input.CoverURL != "" {
@@ -76,6 +95,31 @@ func (r *mutationResolver) SaveMovie(ctx context.Context, input model.SaveMovieI
 
 // SaveAlbum is the resolver for the saveAlbum field.
 func (r *mutationResolver) SaveAlbum(ctx context.Context, input model.SaveAlbumInput) (*model.SaveAlbumResponse, error) {
+	// Validate required fields
+	if input.Artist == "" {
+		return &model.SaveAlbumResponse{
+			Success: false,
+			Error:   &[]string{"Artist is required"}[0],
+		}, nil
+	}
+	if input.Album == "" {
+		return &model.SaveAlbumResponse{
+			Success: false,
+			Error:   &[]string{"Album is required"}[0],
+		}, nil
+	}
+
+	// Validate year if provided
+	if input.Year != nil {
+		year := *input.Year
+		if year < 1800 || year > 2100 {
+			return &model.SaveAlbumResponse{
+				Success: false,
+				Error:   &[]string{"Year must be between 1800 and 2100"}[0],
+			}, nil
+		}
+	}
+
 	// Get cover URL if not provided
 	coverURL := ""
 	if input.CoverURL != nil && *input.CoverURL != "" {

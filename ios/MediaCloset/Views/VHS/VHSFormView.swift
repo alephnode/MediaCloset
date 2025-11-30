@@ -20,6 +20,8 @@ struct VHSFormView: View {
     @State private var isFetchingData = false
     @State private var showingBarcodeScanner = false
     @State private var isFetchingBarcodeData = false
+    @State private var errorAlert: String? = nil
+    @State private var showingErrorAlert = false
 
     var body: some View {
         Form {
@@ -94,6 +96,11 @@ struct VHSFormView: View {
             }
         }
         .navigationTitle(existing == nil ? "New VHS" : "Edit VHS")
+        .alert("Error", isPresented: $showingErrorAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(errorAlert ?? "An unknown error occurred")
+        }
         .sheet(isPresented: $showingBarcodeScanner) {
             BarcodeScannerView { barcode in
                 Task {
@@ -135,14 +142,21 @@ struct VHSFormView: View {
                 onSaved()
                 dismiss()
             } else {
+                // Show error from API
+                let errorMessage = response.error ?? "Unknown error occurred"
                 #if DEBUG
-                print("[VHSFormView] Save failed: \(response.error ?? "unknown error")")
+                print("[VHSFormView] Save failed: \(errorMessage)")
                 #endif
+                errorAlert = errorMessage
+                showingErrorAlert = true
             }
         } catch {
+            // Show network/connection error
             #if DEBUG
             print("[VHSFormView] Save error: \(error)")
             #endif
+            errorAlert = "Failed to save movie: \(error.localizedDescription)"
+            showingErrorAlert = true
         }
 
         isSaving = false

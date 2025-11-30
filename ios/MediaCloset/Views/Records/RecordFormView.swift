@@ -19,6 +19,8 @@ struct RecordFormView: View {
     @State private var isFetchingBarcodeData = false
     @State private var barcodeErrorMessage: String? = nil
     @State private var showBarcodeResult = false
+    @State private var errorAlert: String? = nil
+    @State private var showingErrorAlert = false
 
     var onSaved: () -> Void
 
@@ -89,6 +91,11 @@ struct RecordFormView: View {
                 }
             }
             .navigationTitle("New Record")
+            .alert("Error", isPresented: $showingErrorAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(errorAlert ?? "An unknown error occurred")
+            }
             .sheet(isPresented: $showingBarcodeScanner) {
                 BarcodeScannerView { barcode in
                     Task {
@@ -156,14 +163,21 @@ struct RecordFormView: View {
                 onSaved()
                 dismiss()
             } else {
+                // Show error from API
+                let errorMessage = response.error ?? "Unknown error occurred"
                 #if DEBUG
-                print("[RecordFormView] Save failed: \(response.error ?? "unknown error")")
+                print("[RecordFormView] Save failed: \(errorMessage)")
                 #endif
+                errorAlert = errorMessage
+                showingErrorAlert = true
             }
         } catch {
+            // Show network/connection error
             #if DEBUG
             print("[RecordFormView] Save error: \(error)")
             #endif
+            errorAlert = "Failed to save album: \(error.localizedDescription)"
+            showingErrorAlert = true
         }
 
         isSaving = false
