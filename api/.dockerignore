@@ -1,0 +1,28 @@
+# Ignore local environment files
+.env
+.env.local
+
+# Ignore build artifacts
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Ignore test cache
+*.test
+*.out
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Ignore git
+.git/
+.gitignore
+
+# Ignore documentation
+*.md
