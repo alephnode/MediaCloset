@@ -50,44 +50,40 @@ final class RecordsVM: ObservableObject {
     }
 
     func load() async {
-        isLoading = true; 
+        isLoading = true;
         errorMessage = nil
         defer { isLoading = false }
 
-        // Always send a non-null pattern; "%%" matches all
-        let pattern = search.isEmpty ? "%%" : "%\(search)%"
-
-        let vars: [String: Any] = [
-            "pattern": pattern as String,
-            "limit": 50 as Int,
-            "offset": 0 as Int
-        ]
-
         do {
-            let res = try await GraphQLHTTPClient.shared.execute(
-                operationName: "Records",
-                query: GQL.queryRecords,
-                variables: vars
-            )
-            guard let rows = res.data?["records"] as? [[String: Any]] else { return }
-            items = rows.map { r in
+            // Fetch albums from MediaCloset Go API
+            let albums = try await MediaClosetAPIClient.shared.fetchAlbums()
+
+            // Filter by search text if provided
+            let filteredAlbums = search.isEmpty ? albums : albums.filter { album in
+                album.artist.localizedCaseInsensitiveContains(search) ||
+                album.album.localizedCaseInsensitiveContains(search) ||
+                (album.genres?.contains { $0.localizedCaseInsensitiveContains(search) } ?? false)
+            }
+
+            // Convert to RecordListItem
+            items = filteredAlbums.map { album in
                 RecordListItem(
-                    id: r["id"] as? String ?? UUID().uuidString,
-                    artist: r["artist"] as? String ?? "",
-                    album: r["album"] as? String ?? "",
-                    year: r["year"] as? Int,
-                    colorVariant: r["color_variant"] as? String,
-                    genres: r["genres"] as? [String] ?? [],
-                    coverUrl: r["cover_url"] as? String
+                    id: album.id,
+                    artist: album.artist,
+                    album: album.album,
+                    year: album.year,
+                    colorVariant: album.label, // Using label field for color variant
+                    genres: album.genres ?? [],
+                    coverUrl: album.coverURL
                 )
             }
+
+            #if DEBUG
+            print("[RecordsVM] Loaded \(albums.count) albums from MediaCloset API, filtered to \(items.count)")
+            #endif
         } catch {
-            print("Records fetch error:", error)
-            if case GraphQLError.configurationError(let message) = error {
-                errorMessage = "Configuration Error: \(message)"
-            } else {
-                errorMessage = "Failed to load records: \(error.localizedDescription)"
-            }
+            print("[RecordsVM] Records fetch error:", error)
+            errorMessage = "Failed to load albums: \(error.localizedDescription)"
         }
     }
 

@@ -463,6 +463,98 @@ final class MediaClosetAPIClient {
         return response.movieByBarcode
     }
 
+    // MARK: - List Queries
+
+    /// Movie record from database
+    struct Movie: Decodable {
+        let id: String
+        let title: String
+        let director: String?
+        let year: Int?
+        let genre: String?
+        let coverUrl: String?
+        let createdAt: String?
+        let updatedAt: String?
+
+        var coverURL: String? { coverUrl }
+    }
+
+    /// Album record from database
+    struct Album: Decodable {
+        let id: String
+        let artist: String
+        let album: String
+        let year: Int?
+        let label: String?
+        let genres: [String]?
+        let coverUrl: String?
+        let createdAt: String?
+        let updatedAt: String?
+
+        var coverURL: String? { coverUrl }
+    }
+
+    /// Fetches all movies from the database
+    /// - Returns: Array of Movie records
+    func fetchMovies() async throws -> [Movie] {
+        struct Response: Decodable {
+            let movies: [Movie]
+        }
+
+        let query = """
+        query GetMovies {
+          movies {
+            id
+            title
+            director
+            year
+            genre
+            coverUrl
+            createdAt
+            updatedAt
+          }
+        }
+        """
+
+        let response: Response = try await execute(
+            operationName: "GetMovies",
+            query: query
+        )
+
+        return response.movies
+    }
+
+    /// Fetches all albums from the database
+    /// - Returns: Array of Album records
+    func fetchAlbums() async throws -> [Album] {
+        struct Response: Decodable {
+            let albums: [Album]
+        }
+
+        let query = """
+        query GetAlbums {
+          albums {
+            id
+            artist
+            album
+            year
+            label
+            genres
+            coverUrl
+            createdAt
+            updatedAt
+          }
+        }
+        """
+
+        let response: Response = try await execute(
+            operationName: "GetAlbums",
+            query: query
+        )
+
+        return response.albums
+    }
+
     /// Checks if the API is healthy and reachable
     /// - Returns: true if the API is healthy, false otherwise
     func checkHealth() async -> Bool {

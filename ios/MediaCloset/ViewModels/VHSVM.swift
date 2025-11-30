@@ -54,40 +54,34 @@ final class VHSVM: ObservableObject {
         errorMessage = nil
         defer { isLoading = false }
 
-        // Always provide a non-nil string for $pattern
-        let pattern = search.isEmpty ? "%%" : "%\(search)%"
-
-        let vars: [String: Any] = [
-            "pattern": pattern,
-            "limit": 50,
-            "offset": 0
-        ]
-
         do {
-            let res = try await GraphQLHTTPClient.shared.execute(
-                operationName: "VHSList",
-                query: GQL.queryVHSList,
-                variables: vars
-            )
+            // Fetch movies from MediaCloset Go API
+            let movies = try await MediaClosetAPIClient.shared.fetchMovies()
 
-            guard let rows = res.data?["vhs"] as? [[String: Any]] else { 
-                errorMessage = "No data received from server"
-                return 
+            // Filter by search text if provided
+            let filteredMovies = search.isEmpty ? movies : movies.filter { movie in
+                movie.title.localizedCaseInsensitiveContains(search) ||
+                (movie.director?.localizedCaseInsensitiveContains(search) ?? false)
             }
 
-            self.items = rows.map { r in
+            // Convert to VHSListItem
+            self.items = filteredMovies.map { movie in
                 VHSListItem(
-                    id: r["id"] as? String ?? UUID().uuidString,
-                    title: r["title"] as? String ?? "",
-                    director: (r["director"] as? String) ?? "",
-                    year: r["year"] as? Int,
-                    genre: r["genre"] as? String,
-                    coverUrl: r["cover_url"] as? String
+                    id: movie.id,
+                    title: movie.title,
+                    director: movie.director ?? "",
+                    year: movie.year,
+                    genre: movie.genre,
+                    coverUrl: movie.coverURL
                 )
             }
+
+            #if DEBUG
+            print("[VHSVM] Loaded \(movies.count) movies from MediaCloset API, filtered to \(self.items.count)")
+            #endif
         } catch {
-            print("VHS fetch error:", error)
-            errorMessage = error.localizedDescription
+            print("[VHSVM] VHS fetch error:", error)
+            errorMessage = "Failed to load movies: \(error.localizedDescription)"
         }
     }
 
