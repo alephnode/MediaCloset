@@ -15,8 +15,9 @@ import (
 
 // OMDBService handles requests to the OMDB API (Open Movie Database)
 type OMDBService struct {
-	client *http.Client
-	apiKey string
+	client  *http.Client
+	apiKey  string
+	baseURL string
 }
 
 // NewOMDBService creates a new OMDB API client
@@ -25,7 +26,8 @@ func NewOMDBService(apiKey string) *OMDBService {
 		client: &http.Client{
 			Timeout: 5 * time.Second,
 		},
-		apiKey: apiKey,
+		apiKey:  apiKey,
+		baseURL: "https://www.omdbapi.com",
 	}
 }
 
@@ -54,7 +56,7 @@ func (s *OMDBService) SearchMovie(ctx context.Context, title string, director *s
 	}
 
 	// Build URL
-	apiURL := fmt.Sprintf("https://www.omdbapi.com/?%s", params.Encode())
+	apiURL := fmt.Sprintf("%s/?%s", s.baseURL, params.Encode())
 
 	// Create request
 	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)

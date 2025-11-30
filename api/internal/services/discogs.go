@@ -15,9 +15,10 @@ import (
 
 // DiscogsService handles requests to the Discogs API
 type DiscogsService struct {
-	client        *http.Client
-	consumerKey   string
+	client         *http.Client
+	consumerKey    string
 	consumerSecret string
+	baseURL        string
 }
 
 // NewDiscogsService creates a new Discogs API client
@@ -28,6 +29,7 @@ func NewDiscogsService(consumerKey, consumerSecret string) *DiscogsService {
 		},
 		consumerKey:    consumerKey,
 		consumerSecret: consumerSecret,
+		baseURL:        "https://api.discogs.com",
 	}
 }
 
@@ -62,7 +64,7 @@ func (s *DiscogsService) SearchByBarcode(ctx context.Context, barcode string) (*
 	params.Set("barcode", barcode)
 	params.Set("type", "release")
 
-	apiURL := fmt.Sprintf("https://api.discogs.com/database/search?%s", params.Encode())
+	apiURL := fmt.Sprintf("%s/database/search?%s", s.baseURL, params.Encode())
 
 	// Create request
 	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)

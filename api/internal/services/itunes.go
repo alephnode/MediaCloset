@@ -15,7 +15,8 @@ import (
 
 // ITunesService handles requests to the iTunes Search API
 type ITunesService struct {
-	client *http.Client
+	client  *http.Client
+	baseURL string
 }
 
 // NewITunesService creates a new iTunes Search API client
@@ -24,6 +25,7 @@ func NewITunesService() *ITunesService {
 		client: &http.Client{
 			Timeout: 5 * time.Second,
 		},
+		baseURL: "https://itunes.apple.com",
 	}
 }
 
@@ -50,7 +52,7 @@ func (s *ITunesService) SearchByBarcode(ctx context.Context, barcode string) (*m
 	params.Set("entity", "album")
 	params.Set("limit", "5")
 
-	apiURL := fmt.Sprintf("https://itunes.apple.com/search?%s", params.Encode())
+	apiURL := fmt.Sprintf("%s/search?%s", s.baseURL, params.Encode())
 
 	// Create request
 	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
