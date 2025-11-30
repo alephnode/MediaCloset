@@ -13,6 +13,8 @@ import (
 
 	"mediacloset/api/internal/config"
 	"mediacloset/api/internal/graph"
+	"mediacloset/api/internal/ratelimit"
+	"mediacloset/api/internal/services"
 )
 
 var startTime = time.Now()
@@ -47,9 +49,18 @@ func main() {
 		})
 	})
 
+	// Initialize services
+	rateLimiter := ratelimit.NewServiceLimiter()
+	omdbService := services.NewOMDBService(cfg.OMDBAPIKey)
+	musicBrainzService := services.NewMusicBrainzService(rateLimiter)
+
 	// Create GraphQL server
 	resolver := &graph.Resolver{
-		Config: cfg,
+		Config:          cfg,
+		OMDBService:     omdbService,
+		MusicBrainz:     musicBrainzService,
+		RateLimiter:     rateLimiter,
+		ServerStartTime: startTime,
 	}
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
 

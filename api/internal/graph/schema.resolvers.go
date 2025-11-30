@@ -8,32 +8,41 @@ package graph
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"mediacloset/api/internal/graph/model"
 )
 
 // MovieByTitle is the resolver for the movieByTitle field.
 func (r *queryResolver) MovieByTitle(ctx context.Context, title string, director *string, year *int) (*model.MovieData, error) {
-	panic(fmt.Errorf("not implemented: MovieByTitle - movieByTitle"))
+	return r.OMDBService.SearchMovie(ctx, title, director, year)
 }
 
 // MovieByBarcode is the resolver for the movieByBarcode field.
 func (r *queryResolver) MovieByBarcode(ctx context.Context, barcode string) (*model.MovieData, error) {
-	panic(fmt.Errorf("not implemented: MovieByBarcode - movieByBarcode"))
+	// Barcode lookup not implemented yet (Phase 2b)
+	return nil, fmt.Errorf("barcode lookup not implemented yet")
 }
 
 // AlbumByArtistAndTitle is the resolver for the albumByArtistAndTitle field.
 func (r *queryResolver) AlbumByArtistAndTitle(ctx context.Context, artist string, album string) (*model.AlbumData, error) {
-	panic(fmt.Errorf("not implemented: AlbumByArtistAndTitle - albumByArtistAndTitle"))
+	return r.MusicBrainz.SearchAlbum(ctx, artist, album)
 }
 
 // AlbumByBarcode is the resolver for the albumByBarcode field.
 func (r *queryResolver) AlbumByBarcode(ctx context.Context, barcode string) (*model.AlbumData, error) {
-	panic(fmt.Errorf("not implemented: AlbumByBarcode - albumByBarcode"))
+	// Barcode lookup not implemented yet (Phase 2b)
+	return nil, fmt.Errorf("barcode lookup not implemented yet")
 }
 
 // Health is the resolver for the health field.
 func (r *queryResolver) Health(ctx context.Context) (*model.Health, error) {
-	panic(fmt.Errorf("not implemented: Health - health"))
+	uptime := int(time.Since(r.ServerStartTime).Seconds())
+	return &model.Health{
+		Status:  "ok",
+		Version: "1.0.0",
+		Uptime:  uptime,
+	}, nil
 }
 
 // Query returns QueryResolver implementation.

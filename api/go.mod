@@ -9,6 +9,7 @@ require (
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/spf13/viper v1.21.0
 	github.com/vektah/gqlparser/v2 v2.5.31
+	golang.org/x/time v0.14.0
 )
 
 require (
