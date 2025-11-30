@@ -161,3 +161,20 @@ Notes
 # If you generate Swift from GraphQL and DO NOT commit generated code,
 # ignore that output directory here (adjust path to your project):
 # Apollo/Generated/
+
+# ----------------------------
+# Go / API Backend
+# ----------------------------
+# Binaries
+api/bin/
+api/*.exe
+api/*.dll
+api/*.so
+api/*.dylib
+
+# Go build cache
+api/vendor/
+
+# Go test coverage
+api/coverage.txt
+api/coverage.html

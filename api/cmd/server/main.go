@@ -1,0 +1,80 @@
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"time"
+
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+
+	"mediacloset/api/internal/config"
+	"mediacloset/api/internal/graph"
+)
+
+var startTime = time.Now()
+
+func main() {
+	log.Println("Starting MediaCloset GraphQL API...")
+
+	// Load configuration
+	cfg := config.Load()
+
+	// Create router
+	r := chi.NewRouter()
+
+	// Middleware
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Timeout(60 * time.Second))
+
+	// CORS middleware (allow iOS app to connect)
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	})
+
+	// Create GraphQL server
+	resolver := &graph.Resolver{
+		Config: cfg,
+	}
+	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
+
+	// GraphQL playground (development only)
+	if cfg.IsDevelopment() {
+		r.Handle("/", playground.Handler("MediaCloset GraphQL", "/query"))
+		log.Println("GraphQL playground available at http://localhost:" + cfg.Port + "/")
+	}
+
+	// GraphQL endpoint
+	r.Handle("/query", srv)
+
+	// Health check
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		uptime := int(time.Since(startTime).Seconds())
+		response := fmt.Sprintf(`{"status":"ok","version":"1.0.0","uptime":%d}`, uptime)
+		w.Write([]byte(response))
+	})
+
+	// Start server
+	addr := cfg.GetServerAddress()
+	log.Printf("Server listening on %s", addr)
+	log.Printf("GraphQL endpoint: http://localhost%s/query", addr)
+	if err := http.ListenAndServe(addr, r); err != nil {
+		log.Fatal("Server failed to start:", err)
+	}
+}

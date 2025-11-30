@@ -1,0 +1,48 @@
+# MediaCloset GraphQL Schema
+# Proxies external APIs (OMDB, MusicBrainz, Discogs, iTunes, UPC Database)
+
+type Query {
+  # Movie/VHS lookups
+  movieByTitle(title: String!, director: String, year: Int): MovieData
+  movieByBarcode(barcode: String!): MovieData
+
+  # Album/Record lookups
+  albumByArtistAndTitle(artist: String!, album: String!): AlbumData
+  albumByBarcode(barcode: String!): AlbumData
+
+  # Health check
+  health: Health!
+}
+
+type MovieData {
+  title: String!
+  director: String
+  year: Int
+  genre: String
+  posterUrl: String
+  plot: String
+  source: String!  # "omdb", "upc_database"
+}
+
+type AlbumData {
+  artist: String
+  album: String
+  year: Int
+  label: String
+  genres: [String!]
+  coverUrl: String
+  tracks: [TrackData!]
+  source: String!  # "discogs", "musicbrainz", "itunes"
+}
+
+type TrackData {
+  title: String!
+  trackNumber: Int
+  durationSeconds: Int
+}
+
+type Health {
+  status: String!
+  version: String!
+  uptime: Int!
+}
