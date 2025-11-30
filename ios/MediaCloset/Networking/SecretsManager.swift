@@ -63,20 +63,6 @@ final class SecretsManager {
             #endif
             return secret
         }
-        
-        static var omdbApiKey: String? {
-            guard let key = Bundle.main.object(forInfoDictionaryKey: "OMDB_API_KEY") as? String,
-                  !key.isEmpty else {
-                #if DEBUG
-                print("[SecretsManager] BuildConfig: No OMDB_API_KEY found in Info.plist")
-                #endif
-                return nil
-            }
-            #if DEBUG
-            print("[SecretsManager] BuildConfig: Found OMDB_API_KEY (length: \(key.count))")
-            #endif
-            return key
-        }
 
         static var mediaClosetAPIEndpoint: String? {
             guard let endpoint = Bundle.main.object(forInfoDictionaryKey: "MEDIACLOSET_API_ENDPOINT") as? String,
@@ -169,10 +155,6 @@ final class SecretsManager {
             storedSecrets["secret"] = saveToKeychain(key: "HASURA_ADMIN_SECRET", value: secret)
         }
 
-        if let omdbKey = BuildConfig.omdbApiKey {
-            storedSecrets["omdb"] = saveToKeychain(key: "OMDB_API_KEY", value: omdbKey)
-        }
-
         if let apiEndpoint = BuildConfig.mediaClosetAPIEndpoint {
             storedSecrets["mediaClosetAPI"] = saveToKeychain(key: "MEDIACLOSET_API_ENDPOINT", value: apiEndpoint)
         }
@@ -188,7 +170,6 @@ final class SecretsManager {
             print("[SecretsManager] No secrets available from build config to store in keychain")
             print("  BuildConfig.graphqlEndpoint: \(BuildConfig.graphqlEndpoint?.description ?? "nil")")
             print("  BuildConfig.hasuraAdminSecret: \(BuildConfig.hasuraAdminSecret != nil ? "available" : "nil")")
-            print("  BuildConfig.omdbApiKey: \(BuildConfig.omdbApiKey != nil ? "available" : "nil")")
             print("  BuildConfig.mediaClosetAPIEndpoint: \(BuildConfig.mediaClosetAPIEndpoint?.description ?? "nil")")
             print("  BuildConfig.mediaClosetAPIKey: \(BuildConfig.mediaClosetAPIKey != nil ? "available" : "nil")")
         }
@@ -200,15 +181,13 @@ final class SecretsManager {
         // Check if we already have secrets in keychain
         let hasEndpointInKeychain = loadFromKeychain(key: "GRAPHQL_ENDPOINT") != nil
         let hasSecretInKeychain = loadFromKeychain(key: "HASURA_ADMIN_SECRET") != nil
-        let hasOmdbKeyInKeychain = loadFromKeychain(key: "OMDB_API_KEY") != nil
         let hasMediaClosetAPIInKeychain = loadFromKeychain(key: "MEDIACLOSET_API_ENDPOINT") != nil
         let hasMediaClosetAPIKeyInKeychain = loadFromKeychain(key: "MEDIACLOSET_API_KEY") != nil
 
         // If we don't have secrets in keychain, try to get them from build config or environment
-        if !hasEndpointInKeychain || !hasSecretInKeychain || !hasOmdbKeyInKeychain || !hasMediaClosetAPIInKeychain || !hasMediaClosetAPIKeyInKeychain {
+        if !hasEndpointInKeychain || !hasSecretInKeychain || !hasMediaClosetAPIInKeychain || !hasMediaClosetAPIKeyInKeychain {
             var endpointToStore: String?
             var secretToStore: String?
-            var omdbKeyToStore: String?
             var mediaClosetAPIToStore: String?
             var mediaClosetAPIKeyToStore: String?
 
@@ -222,12 +201,6 @@ final class SecretsManager {
             if !hasSecretInKeychain {
                 secretToStore = BuildConfig.hasuraAdminSecret ??
                                ProcessInfo.processInfo.environment["HASURA_ADMIN_SECRET"]
-            }
-
-            // Try to get OMDB key from build config first, then environment
-            if !hasOmdbKeyInKeychain {
-                omdbKeyToStore = BuildConfig.omdbApiKey ??
-                                ProcessInfo.processInfo.environment["OMDB_API_KEY"]
             }
 
             // Try to get MediaCloset API endpoint from build config first, then environment
@@ -254,13 +227,6 @@ final class SecretsManager {
                 let saved = saveToKeychain(key: "HASURA_ADMIN_SECRET", value: secret)
                 #if DEBUG
                 print("[SecretsManager] Stored secret in keychain: \(saved)")
-                #endif
-            }
-
-            if let omdbKey = omdbKeyToStore {
-                let saved = saveToKeychain(key: "OMDB_API_KEY", value: omdbKey)
-                #if DEBUG
-                print("[SecretsManager] Stored OMDB key in keychain: \(saved)")
                 #endif
             }
 
@@ -295,18 +261,7 @@ final class SecretsManager {
         
         return endpointSaved && secretSaved
     }
-    
-    /// Stores OMDB API key in the iOS Keychain for offline access
-    func storeOMDBKey(_ apiKey: String) -> Bool {
-        let saved = saveToKeychain(key: "OMDB_API_KEY", value: apiKey)
-        
-        #if DEBUG
-        print("[SecretsManager] Stored OMDB key in keychain: \(saved)")
-        #endif
-        
-        return saved
-    }
-    
+
     /// Retrieves the GraphQL endpoint from the most appropriate source
     var graphqlEndpoint: URL? {
         // 1. Try build-time configuration first
@@ -394,46 +349,6 @@ final class SecretsManager {
         print("[SecretsManager] WARNING: HASURA_ADMIN_SECRET must be configured via xcconfig files or keychain")
         #endif
         
-        return nil
-    }
-    
-    /// Retrieves the OMDB API key from the most appropriate source
-    var omdbApiKey: String? {
-        // 1. Try build-time configuration first
-        if let key = BuildConfig.omdbApiKey {
-            #if DEBUG
-            print("[SecretsManager] Using OMDB API key from build config")
-            #endif
-            return key
-        }
-
-        // 2. Fall back to keychain
-        if let key = loadFromKeychain(key: "OMDB_API_KEY") {
-            #if DEBUG
-            print("[SecretsManager] Using OMDB API key from keychain")
-            #endif
-            return key
-        }
-
-        // 3. Fall back to environment variable (for development)
-        if let key = ProcessInfo.processInfo.environment["OMDB_API_KEY"] {
-            #if DEBUG
-            print("[SecretsManager] Using OMDB API key from environment")
-            #endif
-            return key
-        }
-
-        // 4. No hardcoded fallback for API key (security requirement)
-
-        // 5. No fallback - this should never happen in production
-        #if DEBUG
-        print("[SecretsManager] ERROR: No OMDB API key found in any source")
-        print("  Build config: \(BuildConfig.omdbApiKey != nil ? "available" : "nil")")
-        print("  Keychain: \(loadFromKeychain(key: "OMDB_API_KEY") != nil ? "available" : "nil")")
-        print("  Environment: \(ProcessInfo.processInfo.environment["OMDB_API_KEY"] != nil ? "available" : "nil")")
-        print("[SecretsManager] WARNING: OMDB_API_KEY must be configured via xcconfig files or keychain")
-        #endif
-
         return nil
     }
 
@@ -529,7 +444,7 @@ final class SecretsManager {
     
     /// Clears all stored secrets from the keychain
     func clearKeychainSecrets() {
-        let keys = ["GRAPHQL_ENDPOINT", "HASURA_ADMIN_SECRET", "OMDB_API_KEY", "MEDIACLOSET_API_ENDPOINT", "MEDIACLOSET_API_KEY"]
+        let keys = ["GRAPHQL_ENDPOINT", "HASURA_ADMIN_SECRET", "MEDIACLOSET_API_ENDPOINT", "MEDIACLOSET_API_KEY"]
 
         for key in keys {
             let query: [String: Any] = [
@@ -590,18 +505,17 @@ final class SecretsManager {
     func ensureSecretsAvailable() -> Bool {
         let hasEndpoint = graphqlEndpoint != nil
         let hasSecret = hasuraAdminSecret != nil
-        let hasOmdbKey = omdbApiKey != nil
         let hasMediaClosetAPI = mediaClosetAPIEndpoint != nil
         let hasMediaClosetAPIKey = mediaClosetAPIKey != nil
 
-        if !hasEndpoint || !hasSecret || !hasOmdbKey || !hasMediaClosetAPI || !hasMediaClosetAPIKey {
+        if !hasEndpoint || !hasSecret || !hasMediaClosetAPI || !hasMediaClosetAPIKey {
             #if DEBUG
             print("[SecretsManager] Missing secrets, attempting to refresh...")
             #endif
             refreshSecretsFromAllSources()
 
             // Check again after refresh
-            return graphqlEndpoint != nil && hasuraAdminSecret != nil && omdbApiKey != nil && mediaClosetAPIEndpoint != nil && mediaClosetAPIKey != nil
+            return graphqlEndpoint != nil && hasuraAdminSecret != nil && mediaClosetAPIEndpoint != nil && mediaClosetAPIKey != nil
         }
 
         return true
@@ -612,17 +526,14 @@ final class SecretsManager {
         return [
             "buildConfig_endpoint": BuildConfig.graphqlEndpoint != nil,
             "buildConfig_secret": BuildConfig.hasuraAdminSecret != nil,
-            "buildConfig_omdb": BuildConfig.omdbApiKey != nil,
             "buildConfig_mediaClosetAPI": BuildConfig.mediaClosetAPIEndpoint != nil,
             "buildConfig_mediaClosetAPIKey": BuildConfig.mediaClosetAPIKey != nil,
             "keychain_endpoint": loadFromKeychain(key: "GRAPHQL_ENDPOINT") != nil,
             "keychain_secret": loadFromKeychain(key: "HASURA_ADMIN_SECRET") != nil,
-            "keychain_omdb": loadFromKeychain(key: "OMDB_API_KEY") != nil,
             "keychain_mediaClosetAPI": loadFromKeychain(key: "MEDIACLOSET_API_ENDPOINT") != nil,
             "keychain_mediaClosetAPIKey": loadFromKeychain(key: "MEDIACLOSET_API_KEY") != nil,
             "env_endpoint": ProcessInfo.processInfo.environment["GRAPHQL_ENDPOINT"] != nil,
             "env_secret": ProcessInfo.processInfo.environment["HASURA_ADMIN_SECRET"] != nil,
-            "env_omdb": ProcessInfo.processInfo.environment["OMDB_API_KEY"] != nil,
             "env_mediaClosetAPI": ProcessInfo.processInfo.environment["MEDIACLOSET_API_ENDPOINT"] != nil,
             "env_mediaClosetAPIKey": ProcessInfo.processInfo.environment["MEDIACLOSET_API_KEY"] != nil
         ]
@@ -642,11 +553,6 @@ final class SecretsManager {
             help += "  Check that Local.secrets.xcconfig contains HASURA_ADMIN_SECRET.\n\n"
         }
 
-        if BuildConfig.omdbApiKey == nil {
-            help += "• OMDB API key not found in build configuration.\n"
-            help += "  Check that Local.secrets.xcconfig contains OMDB_API_KEY.\n\n"
-        }
-
         if BuildConfig.mediaClosetAPIEndpoint == nil {
             help += "• MediaCloset API endpoint not found in build configuration.\n"
             help += "  Check that Local.secrets.xcconfig contains MEDIACLOSET_API_ENDPOINT.\n\n"
@@ -657,13 +563,13 @@ final class SecretsManager {
             help += "  Check that Local.secrets.xcconfig contains MEDIACLOSET_API_KEY.\n\n"
         }
 
-        if loadFromKeychain(key: "GRAPHQL_ENDPOINT") == nil && loadFromKeychain(key: "HASURA_ADMIN_SECRET") == nil && loadFromKeychain(key: "OMDB_API_KEY") == nil && loadFromKeychain(key: "MEDIACLOSET_API_ENDPOINT") == nil && loadFromKeychain(key: "MEDIACLOSET_API_KEY") == nil {
+        if loadFromKeychain(key: "GRAPHQL_ENDPOINT") == nil && loadFromKeychain(key: "HASURA_ADMIN_SECRET") == nil && loadFromKeychain(key: "MEDIACLOSET_API_ENDPOINT") == nil && loadFromKeychain(key: "MEDIACLOSET_API_KEY") == nil {
             help += "• No secrets found in keychain.\n"
             help += "  Try rebuilding the app or use the 'Set Secrets Manually' option in Debug tab.\n\n"
         }
 
         help += "Steps to fix:\n"
-        help += "1. Ensure Local.secrets.xcconfig exists with GRAPHQL_ENDPOINT, HASURA_ADMIN_SECRET, OMDB_API_KEY, MEDIACLOSET_API_ENDPOINT, and MEDIACLOSET_API_KEY\n"
+        help += "1. Ensure Local.secrets.xcconfig exists with GRAPHQL_ENDPOINT, HASURA_ADMIN_SECRET, MEDIACLOSET_API_ENDPOINT, and MEDIACLOSET_API_KEY\n"
         help += "2. Clean and rebuild the project\n"
         help += "3. Or use the Debug tab to set secrets manually\n"
         help += "4. The app will automatically retry when reopened"

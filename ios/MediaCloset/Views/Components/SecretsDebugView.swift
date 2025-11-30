@@ -13,7 +13,6 @@ struct SecretsDebugView: View {
     @State private var showingClearAlert = false
     @State private var manualEndpoint = ""
     @State private var manualSecret = ""
-    @State private var manualOMDBKey = ""
     @State private var showingManualInput = false
     
     var body: some View {
@@ -49,20 +48,7 @@ struct SecretsDebugView: View {
                     Button("Set Secrets Manually") {
                         showingManualInput = true
                     }
-                    
-                    Button("Set OMDB Key Only") {
-                        // User needs to enter their API key manually
-                        showingManualInput = true
-                        refreshStatus()
-                    }
-                    
-                    Button("Test OMDB API") {
-                        Task {
-                            let vhsVM = VHSVM()
-                            await vhsVM.testOMDBAPI()
-                        }
-                    }
-                    
+
                     Button("Clear Keychain Secrets", role: .destructive) {
                         showingClearAlert = true
                     }
@@ -86,16 +72,6 @@ struct SecretsDebugView: View {
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                             Text(String(secret.prefix(8)) + "...")
-                                .font(.system(.body, design: .monospaced))
-                        }
-                    }
-                    
-                    if let omdbKey = SecretsManager.shared.omdbApiKey {
-                        VStack(alignment: .leading) {
-                            Text("OMDB API Key")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Text(String(omdbKey.prefix(8)) + "...")
                                 .font(.system(.body, design: .monospaced))
                         }
                     }
@@ -123,7 +99,6 @@ struct SecretsDebugView: View {
             .alert("Set Secrets Manually", isPresented: $showingManualInput) {
                 TextField("GraphQL Endpoint", text: $manualEndpoint)
                 SecureField("Hasura Admin Secret", text: $manualSecret)
-                TextField("OMDB API Key", text: $manualOMDBKey)
                 Button("Cancel", role: .cancel) { }
                 Button("Set") {
                     if !manualEndpoint.isEmpty && !manualSecret.isEmpty {
@@ -132,16 +107,12 @@ struct SecretsDebugView: View {
                             hasuraAdminSecret: manualSecret
                         )
                     }
-                    if !manualOMDBKey.isEmpty {
-                        _ = SecretsManager.shared.storeOMDBKey(manualOMDBKey)
-                    }
                     refreshStatus()
                     manualEndpoint = ""
                     manualSecret = ""
-                    manualOMDBKey = ""
                 }
             } message: {
-                Text("Enter the GraphQL endpoint, Hasura admin secret, and OMDB API key manually for testing. All secrets will be stored securely in the keychain.")
+                Text("Enter the GraphQL endpoint and Hasura admin secret manually for testing. All secrets will be stored securely in the keychain.")
             }
         }
     }
