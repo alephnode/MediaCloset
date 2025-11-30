@@ -48,10 +48,16 @@ DerivedData/
 *.xcscmblueprint
 *.xcsettings
 
-## Xcode workspace/project user data (keep shared schemes tracked)
+## Xcode workspace/project user data
+**/xcuserdata/
 *.xcworkspace/xcuserdata/
 *.xcodeproj/project.xcworkspace/xcuserdata/
 *.xcodeproj/xcuserdata/
+ios/MediaCloset.xcodeproj/xcuserdata/
+
+## Xcode shared schemes (ignore if they contain environment variables)
+**/xcshareddata/xcschemes/*.xcscheme
+ios/MediaCloset.xcodeproj/xcshareddata/
 
 ## Xcode Cloud / CI artifacts
 xcshareddata/ci.xcscmblueprint
