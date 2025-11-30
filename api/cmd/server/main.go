@@ -53,12 +53,23 @@ func main() {
 	rateLimiter := ratelimit.NewServiceLimiter()
 	omdbService := services.NewOMDBService(cfg.OMDBAPIKey)
 	musicBrainzService := services.NewMusicBrainzService(rateLimiter)
+	discogsService := services.NewDiscogsService(cfg.DiscogsKey, cfg.DiscogsSecret)
+	itunesService := services.NewITunesService()
+	barcodeService := services.NewBarcodeService(
+		discogsService,
+		itunesService,
+		musicBrainzService,
+		omdbService,
+	)
 
 	// Create GraphQL server
 	resolver := &graph.Resolver{
 		Config:          cfg,
 		OMDBService:     omdbService,
 		MusicBrainz:     musicBrainzService,
+		Discogs:         discogsService,
+		ITunes:          itunesService,
+		BarcodeService:  barcodeService,
 		RateLimiter:     rateLimiter,
 		ServerStartTime: startTime,
 	}

@@ -16,6 +16,9 @@ type Resolver struct {
 	Config          *config.Config
 	OMDBService     *services.OMDBService
 	MusicBrainz     *services.MusicBrainzService
+	Discogs         *services.DiscogsService
+	ITunes          *services.ITunesService
+	BarcodeService  *services.BarcodeService
 	RateLimiter     *ratelimit.ServiceLimiter
 	ServerStartTime time.Time
 }

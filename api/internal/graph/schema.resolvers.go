@@ -7,7 +7,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"mediacloset/api/internal/graph/model"
@@ -20,8 +19,7 @@ func (r *queryResolver) MovieByTitle(ctx context.Context, title string, director
 
 // MovieByBarcode is the resolver for the movieByBarcode field.
 func (r *queryResolver) MovieByBarcode(ctx context.Context, barcode string) (*model.MovieData, error) {
-	// Barcode lookup not implemented yet (Phase 2b)
-	return nil, fmt.Errorf("barcode lookup not implemented yet")
+	return r.BarcodeService.LookupMovie(ctx, barcode)
 }
 
 // AlbumByArtistAndTitle is the resolver for the albumByArtistAndTitle field.
@@ -31,8 +29,7 @@ func (r *queryResolver) AlbumByArtistAndTitle(ctx context.Context, artist string
 
 // AlbumByBarcode is the resolver for the albumByBarcode field.
 func (r *queryResolver) AlbumByBarcode(ctx context.Context, barcode string) (*model.AlbumData, error) {
-	// Barcode lookup not implemented yet (Phase 2b)
-	return nil, fmt.Errorf("barcode lookup not implemented yet")
+	return r.BarcodeService.LookupAlbum(ctx, barcode)
 }
 
 // Health is the resolver for the health field.
