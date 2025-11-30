@@ -29,7 +29,60 @@ type MovieData struct {
 	Source    string  `json:"source"`
 }
 
+type Mutation struct {
+}
+
 type Query struct {
+}
+
+type SaveAlbumInput struct {
+	Artist   string  `json:"artist"`
+	Album    string  `json:"album"`
+	Year     *int    `json:"year,omitempty"`
+	Label    *string `json:"label,omitempty"`
+	Genre    *string `json:"genre,omitempty"`
+	CoverURL *string `json:"coverUrl,omitempty"`
+}
+
+type SaveAlbumResponse struct {
+	Success bool        `json:"success"`
+	ID      *int        `json:"id,omitempty"`
+	Album   *SavedAlbum `json:"album,omitempty"`
+	Error   *string     `json:"error,omitempty"`
+}
+
+type SaveMovieInput struct {
+	Title    string  `json:"title"`
+	Director *string `json:"director,omitempty"`
+	Year     *int    `json:"year,omitempty"`
+	Genre    *string `json:"genre,omitempty"`
+	CoverURL *string `json:"coverUrl,omitempty"`
+}
+
+type SaveMovieResponse struct {
+	Success bool        `json:"success"`
+	ID      *int        `json:"id,omitempty"`
+	Movie   *SavedMovie `json:"movie,omitempty"`
+	Error   *string     `json:"error,omitempty"`
+}
+
+type SavedAlbum struct {
+	ID       int     `json:"id"`
+	Artist   string  `json:"artist"`
+	Album    string  `json:"album"`
+	Year     *int    `json:"year,omitempty"`
+	Label    *string `json:"label,omitempty"`
+	Genre    *string `json:"genre,omitempty"`
+	CoverURL *string `json:"coverUrl,omitempty"`
+}
+
+type SavedMovie struct {
+	ID       int     `json:"id"`
+	Title    string  `json:"title"`
+	Director *string `json:"director,omitempty"`
+	Year     *int    `json:"year,omitempty"`
+	Genre    *string `json:"genre,omitempty"`
+	CoverURL *string `json:"coverUrl,omitempty"`
 }
 
 type TrackData struct {

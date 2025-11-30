@@ -11,6 +11,10 @@ type Config struct {
 	Port        string
 	Environment string
 
+	// Hasura
+	HasuraEndpoint    string
+	HasuraAdminSecret string
+
 	// API Keys
 	OMDBAPIKey      string
 	DiscogsKey      string
@@ -46,19 +50,27 @@ func Load() *Config {
 	}
 
 	cfg := &Config{
-		Port:            viper.GetString("PORT"),
-		Environment:     viper.GetString("ENVIRONMENT"),
-		OMDBAPIKey:      viper.GetString("OMDB_API_KEY"),
-		DiscogsKey:      viper.GetString("DISCOGS_CONSUMER_KEY"),
-		DiscogsSecret:   viper.GetString("DISCOGS_CONSUMER_SECRET"),
-		LastFMAPIKey:    viper.GetString("LASTFM_API_KEY"),
-		EnableCache:     viper.GetBool("ENABLE_CACHE"),
-		EnableRateLimit: viper.GetBool("ENABLE_RATE_LIMIT"),
+		Port:              viper.GetString("PORT"),
+		Environment:       viper.GetString("ENVIRONMENT"),
+		HasuraEndpoint:    viper.GetString("HASURA_ENDPOINT"),
+		HasuraAdminSecret: viper.GetString("HASURA_ADMIN_SECRET"),
+		OMDBAPIKey:        viper.GetString("OMDB_API_KEY"),
+		DiscogsKey:        viper.GetString("DISCOGS_CONSUMER_KEY"),
+		DiscogsSecret:     viper.GetString("DISCOGS_CONSUMER_SECRET"),
+		LastFMAPIKey:      viper.GetString("LASTFM_API_KEY"),
+		EnableCache:       viper.GetBool("ENABLE_CACHE"),
+		EnableRateLimit:   viper.GetBool("ENABLE_RATE_LIMIT"),
 	}
 
 	// Validate required keys
 	if cfg.OMDBAPIKey == "" {
 		log.Fatal("OMDB_API_KEY is required")
+	}
+	if cfg.HasuraEndpoint == "" {
+		log.Fatal("HASURA_ENDPOINT is required")
+	}
+	if cfg.HasuraAdminSecret == "" {
+		log.Fatal("HASURA_ADMIN_SECRET is required")
 	}
 
 	log.Printf("Config loaded: environment=%s, port=%s", cfg.Environment, cfg.Port)

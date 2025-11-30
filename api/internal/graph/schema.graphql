@@ -14,6 +14,14 @@ type Query {
   health: Health!
 }
 
+type Mutation {
+  # Save movie/VHS (auto-fetches poster if missing)
+  saveMovie(input: SaveMovieInput!): SaveMovieResponse!
+
+  # Save album/record (auto-fetches cover if missing)
+  saveAlbum(input: SaveAlbumInput!): SaveAlbumResponse!
+}
+
 type MovieData {
   title: String!
   director: String
@@ -45,4 +53,57 @@ type Health {
   status: String!
   version: String!
   uptime: Int!
+}
+
+# Input types for mutations
+input SaveMovieInput {
+  title: String!
+  director: String
+  year: Int
+  genre: String
+  coverUrl: String  # Optional - will be auto-fetched if missing
+}
+
+input SaveAlbumInput {
+  artist: String!
+  album: String!
+  year: Int
+  label: String
+  genre: String
+  coverUrl: String  # Optional - will be auto-fetched if missing
+}
+
+# Response types for mutations
+type SaveMovieResponse {
+  success: Boolean!
+  id: Int
+  movie: SavedMovie
+  error: String
+}
+
+type SaveAlbumResponse {
+  success: Boolean!
+  id: Int
+  album: SavedAlbum
+  error: String
+}
+
+# Saved data types (from Hasura)
+type SavedMovie {
+  id: Int!
+  title: String!
+  director: String
+  year: Int
+  genre: String
+  coverUrl: String
+}
+
+type SavedAlbum {
+  id: Int!
+  artist: String!
+  album: String!
+  year: Int
+  label: String
+  genre: String
+  coverUrl: String
 }

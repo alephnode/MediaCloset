@@ -61,6 +61,7 @@ func main() {
 		musicBrainzService,
 		omdbService,
 	)
+	hasuraClient := services.NewHasuraClient(cfg.HasuraEndpoint, cfg.HasuraAdminSecret)
 
 	// Create GraphQL server
 	resolver := &graph.Resolver{
@@ -70,6 +71,7 @@ func main() {
 		Discogs:         discogsService,
 		ITunes:          itunesService,
 		BarcodeService:  barcodeService,
+		HasuraClient:    hasuraClient,
 		RateLimiter:     rateLimiter,
 		ServerStartTime: startTime,
 	}

@@ -7,10 +7,77 @@ package graph
 
 import (
 	"context"
-	"time"
-
+	"fmt"
 	"mediacloset/api/internal/graph/model"
+	"time"
 )
+
+// SaveMovie is the resolver for the saveMovie field.
+func (r *mutationResolver) SaveMovie(ctx context.Context, input model.SaveMovieInput) (*model.SaveMovieResponse, error) {
+	// Get cover URL if not provided
+	coverURL := ""
+	if input.CoverURL != nil && *input.CoverURL != "" {
+		coverURL = *input.CoverURL
+	} else {
+		// Auto-fetch poster from OMDB
+		movieData, err := r.OMDBService.SearchMovie(ctx, input.Title, input.Director, input.Year)
+		if err != nil {
+			// Log the error but don't fail the save
+			fmt.Printf("[SaveMovie] Failed to fetch poster for '%s': %v\n", input.Title, err)
+		} else if movieData != nil && movieData.PosterURL != nil {
+			coverURL = *movieData.PosterURL
+			fmt.Printf("[SaveMovie] Auto-fetched poster for '%s' from %s\n", input.Title, movieData.Source)
+		} else {
+			fmt.Printf("[SaveMovie] No poster found for '%s'\n", input.Title)
+		}
+	}
+
+	// Build VHS object for Hasura
+	vhs := map[string]interface{}{
+		"title": input.Title,
+	}
+
+	if input.Director != nil {
+		vhs["director"] = *input.Director
+	}
+	if input.Year != nil {
+		vhs["year"] = *input.Year
+	}
+	if input.Genre != nil {
+		vhs["genre"] = *input.Genre
+	}
+	if coverURL != "" {
+		vhs["cover_url"] = coverURL
+	}
+
+	// Save to Hasura
+	_, err := r.HasuraClient.InsertVHS(ctx, vhs)
+	if err != nil {
+		return &model.SaveMovieResponse{
+			Success: false,
+			Error:   &[]string{fmt.Sprintf("Failed to save movie: %v", err)}[0],
+		}, nil
+	}
+
+	// Return success response
+	// Note: Hasura returns UUID, but we're not using it in the response for now
+	return &model.SaveMovieResponse{
+		Success: true,
+		Movie: &model.SavedMovie{
+			ID:       0, // ID not returned by Hasura
+			Title:    input.Title,
+			Director: input.Director,
+			Year:     input.Year,
+			Genre:    input.Genre,
+			CoverURL: &coverURL,
+		},
+	}, nil
+}
+
+// SaveAlbum is the resolver for the saveAlbum field.
+func (r *mutationResolver) SaveAlbum(ctx context.Context, input model.SaveAlbumInput) (*model.SaveAlbumResponse, error) {
+	panic(fmt.Errorf("not implemented: SaveAlbum - saveAlbum"))
+}
 
 // MovieByTitle is the resolver for the movieByTitle field.
 func (r *queryResolver) MovieByTitle(ctx context.Context, title string, director *string, year *int) (*model.MovieData, error) {
@@ -42,7 +109,11 @@ func (r *queryResolver) Health(ctx context.Context) (*model.Health, error) {
 	}, nil
 }
 
+// Mutation returns MutationResolver implementation.
+func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

@@ -19,6 +19,7 @@ type Resolver struct {
 	Discogs         *services.DiscogsService
 	ITunes          *services.ITunesService
 	BarcodeService  *services.BarcodeService
+	HasuraClient    *services.HasuraClient
 	RateLimiter     *ratelimit.ServiceLimiter
 	ServerStartTime time.Time
 }

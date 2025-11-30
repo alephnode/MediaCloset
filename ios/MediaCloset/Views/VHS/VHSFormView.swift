@@ -114,113 +114,113 @@ struct VHSFormView: View {
 
     func save() async {
         isSaving = true
-        
-        // Fetch movie poster URL from OMDB if coverURL is empty (with 3-second timeout)
-        var finalCoverURL = coverURL
-        if finalCoverURL.isEmpty {
-            finalCoverURL = await OMDBService.fetchMoviePosterURL(
+
+        do {
+            // Use MediaCloset API to save the movie (it will auto-fetch the poster)
+            let response = try await MediaClosetAPIClient.shared.saveMovie(
                 title: title,
                 director: director.isEmpty ? nil : director,
                 year: year,
-                timeout: 3.0
-            ) ?? ""
-        }
-        
-        let object: [String: Any] = [
-            "title": title,
-            "director": director.isEmpty ? NSNull() : director,
-            "year": year as Any,
-            "genre": genre.isEmpty ? NSNull() : genre,
-            "cover_url": finalCoverURL.isEmpty ? NSNull() : finalCoverURL
-        ]
-
-        do {
-            _ = try await GraphQLHTTPClient.shared.execute(
-                operationName: "InsertVHS",
-                query: GQL.insertVHS,
-                variables: ["object": object]
+                genre: genre.isEmpty ? nil : genre,
+                coverUrl: coverURL.isEmpty ? nil : coverURL
             )
-            onSaved()
-            dismiss()
+
+            if response.success {
+                #if DEBUG
+                print("[VHSFormView] Movie saved successfully")
+                if let movie = response.movie {
+                    print("[VHSFormView] Saved movie: \(movie.title), coverUrl: \(movie.coverUrl ?? "none")")
+                }
+                #endif
+                onSaved()
+                dismiss()
+            } else {
+                #if DEBUG
+                print("[VHSFormView] Save failed: \(response.error ?? "unknown error")")
+                #endif
+            }
         } catch {
-            print("save VHS error:", error)
+            #if DEBUG
+            print("[VHSFormView] Save error: \(error)")
+            #endif
         }
-        
+
         isSaving = false
     }
     
     func fetchMovieData() async {
         isFetchingData = true
-        
-        let movieData = await OMDBService.fetchMovieData(
-            title: title,
-            director: director.isEmpty ? nil : director,
-            year: year
-        )
-        
-        if let data = movieData {
-            // Update fields with fetched data
-            if let fetchedDirector = data["Director"] as? String, director.isEmpty {
-                director = fetchedDirector
+
+        do {
+            let movieData = try await MediaClosetAPIClient.shared.fetchMovieByTitle(
+                title: title,
+                director: director.isEmpty ? nil : director,
+                year: year
+            )
+
+            if let data = movieData {
+                // Update fields with fetched data
+                if let fetchedDirector = data.director, director.isEmpty {
+                    director = fetchedDirector
+                }
+                if let fetchedYear = data.year, year == nil {
+                    year = fetchedYear
+                }
+                if let fetchedPoster = data.posterURL, coverURL.isEmpty {
+                    coverURL = fetchedPoster
+                }
+
+                #if DEBUG
+                print("[VHSFormView] Fetched movie data from source: \(data.source ?? "unknown")")
+                #endif
             }
-            if let fetchedYear = data["Year"] as? String, year == nil {
-                year = Int(fetchedYear)
-            }
-            if let fetchedGenre = data["Genre"] as? String, genre.isEmpty {
-                genre = fetchedGenre
-            }
-            if let fetchedPoster = data["Poster"] as? String, coverURL.isEmpty {
-                coverURL = fetchedPoster
-            }
+        } catch {
+            #if DEBUG
+            print("[VHSFormView] Failed to fetch movie data: \(error)")
+            #endif
         }
-        
+
         isFetchingData = false
     }
     
     func handleBarcodeScanned(_ barcode: String) async {
         isFetchingBarcodeData = true
-        
-        // Try to look up movie data from barcode
-        if let movieData = await BarcodeService.lookupMovieByBarcode(barcode) {
-            // Populate form fields with fetched data
-            if let fetchedTitle = movieData["Title"] as? String, title.isEmpty {
-                title = fetchedTitle
+
+        // Try to look up movie data from barcode using MediaCloset API
+        do {
+            let movieData = try await MediaClosetAPIClient.shared.fetchMovieByBarcode(barcode: barcode)
+
+            if let data = movieData {
+                // Populate form fields with fetched data
+                if let fetchedTitle = data.title, title.isEmpty {
+                    title = fetchedTitle
+                }
+                if let fetchedDirector = data.director, director.isEmpty {
+                    director = fetchedDirector
+                }
+                if let fetchedYear = data.year, year == nil {
+                    year = fetchedYear
+                }
+                if let fetchedPoster = data.posterURL, coverURL.isEmpty {
+                    coverURL = fetchedPoster
+                }
+
+                #if DEBUG
+                print("[VHSFormView] Populated form with barcode data from source: \(data.source ?? "unknown")")
+                #endif
+            } else {
+                #if DEBUG
+                print("[VHSFormView] No movie data found for barcode: \(barcode)")
+                #endif
             }
-            if let fetchedDirector = movieData["Director"] as? String, director.isEmpty {
-                director = fetchedDirector
-            }
-            if let fetchedYear = movieData["Year"] as? String, year == nil {
-                year = Int(fetchedYear)
-            }
-            if let fetchedGenre = movieData["Genre"] as? String, genre.isEmpty {
-                genre = fetchedGenre
-            }
-            if let fetchedPoster = movieData["Poster"] as? String, coverURL.isEmpty {
-                coverURL = fetchedPoster
-            }
-            
-            // Handle UPC Database specific fields
-            if let brand = movieData["Brand"] as? String, title.isEmpty {
-                title = brand // Use brand as title if no title found
-            }
-            if let category = movieData["Category"] as? String, genre.isEmpty {
-                genre = category // Use category as genre if no genre found
-            }
-            if let description = movieData["Description"] as? String, title.isEmpty {
-                title = description // Use description as title if no title found
-            }
-            
+        } catch {
+            // Movie barcode lookup is not yet implemented on the backend
             #if DEBUG
-            print("[VHSFormView] Populated form with barcode data: \(movieData)")
-            #endif
-        } else {
-            // If no movie data found, at least show the barcode for manual entry
-            // The user can manually enter the title and use "Fetch Movie Data"
-            #if DEBUG
-            print("[VHSFormView] No movie data found for barcode: \(barcode)")
+            print("[VHSFormView] Barcode lookup error: \(error)")
+            print("[VHSFormView] Note: Movie barcode lookup is not yet implemented on the backend")
             #endif
         }
-        
+
         isFetchingBarcodeData = false
     }
 

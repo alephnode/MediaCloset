@@ -39,6 +39,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Mutation() MutationResolver
 	Query() QueryResolver
 }
 
@@ -73,12 +74,50 @@ type ComplexityRoot struct {
 		Year      func(childComplexity int) int
 	}
 
+	Mutation struct {
+		SaveAlbum func(childComplexity int, input model.SaveAlbumInput) int
+		SaveMovie func(childComplexity int, input model.SaveMovieInput) int
+	}
+
 	Query struct {
 		AlbumByArtistAndTitle func(childComplexity int, artist string, album string) int
 		AlbumByBarcode        func(childComplexity int, barcode string) int
 		Health                func(childComplexity int) int
 		MovieByBarcode        func(childComplexity int, barcode string) int
 		MovieByTitle          func(childComplexity int, title string, director *string, year *int) int
+	}
+
+	SaveAlbumResponse struct {
+		Album   func(childComplexity int) int
+		Error   func(childComplexity int) int
+		ID      func(childComplexity int) int
+		Success func(childComplexity int) int
+	}
+
+	SaveMovieResponse struct {
+		Error   func(childComplexity int) int
+		ID      func(childComplexity int) int
+		Movie   func(childComplexity int) int
+		Success func(childComplexity int) int
+	}
+
+	SavedAlbum struct {
+		Album    func(childComplexity int) int
+		Artist   func(childComplexity int) int
+		CoverURL func(childComplexity int) int
+		Genre    func(childComplexity int) int
+		ID       func(childComplexity int) int
+		Label    func(childComplexity int) int
+		Year     func(childComplexity int) int
+	}
+
+	SavedMovie struct {
+		CoverURL func(childComplexity int) int
+		Director func(childComplexity int) int
+		Genre    func(childComplexity int) int
+		ID       func(childComplexity int) int
+		Title    func(childComplexity int) int
+		Year     func(childComplexity int) int
 	}
 
 	TrackData struct {
@@ -88,6 +127,10 @@ type ComplexityRoot struct {
 	}
 }
 
+type MutationResolver interface {
+	SaveMovie(ctx context.Context, input model.SaveMovieInput) (*model.SaveMovieResponse, error)
+	SaveAlbum(ctx context.Context, input model.SaveAlbumInput) (*model.SaveAlbumResponse, error)
+}
 type QueryResolver interface {
 	MovieByTitle(ctx context.Context, title string, director *string, year *int) (*model.MovieData, error)
 	MovieByBarcode(ctx context.Context, barcode string) (*model.MovieData, error)
@@ -226,6 +269,29 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.MovieData.Year(childComplexity), true
 
+	case "Mutation.saveAlbum":
+		if e.complexity.Mutation.SaveAlbum == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_saveAlbum_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SaveAlbum(childComplexity, args["input"].(model.SaveAlbumInput)), true
+	case "Mutation.saveMovie":
+		if e.complexity.Mutation.SaveMovie == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_saveMovie_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SaveMovie(childComplexity, args["input"].(model.SaveMovieInput)), true
+
 	case "Query.albumByArtistAndTitle":
 		if e.complexity.Query.AlbumByArtistAndTitle == nil {
 			break
@@ -277,6 +343,136 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Query.MovieByTitle(childComplexity, args["title"].(string), args["director"].(*string), args["year"].(*int)), true
 
+	case "SaveAlbumResponse.album":
+		if e.complexity.SaveAlbumResponse.Album == nil {
+			break
+		}
+
+		return e.complexity.SaveAlbumResponse.Album(childComplexity), true
+	case "SaveAlbumResponse.error":
+		if e.complexity.SaveAlbumResponse.Error == nil {
+			break
+		}
+
+		return e.complexity.SaveAlbumResponse.Error(childComplexity), true
+	case "SaveAlbumResponse.id":
+		if e.complexity.SaveAlbumResponse.ID == nil {
+			break
+		}
+
+		return e.complexity.SaveAlbumResponse.ID(childComplexity), true
+	case "SaveAlbumResponse.success":
+		if e.complexity.SaveAlbumResponse.Success == nil {
+			break
+		}
+
+		return e.complexity.SaveAlbumResponse.Success(childComplexity), true
+
+	case "SaveMovieResponse.error":
+		if e.complexity.SaveMovieResponse.Error == nil {
+			break
+		}
+
+		return e.complexity.SaveMovieResponse.Error(childComplexity), true
+	case "SaveMovieResponse.id":
+		if e.complexity.SaveMovieResponse.ID == nil {
+			break
+		}
+
+		return e.complexity.SaveMovieResponse.ID(childComplexity), true
+	case "SaveMovieResponse.movie":
+		if e.complexity.SaveMovieResponse.Movie == nil {
+			break
+		}
+
+		return e.complexity.SaveMovieResponse.Movie(childComplexity), true
+	case "SaveMovieResponse.success":
+		if e.complexity.SaveMovieResponse.Success == nil {
+			break
+		}
+
+		return e.complexity.SaveMovieResponse.Success(childComplexity), true
+
+	case "SavedAlbum.album":
+		if e.complexity.SavedAlbum.Album == nil {
+			break
+		}
+
+		return e.complexity.SavedAlbum.Album(childComplexity), true
+	case "SavedAlbum.artist":
+		if e.complexity.SavedAlbum.Artist == nil {
+			break
+		}
+
+		return e.complexity.SavedAlbum.Artist(childComplexity), true
+	case "SavedAlbum.coverUrl":
+		if e.complexity.SavedAlbum.CoverURL == nil {
+			break
+		}
+
+		return e.complexity.SavedAlbum.CoverURL(childComplexity), true
+	case "SavedAlbum.genre":
+		if e.complexity.SavedAlbum.Genre == nil {
+			break
+		}
+
+		return e.complexity.SavedAlbum.Genre(childComplexity), true
+	case "SavedAlbum.id":
+		if e.complexity.SavedAlbum.ID == nil {
+			break
+		}
+
+		return e.complexity.SavedAlbum.ID(childComplexity), true
+	case "SavedAlbum.label":
+		if e.complexity.SavedAlbum.Label == nil {
+			break
+		}
+
+		return e.complexity.SavedAlbum.Label(childComplexity), true
+	case "SavedAlbum.year":
+		if e.complexity.SavedAlbum.Year == nil {
+			break
+		}
+
+		return e.complexity.SavedAlbum.Year(childComplexity), true
+
+	case "SavedMovie.coverUrl":
+		if e.complexity.SavedMovie.CoverURL == nil {
+			break
+		}
+
+		return e.complexity.SavedMovie.CoverURL(childComplexity), true
+	case "SavedMovie.director":
+		if e.complexity.SavedMovie.Director == nil {
+			break
+		}
+
+		return e.complexity.SavedMovie.Director(childComplexity), true
+	case "SavedMovie.genre":
+		if e.complexity.SavedMovie.Genre == nil {
+			break
+		}
+
+		return e.complexity.SavedMovie.Genre(childComplexity), true
+	case "SavedMovie.id":
+		if e.complexity.SavedMovie.ID == nil {
+			break
+		}
+
+		return e.complexity.SavedMovie.ID(childComplexity), true
+	case "SavedMovie.title":
+		if e.complexity.SavedMovie.Title == nil {
+			break
+		}
+
+		return e.complexity.SavedMovie.Title(childComplexity), true
+	case "SavedMovie.year":
+		if e.complexity.SavedMovie.Year == nil {
+			break
+		}
+
+		return e.complexity.SavedMovie.Year(childComplexity), true
+
 	case "TrackData.durationSeconds":
 		if e.complexity.TrackData.DurationSeconds == nil {
 			break
@@ -303,7 +499,10 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
-	inputUnmarshalMap := graphql.BuildUnmarshalerMap()
+	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputSaveAlbumInput,
+		ec.unmarshalInputSaveMovieInput,
+	)
 	first := true
 
 	switch opCtx.Operation.Operation {
@@ -336,6 +535,21 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			}
 
 			return &response
+		}
+	case ast.Mutation:
+		return func(ctx context.Context) *graphql.Response {
+			if !first {
+				return nil
+			}
+			first = false
+			ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
+			data := ec._Mutation(ctx, opCtx.Operation.SelectionSet)
+			var buf bytes.Buffer
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
 		}
 
 	default:
@@ -403,6 +617,28 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_saveAlbum_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNSaveAlbumInput2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSaveAlbumInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_saveMovie_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNSaveMovieInput2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSaveMovieInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
@@ -1056,6 +1292,108 @@ func (ec *executionContext) fieldContext_MovieData_source(_ context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_saveMovie(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_saveMovie,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().SaveMovie(ctx, fc.Args["input"].(model.SaveMovieInput))
+		},
+		nil,
+		ec.marshalNSaveMovieResponse2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSaveMovieResponse,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_saveMovie(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_SaveMovieResponse_success(ctx, field)
+			case "id":
+				return ec.fieldContext_SaveMovieResponse_id(ctx, field)
+			case "movie":
+				return ec.fieldContext_SaveMovieResponse_movie(ctx, field)
+			case "error":
+				return ec.fieldContext_SaveMovieResponse_error(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SaveMovieResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_saveMovie_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_saveAlbum(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_saveAlbum,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().SaveAlbum(ctx, fc.Args["input"].(model.SaveAlbumInput))
+		},
+		nil,
+		ec.marshalNSaveAlbumResponse2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSaveAlbumResponse,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_saveAlbum(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_SaveAlbumResponse_success(ctx, field)
+			case "id":
+				return ec.fieldContext_SaveAlbumResponse_id(ctx, field)
+			case "album":
+				return ec.fieldContext_SaveAlbumResponse_album(ctx, field)
+			case "error":
+				return ec.fieldContext_SaveAlbumResponse_error(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SaveAlbumResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_saveAlbum_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_movieByTitle(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1428,6 +1766,645 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SaveAlbumResponse_success(ctx context.Context, field graphql.CollectedField, obj *model.SaveAlbumResponse) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SaveAlbumResponse_success,
+		func(ctx context.Context) (any, error) {
+			return obj.Success, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SaveAlbumResponse_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SaveAlbumResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SaveAlbumResponse_id(ctx context.Context, field graphql.CollectedField, obj *model.SaveAlbumResponse) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SaveAlbumResponse_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SaveAlbumResponse_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SaveAlbumResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SaveAlbumResponse_album(ctx context.Context, field graphql.CollectedField, obj *model.SaveAlbumResponse) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SaveAlbumResponse_album,
+		func(ctx context.Context) (any, error) {
+			return obj.Album, nil
+		},
+		nil,
+		ec.marshalOSavedAlbum2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSavedAlbum,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SaveAlbumResponse_album(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SaveAlbumResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_SavedAlbum_id(ctx, field)
+			case "artist":
+				return ec.fieldContext_SavedAlbum_artist(ctx, field)
+			case "album":
+				return ec.fieldContext_SavedAlbum_album(ctx, field)
+			case "year":
+				return ec.fieldContext_SavedAlbum_year(ctx, field)
+			case "label":
+				return ec.fieldContext_SavedAlbum_label(ctx, field)
+			case "genre":
+				return ec.fieldContext_SavedAlbum_genre(ctx, field)
+			case "coverUrl":
+				return ec.fieldContext_SavedAlbum_coverUrl(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SavedAlbum", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SaveAlbumResponse_error(ctx context.Context, field graphql.CollectedField, obj *model.SaveAlbumResponse) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SaveAlbumResponse_error,
+		func(ctx context.Context) (any, error) {
+			return obj.Error, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SaveAlbumResponse_error(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SaveAlbumResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SaveMovieResponse_success(ctx context.Context, field graphql.CollectedField, obj *model.SaveMovieResponse) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SaveMovieResponse_success,
+		func(ctx context.Context) (any, error) {
+			return obj.Success, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SaveMovieResponse_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SaveMovieResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SaveMovieResponse_id(ctx context.Context, field graphql.CollectedField, obj *model.SaveMovieResponse) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SaveMovieResponse_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SaveMovieResponse_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SaveMovieResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SaveMovieResponse_movie(ctx context.Context, field graphql.CollectedField, obj *model.SaveMovieResponse) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SaveMovieResponse_movie,
+		func(ctx context.Context) (any, error) {
+			return obj.Movie, nil
+		},
+		nil,
+		ec.marshalOSavedMovie2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSavedMovie,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SaveMovieResponse_movie(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SaveMovieResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_SavedMovie_id(ctx, field)
+			case "title":
+				return ec.fieldContext_SavedMovie_title(ctx, field)
+			case "director":
+				return ec.fieldContext_SavedMovie_director(ctx, field)
+			case "year":
+				return ec.fieldContext_SavedMovie_year(ctx, field)
+			case "genre":
+				return ec.fieldContext_SavedMovie_genre(ctx, field)
+			case "coverUrl":
+				return ec.fieldContext_SavedMovie_coverUrl(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SavedMovie", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SaveMovieResponse_error(ctx context.Context, field graphql.CollectedField, obj *model.SaveMovieResponse) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SaveMovieResponse_error,
+		func(ctx context.Context) (any, error) {
+			return obj.Error, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SaveMovieResponse_error(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SaveMovieResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SavedAlbum_id(ctx context.Context, field graphql.CollectedField, obj *model.SavedAlbum) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SavedAlbum_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SavedAlbum_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SavedAlbum",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SavedAlbum_artist(ctx context.Context, field graphql.CollectedField, obj *model.SavedAlbum) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SavedAlbum_artist,
+		func(ctx context.Context) (any, error) {
+			return obj.Artist, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SavedAlbum_artist(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SavedAlbum",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SavedAlbum_album(ctx context.Context, field graphql.CollectedField, obj *model.SavedAlbum) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SavedAlbum_album,
+		func(ctx context.Context) (any, error) {
+			return obj.Album, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SavedAlbum_album(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SavedAlbum",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SavedAlbum_year(ctx context.Context, field graphql.CollectedField, obj *model.SavedAlbum) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SavedAlbum_year,
+		func(ctx context.Context) (any, error) {
+			return obj.Year, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SavedAlbum_year(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SavedAlbum",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SavedAlbum_label(ctx context.Context, field graphql.CollectedField, obj *model.SavedAlbum) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SavedAlbum_label,
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SavedAlbum_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SavedAlbum",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SavedAlbum_genre(ctx context.Context, field graphql.CollectedField, obj *model.SavedAlbum) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SavedAlbum_genre,
+		func(ctx context.Context) (any, error) {
+			return obj.Genre, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SavedAlbum_genre(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SavedAlbum",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SavedAlbum_coverUrl(ctx context.Context, field graphql.CollectedField, obj *model.SavedAlbum) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SavedAlbum_coverUrl,
+		func(ctx context.Context) (any, error) {
+			return obj.CoverURL, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SavedAlbum_coverUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SavedAlbum",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SavedMovie_id(ctx context.Context, field graphql.CollectedField, obj *model.SavedMovie) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SavedMovie_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SavedMovie_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SavedMovie",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SavedMovie_title(ctx context.Context, field graphql.CollectedField, obj *model.SavedMovie) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SavedMovie_title,
+		func(ctx context.Context) (any, error) {
+			return obj.Title, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SavedMovie_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SavedMovie",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SavedMovie_director(ctx context.Context, field graphql.CollectedField, obj *model.SavedMovie) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SavedMovie_director,
+		func(ctx context.Context) (any, error) {
+			return obj.Director, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SavedMovie_director(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SavedMovie",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SavedMovie_year(ctx context.Context, field graphql.CollectedField, obj *model.SavedMovie) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SavedMovie_year,
+		func(ctx context.Context) (any, error) {
+			return obj.Year, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SavedMovie_year(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SavedMovie",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SavedMovie_genre(ctx context.Context, field graphql.CollectedField, obj *model.SavedMovie) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SavedMovie_genre,
+		func(ctx context.Context) (any, error) {
+			return obj.Genre, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SavedMovie_genre(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SavedMovie",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SavedMovie_coverUrl(ctx context.Context, field graphql.CollectedField, obj *model.SavedMovie) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SavedMovie_coverUrl,
+		func(ctx context.Context) (any, error) {
+			return obj.CoverURL, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SavedMovie_coverUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SavedMovie",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2966,6 +3943,123 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputSaveAlbumInput(ctx context.Context, obj any) (model.SaveAlbumInput, error) {
+	var it model.SaveAlbumInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"artist", "album", "year", "label", "genre", "coverUrl"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "artist":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("artist"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Artist = data
+		case "album":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("album"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Album = data
+		case "year":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("year"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Year = data
+		case "label":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("label"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Label = data
+		case "genre":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("genre"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Genre = data
+		case "coverUrl":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("coverUrl"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CoverURL = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputSaveMovieInput(ctx context.Context, obj any) (model.SaveMovieInput, error) {
+	var it model.SaveMovieInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"title", "director", "year", "genre", "coverUrl"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
+		case "director":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("director"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Director = data
+		case "year":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("year"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Year = data
+		case "genre":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("genre"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Genre = data
+		case "coverUrl":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("coverUrl"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CoverURL = data
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -3130,6 +4224,62 @@ func (ec *executionContext) _MovieData(ctx context.Context, sel ast.SelectionSet
 	return out
 }
 
+var mutationImplementors = []string{"Mutation"}
+
+func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, mutationImplementors)
+	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
+		Object: "Mutation",
+	})
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		innerCtx := graphql.WithRootFieldContext(ctx, &graphql.RootFieldContext{
+			Object: field.Name,
+			Field:  field,
+		})
+
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Mutation")
+		case "saveMovie":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_saveMovie(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "saveAlbum":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_saveAlbum(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var queryImplementors = []string{"Query"}
 
 func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -3255,6 +4405,205 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var saveAlbumResponseImplementors = []string{"SaveAlbumResponse"}
+
+func (ec *executionContext) _SaveAlbumResponse(ctx context.Context, sel ast.SelectionSet, obj *model.SaveAlbumResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, saveAlbumResponseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SaveAlbumResponse")
+		case "success":
+			out.Values[i] = ec._SaveAlbumResponse_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "id":
+			out.Values[i] = ec._SaveAlbumResponse_id(ctx, field, obj)
+		case "album":
+			out.Values[i] = ec._SaveAlbumResponse_album(ctx, field, obj)
+		case "error":
+			out.Values[i] = ec._SaveAlbumResponse_error(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var saveMovieResponseImplementors = []string{"SaveMovieResponse"}
+
+func (ec *executionContext) _SaveMovieResponse(ctx context.Context, sel ast.SelectionSet, obj *model.SaveMovieResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, saveMovieResponseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SaveMovieResponse")
+		case "success":
+			out.Values[i] = ec._SaveMovieResponse_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "id":
+			out.Values[i] = ec._SaveMovieResponse_id(ctx, field, obj)
+		case "movie":
+			out.Values[i] = ec._SaveMovieResponse_movie(ctx, field, obj)
+		case "error":
+			out.Values[i] = ec._SaveMovieResponse_error(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var savedAlbumImplementors = []string{"SavedAlbum"}
+
+func (ec *executionContext) _SavedAlbum(ctx context.Context, sel ast.SelectionSet, obj *model.SavedAlbum) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, savedAlbumImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SavedAlbum")
+		case "id":
+			out.Values[i] = ec._SavedAlbum_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "artist":
+			out.Values[i] = ec._SavedAlbum_artist(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "album":
+			out.Values[i] = ec._SavedAlbum_album(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "year":
+			out.Values[i] = ec._SavedAlbum_year(ctx, field, obj)
+		case "label":
+			out.Values[i] = ec._SavedAlbum_label(ctx, field, obj)
+		case "genre":
+			out.Values[i] = ec._SavedAlbum_genre(ctx, field, obj)
+		case "coverUrl":
+			out.Values[i] = ec._SavedAlbum_coverUrl(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var savedMovieImplementors = []string{"SavedMovie"}
+
+func (ec *executionContext) _SavedMovie(ctx context.Context, sel ast.SelectionSet, obj *model.SavedMovie) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, savedMovieImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SavedMovie")
+		case "id":
+			out.Values[i] = ec._SavedMovie_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._SavedMovie_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "director":
+			out.Values[i] = ec._SavedMovie_director(ctx, field, obj)
+		case "year":
+			out.Values[i] = ec._SavedMovie_year(ctx, field, obj)
+		case "genre":
+			out.Values[i] = ec._SavedMovie_genre(ctx, field, obj)
+		case "coverUrl":
+			out.Values[i] = ec._SavedMovie_coverUrl(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3702,6 +5051,44 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
+func (ec *executionContext) unmarshalNSaveAlbumInput2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSaveAlbumInput(ctx context.Context, v any) (model.SaveAlbumInput, error) {
+	res, err := ec.unmarshalInputSaveAlbumInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSaveAlbumResponse2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSaveAlbumResponse(ctx context.Context, sel ast.SelectionSet, v model.SaveAlbumResponse) graphql.Marshaler {
+	return ec._SaveAlbumResponse(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSaveAlbumResponse2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSaveAlbumResponse(ctx context.Context, sel ast.SelectionSet, v *model.SaveAlbumResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SaveAlbumResponse(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNSaveMovieInput2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSaveMovieInput(ctx context.Context, v any) (model.SaveMovieInput, error) {
+	res, err := ec.unmarshalInputSaveMovieInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSaveMovieResponse2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSaveMovieResponse(ctx context.Context, sel ast.SelectionSet, v model.SaveMovieResponse) graphql.Marshaler {
+	return ec._SaveMovieResponse(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSaveMovieResponse2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSaveMovieResponse(ctx context.Context, sel ast.SelectionSet, v *model.SaveMovieResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SaveMovieResponse(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -4041,6 +5428,20 @@ func (ec *executionContext) marshalOMovieData2ᚖmediaclosetᚋapiᚋinternalᚋ
 		return graphql.Null
 	}
 	return ec._MovieData(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOSavedAlbum2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSavedAlbum(ctx context.Context, sel ast.SelectionSet, v *model.SavedAlbum) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._SavedAlbum(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOSavedMovie2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSavedMovie(ctx context.Context, sel ast.SelectionSet, v *model.SavedMovie) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._SavedMovie(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
