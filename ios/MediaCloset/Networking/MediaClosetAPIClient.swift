@@ -278,6 +278,86 @@ final class MediaClosetAPIClient {
         return response.movieByTitle
     }
 
+    /// Saves an album to the database (auto-fetches cover if not provided)
+    /// - Parameters:
+    ///   - artist: The artist name
+    ///   - album: The album title
+    ///   - year: Optional release year
+    ///   - label: Optional record label
+    ///   - genre: Optional genre
+    ///   - coverUrl: Optional cover URL (will be auto-fetched if not provided)
+    /// - Returns: SaveAlbumResponse with success status and saved album data
+    func saveAlbum(artist: String, album: String, year: Int? = nil, label: String? = nil, genre: String? = nil, coverUrl: String? = nil) async throws -> SaveAlbumResponse {
+        struct Response: Decodable {
+            let saveAlbum: SaveAlbumResponse
+        }
+
+        let query = """
+        mutation SaveAlbum($input: SaveAlbumInput!) {
+          saveAlbum(input: $input) {
+            success
+            album {
+              id
+              artist
+              album
+              year
+              label
+              genre
+              coverUrl
+            }
+            error
+          }
+        }
+        """
+
+        var input: [String: Any] = [
+            "artist": artist,
+            "album": album
+        ]
+        if let year = year {
+            input["year"] = year
+        }
+        if let label = label {
+            input["label"] = label
+        }
+        if let genre = genre {
+            input["genre"] = genre
+        }
+        if let coverUrl = coverUrl {
+            input["coverUrl"] = coverUrl
+        }
+
+        let variables: [String: Any] = ["input": input]
+
+        let response: Response = try await execute(
+            operationName: "SaveAlbum",
+            query: query,
+            variables: variables
+        )
+
+        return response.saveAlbum
+    }
+
+    /// Response from saveAlbum mutation
+    struct SaveAlbumResponse: Decodable {
+        let success: Bool
+        let album: SavedAlbum?
+        let error: String?
+    }
+
+    struct SavedAlbum: Decodable {
+        let id: Int
+        let artist: String
+        let album: String
+        let year: Int?
+        let label: String?
+        let genre: String?
+        let coverUrl: String?
+
+        // Convenience computed property for Swift naming conventions
+        var coverURL: String? { coverUrl }
+    }
+
     /// Fetches album metadata by artist and title
     /// - Parameters:
     ///   - artist: The artist name

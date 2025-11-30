@@ -76,7 +76,66 @@ func (r *mutationResolver) SaveMovie(ctx context.Context, input model.SaveMovieI
 
 // SaveAlbum is the resolver for the saveAlbum field.
 func (r *mutationResolver) SaveAlbum(ctx context.Context, input model.SaveAlbumInput) (*model.SaveAlbumResponse, error) {
-	panic(fmt.Errorf("not implemented: SaveAlbum - saveAlbum"))
+	// Get cover URL if not provided
+	coverURL := ""
+	if input.CoverURL != nil && *input.CoverURL != "" {
+		coverURL = *input.CoverURL
+	} else {
+		// Auto-fetch cover art from MusicBrainz
+		albumData, err := r.MusicBrainz.SearchAlbum(ctx, input.Artist, input.Album)
+		if err != nil {
+			// Log the error but don't fail the save
+			fmt.Printf("[SaveAlbum] Failed to fetch cover for '%s - %s': %v\n", input.Artist, input.Album, err)
+		} else if albumData != nil && albumData.CoverURL != nil {
+			coverURL = *albumData.CoverURL
+			fmt.Printf("[SaveAlbum] Auto-fetched cover for '%s - %s' from %s\n", input.Artist, input.Album, albumData.Source)
+		} else {
+			fmt.Printf("[SaveAlbum] No cover found for '%s - %s'\n", input.Artist, input.Album)
+		}
+	}
+
+	// Build record object for Hasura
+	record := map[string]interface{}{
+		"artist": input.Artist,
+		"album":  input.Album,
+	}
+
+	if input.Year != nil {
+		record["year"] = *input.Year
+	}
+	if input.Label != nil {
+		record["label"] = *input.Label
+	}
+	if input.Genre != nil {
+		record["genres"] = []string{*input.Genre}
+	}
+	if coverURL != "" {
+		record["cover_url"] = coverURL
+	}
+
+	// Save to Hasura
+	_, err := r.HasuraClient.InsertRecord(ctx, record)
+	if err != nil {
+		return &model.SaveAlbumResponse{
+			Success: false,
+			Error:   &[]string{fmt.Sprintf("Failed to save album: %v", err)}[0],
+		}, nil
+	}
+
+	// Return success response
+	// Note: Hasura returns UUID, but we're not using it in the response for now
+	return &model.SaveAlbumResponse{
+		Success: true,
+		Album: &model.SavedAlbum{
+			ID:       0, // ID not returned by Hasura
+			Artist:   input.Artist,
+			Album:    input.Album,
+			Year:     input.Year,
+			Label:    input.Label,
+			Genre:    input.Genre,
+			CoverURL: &coverURL,
+		},
+	}, nil
 }
 
 // MovieByTitle is the resolver for the movieByTitle field.

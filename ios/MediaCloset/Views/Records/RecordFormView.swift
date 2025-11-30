@@ -122,48 +122,50 @@ struct RecordFormView: View {
 
     func save() async {
         isSaving = true
-        
-        // Fetch album art URL from MusicBrainz (with 3-second timeout)
-        let coverUrl = await MusicBrainzService.fetchAlbumArtURL(
-            artist: artist,
-            album: album,
-            timeout: 3.0
-        )
-        
-        // Map UI -> snake_case object for Hasura
-        let trackObjects: [[String: Any]]? = tracks.isEmpty ? nil : tracks.map {
-            [
-                "title": $0.title,
-                "duration_sec": $0.durationSec as Any,
-                "track_no": $0.trackNo as Any
-            ]
-        }
-
-        let object: [String: Any] = [
-            "artist": artist,
-            "album": album,
-            "year": year as Any,
-            "color_variant": color.isEmpty ? NSNull() : color,
-            "genres": genres
-                .split(separator: ",")
-                .map { $0.trimmingCharacters(in: .whitespaces) },
-            "cover_url": coverUrl ?? NSNull(),
-            // Nested tracks insert
-            "tracks": trackObjects == nil ? NSNull() : [ "data": trackObjects! ]
-        ]
 
         do {
-            _ = try await GraphQLHTTPClient.shared.execute(
-                operationName: "InsertRecord",
-                query: GQL.insertRecord,
-                variables: ["object": object]
+            // Extract first genre if multiple are provided
+            let firstGenre = genres
+                .split(separator: ",")
+                .first?
+                .trimmingCharacters(in: .whitespaces)
+
+            // Use MediaCloset API to save the album (it will auto-fetch the cover)
+            let response = try await MediaClosetAPIClient.shared.saveAlbum(
+                artist: artist,
+                album: album,
+                year: year,
+                label: color.isEmpty ? nil : color,  // Using color field for label
+                genre: firstGenre
             )
-            onSaved()
-            dismiss()
+
+            if response.success {
+                #if DEBUG
+                print("[RecordFormView] Album saved successfully")
+                if let album = response.album {
+                    print("[RecordFormView] Saved album: \(album.artist) - \(album.album), coverUrl: \(album.coverUrl ?? "none")")
+                }
+                #endif
+
+                // TODO: Handle tracks separately - they're not part of the saveAlbum mutation yet
+                // For now, we're just saving the album without tracks
+                if !tracks.isEmpty {
+                    print("[RecordFormView] Warning: Tracks are not yet supported in saveAlbum mutation")
+                }
+
+                onSaved()
+                dismiss()
+            } else {
+                #if DEBUG
+                print("[RecordFormView] Save failed: \(response.error ?? "unknown error")")
+                #endif
+            }
         } catch {
-            print("save err", error)
+            #if DEBUG
+            print("[RecordFormView] Save error: \(error)")
+            #endif
         }
-        
+
         isSaving = false
     }
     
