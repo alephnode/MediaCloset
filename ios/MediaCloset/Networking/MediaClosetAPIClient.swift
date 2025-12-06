@@ -497,12 +497,14 @@ final class MediaClosetAPIClient {
         let album: String
         let year: Int?
         let label: String?
+        let color_variant: String?
         let genres: [String]?
         let coverUrl: String?
         let createdAt: String?
         let updatedAt: String?
 
         var coverURL: String? { coverUrl }
+        var colorVariant: String? { color_variant }
     }
 
     /// Fetches all movies from the database
@@ -550,6 +552,7 @@ final class MediaClosetAPIClient {
             album
             year
             label
+            color_variant
             genres
             coverUrl
             createdAt
@@ -616,6 +619,7 @@ final class MediaClosetAPIClient {
             album
             year
             label
+            color_variant
             genres
             coverUrl
             createdAt
@@ -731,6 +735,7 @@ final class MediaClosetAPIClient {
               album
               year
               label
+              color_variant
               genres
               coverUrl
               createdAt

@@ -178,6 +178,7 @@ type Album {
   album: String!
   year: Int
   label: String
+  color_variant: String
   genres: [String!]
   coverUrl: String
   createdAt: String

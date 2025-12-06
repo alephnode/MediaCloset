@@ -12,9 +12,9 @@ import (
 
 // HasuraClient handles requests to Hasura GraphQL API
 type HasuraClient struct {
-	client       *http.Client
-	endpoint     string
-	adminSecret  string
+	client      *http.Client
+	endpoint    string
+	adminSecret string
 }
 
 // NewHasuraClient creates a new Hasura client
@@ -229,6 +229,7 @@ func (h *HasuraClient) GetAllAlbums(ctx context.Context) ([]map[string]interface
 				album
 				year
 				label
+				color_variant
 				genres
 				cover_url
 				created_at
@@ -323,6 +324,7 @@ func (h *HasuraClient) GetAlbumByID(ctx context.Context, id string) (map[string]
 				album
 				year
 				label
+				color_variant
 				genres
 				cover_url
 				created_at
@@ -413,6 +415,7 @@ func (h *HasuraClient) UpdateAlbum(ctx context.Context, id string, updates map[s
 				album
 				year
 				label
+				color_variant
 				genres
 				cover_url
 				created_at

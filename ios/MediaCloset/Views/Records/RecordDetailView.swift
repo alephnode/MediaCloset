@@ -61,16 +61,22 @@ struct RecordDetailView: View {
                                 .foregroundStyle(.secondary)
                         }
 
-                        if let genres = obj["genres"] as? [String], !genres.isEmpty {
-                            Text(genres.joined(separator: ", "))
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
+                if let genres = obj["genres"] as? [String], !genres.isEmpty {
+                    Text(genres.joined(separator: ", "))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
 
-                        if let notes = obj["notes"] as? String, !notes.isEmpty {
-                            Text(notes)
-                                .padding(.top, 8)
-                        }
+                if let colorVariant = obj["color_variant"] as? String, !colorVariant.isEmpty {
+                    Text("Color: \(colorVariant)")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                if let notes = obj["notes"] as? String, !notes.isEmpty {
+                    Text(notes)
+                        .padding(.top, 8)
+                }
                     }
                     .padding(.horizontal, 16)
 
@@ -138,6 +144,9 @@ struct RecordDetailView: View {
                 }
                 if let genres = album.genres {
                     dict["genres"] = genres
+                }
+                if let colorVariant = album.colorVariant {
+                    dict["color_variant"] = colorVariant
                 }
                 if let coverURL = album.coverURL {
                     dict["cover_url"] = coverURL

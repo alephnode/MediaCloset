@@ -312,6 +312,9 @@ func (r *mutationResolver) UpdateAlbum(ctx context.Context, id string, input mod
 	if label, ok := albumData["label"].(string); ok {
 		album.Label = &label
 	}
+	if colorVariant, ok := albumData["color_variant"].(string); ok {
+		album.ColorVariant = &colorVariant
+	}
 	if genres, ok := albumData["genres"].([]interface{}); ok {
 		genreStrs := make([]string, 0, len(genres))
 		for _, g := range genres {
@@ -443,6 +446,9 @@ func (r *queryResolver) Album(ctx context.Context, id string) (*model.Album, err
 	if label, ok := albumData["label"].(string); ok {
 		album.Label = &label
 	}
+	if colorVariant, ok := albumData["color_variant"].(string); ok {
+		album.ColorVariant = &colorVariant
+	}
 	if genres, ok := albumData["genres"].([]interface{}); ok {
 		genreStrs := make([]string, 0, len(genres))
 		for _, g := range genres {
@@ -547,6 +553,9 @@ func (r *queryResolver) Albums(ctx context.Context) ([]*model.Album, error) {
 		}
 		if label, ok := a["label"].(string); ok {
 			album.Label = &label
+		}
+		if colorVariant, ok := a["color_variant"].(string); ok {
+			album.ColorVariant = &colorVariant
 		}
 		if genres, ok := a["genres"].([]interface{}); ok {
 			genreStrs := make([]string, 0, len(genres))

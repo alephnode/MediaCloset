@@ -3,15 +3,16 @@
 package model
 
 type Album struct {
-	ID        string   `json:"id"`
-	Artist    string   `json:"artist"`
-	Album     string   `json:"album"`
-	Year      *int     `json:"year,omitempty"`
-	Label     *string  `json:"label,omitempty"`
-	Genres    []string `json:"genres,omitempty"`
-	CoverURL  *string  `json:"coverUrl,omitempty"`
-	CreatedAt *string  `json:"createdAt,omitempty"`
-	UpdatedAt *string  `json:"updatedAt,omitempty"`
+	ID           string   `json:"id"`
+	Artist       string   `json:"artist"`
+	Album        string   `json:"album"`
+	Year         *int     `json:"year,omitempty"`
+	Label        *string  `json:"label,omitempty"`
+	ColorVariant *string  `json:"color_variant,omitempty"`
+	Genres       []string `json:"genres,omitempty"`
+	CoverURL     *string  `json:"coverUrl,omitempty"`
+	CreatedAt    *string  `json:"createdAt,omitempty"`
+	UpdatedAt    *string  `json:"updatedAt,omitempty"`
 }
 
 type AlbumData struct {
