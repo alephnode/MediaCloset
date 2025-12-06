@@ -50,8 +50,8 @@ func main() {
 		})
 	})
 
-	// API key authentication
-	r.Use(custommw.APIKeyAuth(cfg.APIKey))
+	// API key authentication (skipped for playground in development)
+	r.Use(custommw.APIKeyAuth(cfg.APIKey, cfg.IsDevelopment()))
 
 	// Rate limiting (100 requests per minute)
 	apiRateLimiter := custommw.NewRateLimiter()

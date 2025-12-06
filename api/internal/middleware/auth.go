@@ -6,12 +6,19 @@ import (
 	"strings"
 )
 
-// APIKeyAuth validates the X-API-Key header against the configured API key
-func APIKeyAuth(apiKey string) func(http.Handler) http.Handler {
+// APIKeyAuth validates the X-API-Key header against the configured API key.
+// In development mode, authentication is skipped for the GraphQL playground.
+func APIKeyAuth(apiKey string, isDevelopment bool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Allow health check without authentication
 			if r.URL.Path == "/health" {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			// In development mode, skip auth for playground and GraphQL queries
+			if isDevelopment {
 				next.ServeHTTP(w, r)
 				return
 			}

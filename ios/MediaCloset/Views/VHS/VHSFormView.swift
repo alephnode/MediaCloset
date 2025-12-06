@@ -46,7 +46,7 @@ struct VHSFormView: View {
             Section("Info") {
                 TextField("Title", text: $title)
                 TextField("Director", text: $director)
-                TextField("Year", value: $year, format: .number)
+                TextField("Year", value: $year, format: .number.grouping(.never))
                 TextField("Genre", text: $genre)
             }
             

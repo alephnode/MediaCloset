@@ -15,8 +15,8 @@ func TestAPIKeyAuth(t *testing.T) {
 		w.Write([]byte("OK"))
 	})
 
-	// Wrap with auth middleware
-	authMiddleware := APIKeyAuth(apiKey)
+	// Wrap with auth middleware (production mode - isDevelopment=false)
+	authMiddleware := APIKeyAuth(apiKey, false)
 	handler := authMiddleware(testHandler)
 
 	tests := []struct {
@@ -58,6 +58,70 @@ func TestAPIKeyAuth(t *testing.T) {
 			name:           "Case insensitive API key comparison",
 			path:           "/query",
 			apiKeyHeader:   "TEST-API-KEY-12345",
+			expectedStatus: http.StatusOK,
+			expectedBody:   "OK",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest("GET", tt.path, nil)
+			if tt.apiKeyHeader != "" {
+				req.Header.Set("X-API-Key", tt.apiKeyHeader)
+			}
+
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
+
+			if rr.Code != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, rr.Code)
+			}
+
+			if rr.Body.String() != tt.expectedBody {
+				t.Errorf("Expected body %q, got %q", tt.expectedBody, rr.Body.String())
+			}
+		})
+	}
+}
+
+func TestAPIKeyAuthDevelopmentMode(t *testing.T) {
+	apiKey := "test-api-key-12345"
+
+	// Create a test handler that just returns 200 OK
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
+
+	// Wrap with auth middleware (development mode - isDevelopment=true)
+	authMiddleware := APIKeyAuth(apiKey, true)
+	handler := authMiddleware(testHandler)
+
+	tests := []struct {
+		name           string
+		path           string
+		apiKeyHeader   string
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			name:           "Development mode should bypass auth for root path",
+			path:           "/",
+			apiKeyHeader:   "",
+			expectedStatus: http.StatusOK,
+			expectedBody:   "OK",
+		},
+		{
+			name:           "Development mode should bypass auth for /query",
+			path:           "/query",
+			apiKeyHeader:   "",
+			expectedStatus: http.StatusOK,
+			expectedBody:   "OK",
+		},
+		{
+			name:           "Development mode should still work with valid API key",
+			path:           "/query",
+			apiKeyHeader:   apiKey,
 			expectedStatus: http.StatusOK,
 			expectedBody:   "OK",
 		},
