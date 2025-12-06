@@ -5530,7 +5530,7 @@ func (ec *executionContext) unmarshalInputSaveAlbumInput(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"artist", "album", "year", "label", "genre", "coverUrl"}
+	fieldsInOrder := [...]string{"artist", "album", "year", "label", "color_variant", "genre", "coverUrl"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5565,6 +5565,13 @@ func (ec *executionContext) unmarshalInputSaveAlbumInput(ctx context.Context, ob
 				return it, err
 			}
 			it.Label = data
+		case "color_variant":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("color_variant"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ColorVariant = data
 		case "genre":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("genre"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -5647,7 +5654,7 @@ func (ec *executionContext) unmarshalInputUpdateAlbumInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"artist", "album", "year", "label", "genre", "coverUrl"}
+	fieldsInOrder := [...]string{"artist", "album", "year", "label", "color_variant", "genre", "coverUrl"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5682,6 +5689,13 @@ func (ec *executionContext) unmarshalInputUpdateAlbumInput(ctx context.Context, 
 				return it, err
 			}
 			it.Label = data
+		case "color_variant":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("color_variant"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ColorVariant = data
 		case "genre":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("genre"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
