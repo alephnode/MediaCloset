@@ -142,7 +142,8 @@ struct RecordFormView: View {
                 artist: artist,
                 album: album,
                 year: year,
-                label: color.isEmpty ? nil : color,  // Using color field for label
+                label: nil,
+                colorVariant: color.isEmpty ? nil : color,
                 genre: firstGenre
             )
 

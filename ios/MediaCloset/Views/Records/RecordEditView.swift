@@ -91,8 +91,8 @@ struct RecordEditView: View {
                 artist: artist,
                 album: album,
                 year: year,
-                colorVariant: colorVariant,
                 label: nil, // Not editable in this view
+                colorVariant: colorVariant.isEmpty ? nil : colorVariant,
                 genre: nil, // Using genres array instead
                 coverUrl: coverURL.isEmpty ? nil : coverURL
             )

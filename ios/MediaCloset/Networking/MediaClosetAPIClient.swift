@@ -295,10 +295,11 @@ final class MediaClosetAPIClient {
     ///   - album: The album title
     ///   - year: Optional release year
     ///   - label: Optional record label
+    ///   - colorVariant: Optional color variant
     ///   - genre: Optional genre
     ///   - coverUrl: Optional cover URL (will be auto-fetched if not provided)
     /// - Returns: SaveAlbumResponse with success status and saved album data
-    func saveAlbum(artist: String, album: String, year: Int? = nil, label: String? = nil, genre: String? = nil, coverUrl: String? = nil) async throws -> SaveAlbumResponse {
+    func saveAlbum(artist: String, album: String, year: Int? = nil, label: String? = nil, colorVariant: String? = nil, genre: String? = nil, coverUrl: String? = nil) async throws -> SaveAlbumResponse {
         struct Response: Decodable {
             let saveAlbum: SaveAlbumResponse
         }
@@ -330,6 +331,9 @@ final class MediaClosetAPIClient {
         }
         if let label = label {
             input["label"] = label
+        }
+        if let colorVariant = colorVariant {
+            input["color_variant"] = colorVariant
         }
         if let genre = genre {
             input["genre"] = genre

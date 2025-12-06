@@ -95,6 +95,7 @@ input SaveAlbumInput {
   album: String!
   year: Int
   label: String
+  color_variant: String
   genre: String
   coverUrl: String  # Optional - will be auto-fetched if missing
 }

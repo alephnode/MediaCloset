@@ -229,6 +229,9 @@ func (r *mutationResolver) SaveAlbum(ctx context.Context, input model.SaveAlbumI
 	if input.Label != nil {
 		record["label"] = *input.Label
 	}
+	if input.ColorVariant != nil {
+		record["color_variant"] = *input.ColorVariant
+	}
 	if input.Genre != nil {
 		record["genres"] = []string{*input.Genre}
 	}
