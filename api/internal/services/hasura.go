@@ -141,7 +141,7 @@ func (h *HasuraClient) InsertRecord(ctx context.Context, record map[string]inter
 				album
 				year
 				label
-				color_variant
+				color_variants
 				genres
 				cover_url
 			}
@@ -230,7 +230,7 @@ func (h *HasuraClient) GetAllAlbums(ctx context.Context) ([]map[string]interface
 				album
 				year
 				label
-				color_variant
+				color_variants
 				genres
 				cover_url
 				created_at
@@ -325,7 +325,7 @@ func (h *HasuraClient) GetAlbumByID(ctx context.Context, id string) (map[string]
 				album
 				year
 				label
-				color_variant
+				color_variants
 				genres
 				cover_url
 				created_at
@@ -416,7 +416,7 @@ func (h *HasuraClient) UpdateAlbum(ctx context.Context, id string, updates map[s
 				album
 				year
 				label
-				color_variant
+				color_variants
 				genres
 				cover_url
 				created_at

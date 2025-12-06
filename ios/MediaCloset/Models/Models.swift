@@ -5,7 +5,7 @@ struct RecordListItem: Identifiable, Hashable {
     let artist: String;
     let album: String;
     let year: Int?;
-    let colorVariant: String?;
+    let colorVariants: [String];
     let genres: [String];
     let coverUrl: String?
 }

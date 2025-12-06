@@ -295,11 +295,11 @@ final class MediaClosetAPIClient {
     ///   - album: The album title
     ///   - year: Optional release year
     ///   - label: Optional record label
-    ///   - colorVariant: Optional color variant
+    ///   - colorVariants: Optional color variants array
     ///   - genres: Optional genres array
     ///   - coverUrl: Optional cover URL (will be auto-fetched if not provided)
     /// - Returns: SaveAlbumResponse with success status and saved album data
-    func saveAlbum(artist: String, album: String, year: Int? = nil, label: String? = nil, colorVariant: String? = nil, genres: [String]? = nil, coverUrl: String? = nil) async throws -> SaveAlbumResponse {
+    func saveAlbum(artist: String, album: String, year: Int? = nil, label: String? = nil, colorVariants: [String]? = nil, genres: [String]? = nil, coverUrl: String? = nil) async throws -> SaveAlbumResponse {
         struct Response: Decodable {
             let saveAlbum: SaveAlbumResponse
         }
@@ -314,6 +314,7 @@ final class MediaClosetAPIClient {
               album
               year
               label
+              color_variants
               genres
               coverUrl
             }
@@ -332,8 +333,8 @@ final class MediaClosetAPIClient {
         if let label = label {
             input["label"] = label
         }
-        if let colorVariant = colorVariant {
-            input["color_variant"] = colorVariant
+        if let colorVariants = colorVariants, !colorVariants.isEmpty {
+            input["color_variants"] = colorVariants
         }
         if let genres = genres, !genres.isEmpty {
             input["genres"] = genres
@@ -366,11 +367,13 @@ final class MediaClosetAPIClient {
         let album: String
         let year: Int?
         let label: String?
+        let color_variants: [String]?
         let genres: [String]?
         let coverUrl: String?
 
         // Convenience computed property for Swift naming conventions
         var coverURL: String? { coverUrl }
+        var colorVariants: [String]? { color_variants }
     }
 
     /// Fetches album metadata by artist and title
@@ -501,14 +504,14 @@ final class MediaClosetAPIClient {
         let album: String
         let year: Int?
         let label: String?
-        let color_variant: String?
+        let color_variants: [String]?
         let genres: [String]?
         let coverUrl: String?
         let createdAt: String?
         let updatedAt: String?
 
         var coverURL: String? { coverUrl }
-        var colorVariant: String? { color_variant }
+        var colorVariants: [String]? { color_variants }
     }
 
     /// Fetches all movies from the database
@@ -556,7 +559,7 @@ final class MediaClosetAPIClient {
             album
             year
             label
-            color_variant
+            color_variants
             genres
             coverUrl
             createdAt
@@ -623,7 +626,7 @@ final class MediaClosetAPIClient {
             album
             year
             label
-            color_variant
+            color_variants
             genres
             coverUrl
             createdAt
@@ -721,11 +724,11 @@ final class MediaClosetAPIClient {
     ///   - album: Optional new album title
     ///   - year: Optional new year
     ///   - label: Optional new label
-    ///   - colorVariant: Optional new color variant
+    ///   - colorVariants: Optional new color variants array
     ///   - genres: Optional new genres array
     ///   - coverUrl: Optional new cover URL
     /// - Returns: UpdateAlbumResponse with success status and updated album data
-    func updateAlbum(id: String, artist: String? = nil, album: String? = nil, year: Int? = nil, label: String? = nil, colorVariant: String? = nil, genres: [String]? = nil, coverUrl: String? = nil) async throws -> UpdateAlbumResponse {
+    func updateAlbum(id: String, artist: String? = nil, album: String? = nil, year: Int? = nil, label: String? = nil, colorVariants: [String]? = nil, genres: [String]? = nil, coverUrl: String? = nil) async throws -> UpdateAlbumResponse {
         struct Response: Decodable {
             let updateAlbum: UpdateAlbumResponse
         }
@@ -740,7 +743,7 @@ final class MediaClosetAPIClient {
               album
               year
               label
-              color_variant
+              color_variants
               genres
               coverUrl
               createdAt
@@ -764,8 +767,8 @@ final class MediaClosetAPIClient {
         if let label = label {
             input["label"] = label
         }
-        if let colorVariant = colorVariant {
-            input["color_variant"] = colorVariant
+        if let colorVariants = colorVariants, !colorVariants.isEmpty {
+            input["color_variants"] = colorVariants
         }
         if let genres = genres, !genres.isEmpty {
             input["genres"] = genres

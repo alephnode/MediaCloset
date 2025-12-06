@@ -67,8 +67,8 @@ struct RecordDetailView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                if let colorVariant = obj["color_variant"] as? String, !colorVariant.isEmpty {
-                    Text("Color: \(colorVariant)")
+                if let colorVariants = obj["color_variants"] as? [String], !colorVariants.isEmpty {
+                    Text("Color: \(colorVariants.joined(separator: ", "))")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -145,8 +145,8 @@ struct RecordDetailView: View {
                 if let genres = album.genres {
                     dict["genres"] = genres
                 }
-                if let colorVariant = album.colorVariant {
-                    dict["color_variant"] = colorVariant
+                if let colorVariants = album.colorVariants {
+                    dict["color_variants"] = colorVariants
                 }
                 if let coverURL = album.coverURL {
                     dict["cover_url"] = coverURL

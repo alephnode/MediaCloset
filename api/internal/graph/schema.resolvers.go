@@ -229,8 +229,8 @@ func (r *mutationResolver) SaveAlbum(ctx context.Context, input model.SaveAlbumI
 	if input.Label != nil {
 		record["label"] = *input.Label
 	}
-	if input.ColorVariant != nil {
-		record["color_variant"] = *input.ColorVariant
+	if len(input.ColorVariants) > 0 {
+		record["color_variants"] = input.ColorVariants
 	}
 	if len(input.Genres) > 0 {
 		record["genres"] = input.Genres
@@ -253,13 +253,14 @@ func (r *mutationResolver) SaveAlbum(ctx context.Context, input model.SaveAlbumI
 	return &model.SaveAlbumResponse{
 		Success: true,
 		Album: &model.SavedAlbum{
-			ID:       0, // ID not returned by Hasura
-			Artist:   input.Artist,
-			Album:    input.Album,
-			Year:     input.Year,
-			Label:    input.Label,
-			Genres:   input.Genres,
-			CoverURL: &coverURL,
+			ID:            0, // ID not returned by Hasura
+			Artist:        input.Artist,
+			Album:         input.Album,
+			Year:          input.Year,
+			Label:         input.Label,
+			ColorVariants: input.ColorVariants,
+			Genres:        input.Genres,
+			CoverURL:      &coverURL,
 		},
 	}, nil
 }
@@ -281,8 +282,8 @@ func (r *mutationResolver) UpdateAlbum(ctx context.Context, id string, input mod
 	if input.Label != nil {
 		updates["label"] = *input.Label
 	}
-	if input.ColorVariant != nil {
-		updates["color_variant"] = *input.ColorVariant
+	if len(input.ColorVariants) > 0 {
+		updates["color_variants"] = input.ColorVariants
 	}
 	if len(input.Genres) > 0 {
 		updates["genres"] = input.Genres
@@ -318,8 +319,16 @@ func (r *mutationResolver) UpdateAlbum(ctx context.Context, id string, input mod
 	if label, ok := albumData["label"].(string); ok {
 		album.Label = &label
 	}
-	if colorVariant, ok := albumData["color_variant"].(string); ok {
-		album.ColorVariant = &colorVariant
+	if colorVariants, ok := albumData["color_variants"].([]interface{}); ok {
+		variantStrs := make([]string, 0, len(colorVariants))
+		for _, v := range colorVariants {
+			if variantStr, ok := v.(string); ok {
+				variantStrs = append(variantStrs, variantStr)
+			}
+		}
+		if len(variantStrs) > 0 {
+			album.ColorVariants = variantStrs
+		}
 	}
 	if genres, ok := albumData["genres"].([]interface{}); ok {
 		genreStrs := make([]string, 0, len(genres))
@@ -452,8 +461,16 @@ func (r *queryResolver) Album(ctx context.Context, id string) (*model.Album, err
 	if label, ok := albumData["label"].(string); ok {
 		album.Label = &label
 	}
-	if colorVariant, ok := albumData["color_variant"].(string); ok {
-		album.ColorVariant = &colorVariant
+	if colorVariants, ok := albumData["color_variants"].([]interface{}); ok {
+		variantStrs := make([]string, 0, len(colorVariants))
+		for _, v := range colorVariants {
+			if variantStr, ok := v.(string); ok {
+				variantStrs = append(variantStrs, variantStr)
+			}
+		}
+		if len(variantStrs) > 0 {
+			album.ColorVariants = variantStrs
+		}
 	}
 	if genres, ok := albumData["genres"].([]interface{}); ok {
 		genreStrs := make([]string, 0, len(genres))
@@ -560,8 +577,16 @@ func (r *queryResolver) Albums(ctx context.Context) ([]*model.Album, error) {
 		if label, ok := a["label"].(string); ok {
 			album.Label = &label
 		}
-		if colorVariant, ok := a["color_variant"].(string); ok {
-			album.ColorVariant = &colorVariant
+		if colorVariants, ok := a["color_variants"].([]interface{}); ok {
+			variantStrs := make([]string, 0, len(colorVariants))
+			for _, v := range colorVariants {
+				if variantStr, ok := v.(string); ok {
+					variantStrs = append(variantStrs, variantStr)
+				}
+			}
+			if len(variantStrs) > 0 {
+				album.ColorVariants = variantStrs
+			}
 		}
 		if genres, ok := a["genres"].([]interface{}); ok {
 			genreStrs := make([]string, 0, len(genres))

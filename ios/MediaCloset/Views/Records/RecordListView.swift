@@ -21,7 +21,7 @@ struct RecordListView: View {
                             VStack(alignment: .leading) {
                                 Text("\(item.artist)").font(.headline)
                                 Text("\(item.album)").font(.subheadline)
-                                Text([item.year?.description, item.colorVariant]
+                                Text([item.year?.description, item.colorVariants.isEmpty ? nil : item.colorVariants.joined(separator: ", ")]
                                      .compactMap { $0 }
                                      .joined(separator: " · "))
                                     .font(.subheadline)

@@ -19,7 +19,7 @@ enum GQL {
         offset: $offset,
         order_by: [{ artist: asc }, { year: asc }]
       ) {
-        id artist album year color_variant genres cover_url
+        id artist album year color_variants genres cover_url
       }
     }
     """
@@ -34,7 +34,7 @@ enum GQL {
         label
         catalog_number
         year
-        color_variant
+        color_variants
         genres
         country
         upc

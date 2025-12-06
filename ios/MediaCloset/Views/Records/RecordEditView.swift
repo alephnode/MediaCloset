@@ -16,7 +16,7 @@ struct RecordEditView: View {
     @State private var artist = ""
     @State private var album = ""
     @State private var year: Int? = nil
-    @State private var colorVariant = ""
+    @State private var colorVariantsCSV = ""   // comma-separated in the UI
     @State private var genresCSV = ""   // comma-separated in the UI
     @State private var notes = ""
     @State private var coverURL = ""
@@ -31,7 +31,7 @@ struct RecordEditView: View {
                     TextField("Artist", text: $artist)
                     TextField("Album", text: $album)
                     TextField("Year", value: $year, format: .number.grouping(.never))
-                    TextField("Color variant", text: $colorVariant)
+                    TextField("Color variants (comma-separated)", text: $colorVariantsCSV)
                 }
                 Section("Metadata") {
                     TextField("Genres (comma-separated)", text: $genresCSV)
@@ -69,7 +69,9 @@ struct RecordEditView: View {
             artist = record.artist
             album  = record.album
             year   = record.year
-            colorVariant = record.colorVariant ?? ""
+            if let colorVariants = record.colorVariants {
+                colorVariantsCSV = colorVariants.joined(separator: ", ")
+            }
             coverURL = record.coverURL ?? ""
             notes = "" // Not returned by API
             if let genres = record.genres {
@@ -85,7 +87,12 @@ struct RecordEditView: View {
         isSaving = true
         defer { isSaving = false }
 
-        // Convert comma-separated genres to array
+        // Convert comma-separated values to arrays
+        let colorVariantsArray: [String]? = colorVariantsCSV.isEmpty ? nil : colorVariantsCSV
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+
         let genresArray: [String]? = genresCSV.isEmpty ? nil : genresCSV
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespaces) }
@@ -98,7 +105,7 @@ struct RecordEditView: View {
                 album: album,
                 year: year,
                 label: nil, // Not editable in this view
-                colorVariant: colorVariant.isEmpty ? nil : colorVariant,
+                colorVariants: colorVariantsArray,
                 genres: genresArray,
                 coverUrl: coverURL.isEmpty ? nil : coverURL
             )

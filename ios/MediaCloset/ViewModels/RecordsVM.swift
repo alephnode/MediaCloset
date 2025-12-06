@@ -72,7 +72,7 @@ final class RecordsVM: ObservableObject {
                     artist: album.artist,
                     album: album.album,
                     year: album.year,
-                    colorVariant: album.colorVariant,
+                    colorVariants: album.colorVariants ?? [],
                     genres: album.genres ?? [],
                     coverUrl: album.coverURL
                 )

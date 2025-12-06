@@ -95,7 +95,7 @@ input SaveAlbumInput {
   album: String!
   year: Int
   label: String
-  color_variant: String
+  color_variants: [String!]
   genres: [String!]
   coverUrl: String  # Optional - will be auto-fetched if missing
 }
@@ -105,7 +105,7 @@ input UpdateAlbumInput {
   album: String
   year: Int
   label: String
-  color_variant: String
+  color_variants: [String!]
   genres: [String!]
   coverUrl: String
 }
@@ -158,6 +158,7 @@ type SavedAlbum {
   album: String!
   year: Int
   label: String
+  color_variants: [String!]
   genres: [String!]
   coverUrl: String
 }
@@ -180,7 +181,7 @@ type Album {
   album: String!
   year: Int
   label: String
-  color_variant: String
+  color_variants: [String!]
   genres: [String!]
   coverUrl: String
   createdAt: String

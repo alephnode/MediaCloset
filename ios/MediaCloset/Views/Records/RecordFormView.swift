@@ -11,7 +11,7 @@ struct RecordFormView: View {
     @State private var artist = ""
     @State private var album = ""
     @State private var year: Int? = nil
-    @State private var color = ""
+    @State private var colorVariants = ""
     @State private var genres = ""
     @State private var tracks: [TrackRow] = []
     @State private var isSaving = false
@@ -69,7 +69,7 @@ struct RecordFormView: View {
                     TextField("Artist", text: $artist)
                     TextField("Album", text: $album)
                     TextField("Year", value: $year, formatter: NumberFormatter())
-                    TextField("Color variant (e.g. Clear)", text: $color)
+                    TextField("Color variants (comma-separated, e.g. Clear, Red)", text: $colorVariants)
                     TextField("Genres (comma-separated)", text: $genres)
                 }
                 Section("Tracks") {
@@ -131,7 +131,12 @@ struct RecordFormView: View {
         isSaving = true
 
         do {
-            // Convert comma-separated genres to array
+            // Convert comma-separated values to arrays
+            let colorVariantsArray: [String]? = colorVariants.isEmpty ? nil : colorVariants
+                .split(separator: ",")
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+                .filter { !$0.isEmpty }
+
             let genresArray: [String]? = genres.isEmpty ? nil : genres
                 .split(separator: ",")
                 .map { $0.trimmingCharacters(in: .whitespaces) }
@@ -143,7 +148,7 @@ struct RecordFormView: View {
                 album: album,
                 year: year,
                 label: nil,
-                colorVariant: color.isEmpty ? nil : color,
+                colorVariants: colorVariantsArray,
                 genres: genresArray
             )
 
@@ -219,10 +224,7 @@ struct RecordFormView: View {
                     year = fetchedYear
                     fieldsPopulated += 1
                 }
-                if let fetchedLabel = albumData.label, color.isEmpty {
-                    color = fetchedLabel // Using color field for label info
-                    fieldsPopulated += 1
-                }
+                // Note: barcode lookup doesn't provide color variant info
                 if let fetchedGenres = albumData.genres, genres.isEmpty {
                     genres = fetchedGenres.joined(separator: ", ")
                     fieldsPopulated += 1
