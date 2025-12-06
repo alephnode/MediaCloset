@@ -41,8 +41,6 @@ struct VHSListView: View {
             .searchable(text: $searchText)
             .onChange(of: searchText) { _, newValue in
                 vm.search = newValue
-            }
-            .onSubmit(of: .search) {
                 Task { await vm.load() }
             }
             .overlay { 

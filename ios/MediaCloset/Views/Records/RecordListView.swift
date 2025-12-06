@@ -44,8 +44,8 @@ struct RecordListView: View {
                 }
             }
             .searchable(text: $searchText)
-            .onSubmit(of: .search) {
-                vm.search = searchText
+            .onChange(of: searchText) { _, newValue in
+                vm.search = newValue
                 Task { await vm.load() }
             }
             .overlay { 
