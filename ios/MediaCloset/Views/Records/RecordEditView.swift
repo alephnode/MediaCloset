@@ -85,6 +85,12 @@ struct RecordEditView: View {
         isSaving = true
         defer { isSaving = false }
 
+        // Convert comma-separated genres to array
+        let genresArray: [String]? = genresCSV.isEmpty ? nil : genresCSV
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+
         do {
             let response = try await MediaClosetAPIClient.shared.updateAlbum(
                 id: recordId,
@@ -93,7 +99,7 @@ struct RecordEditView: View {
                 year: year,
                 label: nil, // Not editable in this view
                 colorVariant: colorVariant.isEmpty ? nil : colorVariant,
-                genre: nil, // Using genres array instead
+                genres: genresArray,
                 coverUrl: coverURL.isEmpty ? nil : coverURL
             )
 

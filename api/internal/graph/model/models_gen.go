@@ -65,13 +65,13 @@ type Query struct {
 }
 
 type SaveAlbumInput struct {
-	Artist       string  `json:"artist"`
-	Album        string  `json:"album"`
-	Year         *int    `json:"year,omitempty"`
-	Label        *string `json:"label,omitempty"`
-	ColorVariant *string `json:"color_variant,omitempty"`
-	Genre        *string `json:"genre,omitempty"`
-	CoverURL     *string `json:"coverUrl,omitempty"`
+	Artist       string   `json:"artist"`
+	Album        string   `json:"album"`
+	Year         *int     `json:"year,omitempty"`
+	Label        *string  `json:"label,omitempty"`
+	ColorVariant *string  `json:"color_variant,omitempty"`
+	Genres       []string `json:"genres,omitempty"`
+	CoverURL     *string  `json:"coverUrl,omitempty"`
 }
 
 type SaveAlbumResponse struct {
@@ -97,13 +97,13 @@ type SaveMovieResponse struct {
 }
 
 type SavedAlbum struct {
-	ID       int     `json:"id"`
-	Artist   string  `json:"artist"`
-	Album    string  `json:"album"`
-	Year     *int    `json:"year,omitempty"`
-	Label    *string `json:"label,omitempty"`
-	Genre    *string `json:"genre,omitempty"`
-	CoverURL *string `json:"coverUrl,omitempty"`
+	ID       int      `json:"id"`
+	Artist   string   `json:"artist"`
+	Album    string   `json:"album"`
+	Year     *int     `json:"year,omitempty"`
+	Label    *string  `json:"label,omitempty"`
+	Genres   []string `json:"genres,omitempty"`
+	CoverURL *string  `json:"coverUrl,omitempty"`
 }
 
 type SavedMovie struct {
@@ -122,13 +122,13 @@ type TrackData struct {
 }
 
 type UpdateAlbumInput struct {
-	Artist       *string `json:"artist,omitempty"`
-	Album        *string `json:"album,omitempty"`
-	Year         *int    `json:"year,omitempty"`
-	Label        *string `json:"label,omitempty"`
-	ColorVariant *string `json:"color_variant,omitempty"`
-	Genre        *string `json:"genre,omitempty"`
-	CoverURL     *string `json:"coverUrl,omitempty"`
+	Artist       *string  `json:"artist,omitempty"`
+	Album        *string  `json:"album,omitempty"`
+	Year         *int     `json:"year,omitempty"`
+	Label        *string  `json:"label,omitempty"`
+	ColorVariant *string  `json:"color_variant,omitempty"`
+	Genres       []string `json:"genres,omitempty"`
+	CoverURL     *string  `json:"coverUrl,omitempty"`
 }
 
 type UpdateAlbumResponse struct {

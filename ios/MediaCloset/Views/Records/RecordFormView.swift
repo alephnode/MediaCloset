@@ -131,11 +131,11 @@ struct RecordFormView: View {
         isSaving = true
 
         do {
-            // Extract first genre if multiple are provided
-            let firstGenre = genres
+            // Convert comma-separated genres to array
+            let genresArray: [String]? = genres.isEmpty ? nil : genres
                 .split(separator: ",")
-                .first?
-                .trimmingCharacters(in: .whitespaces)
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+                .filter { !$0.isEmpty }
 
             // Use MediaCloset API to save the album (it will auto-fetch the cover)
             let response = try await MediaClosetAPIClient.shared.saveAlbum(
@@ -144,7 +144,7 @@ struct RecordFormView: View {
                 year: year,
                 label: nil,
                 colorVariant: color.isEmpty ? nil : color,
-                genre: firstGenre
+                genres: genresArray
             )
 
             if response.success {

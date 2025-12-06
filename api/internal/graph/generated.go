@@ -142,7 +142,7 @@ type ComplexityRoot struct {
 		Album    func(childComplexity int) int
 		Artist   func(childComplexity int) int
 		CoverURL func(childComplexity int) int
-		Genre    func(childComplexity int) int
+		Genres   func(childComplexity int) int
 		ID       func(childComplexity int) int
 		Label    func(childComplexity int) int
 		Year     func(childComplexity int) int
@@ -669,12 +669,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.SavedAlbum.CoverURL(childComplexity), true
-	case "SavedAlbum.genre":
-		if e.complexity.SavedAlbum.Genre == nil {
+	case "SavedAlbum.genres":
+		if e.complexity.SavedAlbum.Genres == nil {
 			break
 		}
 
-		return e.complexity.SavedAlbum.Genre(childComplexity), true
+		return e.complexity.SavedAlbum.Genres(childComplexity), true
 	case "SavedAlbum.id":
 		if e.complexity.SavedAlbum.ID == nil {
 			break
@@ -3229,8 +3229,8 @@ func (ec *executionContext) fieldContext_SaveAlbumResponse_album(_ context.Conte
 				return ec.fieldContext_SavedAlbum_year(ctx, field)
 			case "label":
 				return ec.fieldContext_SavedAlbum_label(ctx, field)
-			case "genre":
-				return ec.fieldContext_SavedAlbum_genre(ctx, field)
+			case "genres":
+				return ec.fieldContext_SavedAlbum_genres(ctx, field)
 			case "coverUrl":
 				return ec.fieldContext_SavedAlbum_coverUrl(ctx, field)
 			}
@@ -3544,23 +3544,23 @@ func (ec *executionContext) fieldContext_SavedAlbum_label(_ context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _SavedAlbum_genre(ctx context.Context, field graphql.CollectedField, obj *model.SavedAlbum) (ret graphql.Marshaler) {
+func (ec *executionContext) _SavedAlbum_genres(ctx context.Context, field graphql.CollectedField, obj *model.SavedAlbum) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_SavedAlbum_genre,
+		ec.fieldContext_SavedAlbum_genres,
 		func(ctx context.Context) (any, error) {
-			return obj.Genre, nil
+			return obj.Genres, nil
 		},
 		nil,
-		ec.marshalOString2ᚖstring,
+		ec.marshalOString2ᚕstringᚄ,
 		true,
 		false,
 	)
 }
 
-func (ec *executionContext) fieldContext_SavedAlbum_genre(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_SavedAlbum_genres(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SavedAlbum",
 		Field:      field,
@@ -5530,7 +5530,7 @@ func (ec *executionContext) unmarshalInputSaveAlbumInput(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"artist", "album", "year", "label", "color_variant", "genre", "coverUrl"}
+	fieldsInOrder := [...]string{"artist", "album", "year", "label", "color_variant", "genres", "coverUrl"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5572,13 +5572,13 @@ func (ec *executionContext) unmarshalInputSaveAlbumInput(ctx context.Context, ob
 				return it, err
 			}
 			it.ColorVariant = data
-		case "genre":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("genre"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+		case "genres":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("genres"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Genre = data
+			it.Genres = data
 		case "coverUrl":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("coverUrl"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -5654,7 +5654,7 @@ func (ec *executionContext) unmarshalInputUpdateAlbumInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"artist", "album", "year", "label", "color_variant", "genre", "coverUrl"}
+	fieldsInOrder := [...]string{"artist", "album", "year", "label", "color_variant", "genres", "coverUrl"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5696,13 +5696,13 @@ func (ec *executionContext) unmarshalInputUpdateAlbumInput(ctx context.Context, 
 				return it, err
 			}
 			it.ColorVariant = data
-		case "genre":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("genre"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+		case "genres":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("genres"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Genre = data
+			it.Genres = data
 		case "coverUrl":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("coverUrl"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -6529,8 +6529,8 @@ func (ec *executionContext) _SavedAlbum(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = ec._SavedAlbum_year(ctx, field, obj)
 		case "label":
 			out.Values[i] = ec._SavedAlbum_label(ctx, field, obj)
-		case "genre":
-			out.Values[i] = ec._SavedAlbum_genre(ctx, field, obj)
+		case "genres":
+			out.Values[i] = ec._SavedAlbum_genres(ctx, field, obj)
 		case "coverUrl":
 			out.Values[i] = ec._SavedAlbum_coverUrl(ctx, field, obj)
 		default:

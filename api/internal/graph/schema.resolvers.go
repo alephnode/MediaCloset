@@ -232,8 +232,8 @@ func (r *mutationResolver) SaveAlbum(ctx context.Context, input model.SaveAlbumI
 	if input.ColorVariant != nil {
 		record["color_variant"] = *input.ColorVariant
 	}
-	if input.Genre != nil {
-		record["genres"] = []string{*input.Genre}
+	if len(input.Genres) > 0 {
+		record["genres"] = input.Genres
 	}
 	if coverURL != "" {
 		record["cover_url"] = coverURL
@@ -258,7 +258,7 @@ func (r *mutationResolver) SaveAlbum(ctx context.Context, input model.SaveAlbumI
 			Album:    input.Album,
 			Year:     input.Year,
 			Label:    input.Label,
-			Genre:    input.Genre,
+			Genres:   input.Genres,
 			CoverURL: &coverURL,
 		},
 	}, nil
@@ -284,8 +284,8 @@ func (r *mutationResolver) UpdateAlbum(ctx context.Context, id string, input mod
 	if input.ColorVariant != nil {
 		updates["color_variant"] = *input.ColorVariant
 	}
-	if input.Genre != nil {
-		updates["genres"] = []string{*input.Genre}
+	if len(input.Genres) > 0 {
+		updates["genres"] = input.Genres
 	}
 	if input.CoverURL != nil {
 		updates["cover_url"] = *input.CoverURL
