@@ -22,7 +22,7 @@ MediaCloset/
 ### Technology Stack
 
 **Backend (Go API):**
-- Go 1.21+
+- Go 1.24+
 - GraphQL (gqlgen)
 - External APIs: OMDB, MusicBrainz, Discogs, iTunes
 - Hasura GraphQL Engine (database layer)
@@ -51,9 +51,6 @@ The backend API server that acts as a proxy and business logic layer between the
 ```bash
 cd api
 
-# Install dependencies
-go mod download
-
 # Set up environment variables
 cp .env.example .env
 # Edit .env with your API keys:
@@ -62,17 +59,23 @@ cp .env.example .env
 # - HASURA_ENDPOINT
 # - HASURA_ADMIN_SECRET
 
-# Run tests
-go test ./...
-
-# Build
-go build -o bin/server ./cmd/server
-
-# Run
-./bin/server
+# Run the server
+make run
 # Server will start on http://localhost:8080
 # GraphQL playground: http://localhost:8080/
 ```
+
+> 💡 **Tip:** A `Makefile` is provided for common development workflows. Run `make help` to see all available commands.
+
+**Common Make Commands:**
+
+| Command | Description |
+|---------|-------------|
+| `make run` | Run the server |
+| `make build` | Build the binary to `./bin/server` |
+| `make test` | Run all tests |
+| `make generate` | Regenerate GraphQL code |
+| `make help` | Show all available commands |
 
 **Environment Variables:**
 - `OMDB_API_KEY` - API key for OMDB movie database
@@ -127,7 +130,7 @@ open MediaCloset.xcodeproj
    cd api
    cp .env.example .env
    # Edit .env with your API keys
-   go run ./cmd/server
+   make run
    ```
 
 2. **Configure iOS app:**
@@ -275,8 +278,8 @@ mutation {
 **Go API:**
 ```bash
 cd api
-go test ./...
-go test ./internal/services -v  # Verbose output
+make test              # Run all tests
+make test-coverage     # Run tests with coverage report
 ```
 
 ### Building for Production
@@ -284,8 +287,8 @@ go test ./internal/services -v  # Verbose output
 **Go API:**
 ```bash
 cd api
-go build -o bin/server ./cmd/server
-./bin/server
+make build      # Build binary to ./bin/server
+./bin/server    # Run the built binary
 ```
 
 **iOS App:**
