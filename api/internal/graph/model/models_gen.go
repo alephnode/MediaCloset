@@ -121,12 +121,13 @@ type TrackData struct {
 }
 
 type UpdateAlbumInput struct {
-	Artist   *string `json:"artist,omitempty"`
-	Album    *string `json:"album,omitempty"`
-	Year     *int    `json:"year,omitempty"`
-	Label    *string `json:"label,omitempty"`
-	Genre    *string `json:"genre,omitempty"`
-	CoverURL *string `json:"coverUrl,omitempty"`
+	Artist       *string `json:"artist,omitempty"`
+	Album        *string `json:"album,omitempty"`
+	Year         *int    `json:"year,omitempty"`
+	Label        *string `json:"label,omitempty"`
+	ColorVariant *string `json:"color_variant,omitempty"`
+	Genre        *string `json:"genre,omitempty"`
+	CoverURL     *string `json:"coverUrl,omitempty"`
 }
 
 type UpdateAlbumResponse struct {

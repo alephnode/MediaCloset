@@ -278,6 +278,9 @@ func (r *mutationResolver) UpdateAlbum(ctx context.Context, id string, input mod
 	if input.Label != nil {
 		updates["label"] = *input.Label
 	}
+	if input.ColorVariant != nil {
+		updates["color_variant"] = *input.ColorVariant
+	}
 	if input.Genre != nil {
 		updates["genre"] = *input.Genre
 	}

@@ -717,10 +717,11 @@ final class MediaClosetAPIClient {
     ///   - album: Optional new album title
     ///   - year: Optional new year
     ///   - label: Optional new label
+    ///   - colorVariant: Optional new color variant
     ///   - genre: Optional new genre
     ///   - coverUrl: Optional new cover URL
     /// - Returns: UpdateAlbumResponse with success status and updated album data
-    func updateAlbum(id: String, artist: String? = nil, album: String? = nil, year: Int? = nil, label: String? = nil, genre: String? = nil, coverUrl: String? = nil) async throws -> UpdateAlbumResponse {
+    func updateAlbum(id: String, artist: String? = nil, album: String? = nil, year: Int? = nil, label: String? = nil, colorVariant: String? = nil, genre: String? = nil, coverUrl: String? = nil) async throws -> UpdateAlbumResponse {
         struct Response: Decodable {
             let updateAlbum: UpdateAlbumResponse
         }
@@ -758,6 +759,9 @@ final class MediaClosetAPIClient {
         }
         if let label = label {
             input["label"] = label
+        }
+        if let colorVariant = colorVariant {
+            input["color_variant"] = colorVariant
         }
         if let genre = genre {
             input["genre"] = genre

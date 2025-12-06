@@ -69,7 +69,7 @@ struct RecordEditView: View {
             artist = record.artist
             album  = record.album
             year   = record.year
-            colorVariant = "" // Not returned by API
+            colorVariant = record.colorVariant ?? ""
             coverURL = record.coverURL ?? ""
             notes = "" // Not returned by API
             if let genres = record.genres {
@@ -91,6 +91,7 @@ struct RecordEditView: View {
                 artist: artist,
                 album: album,
                 year: year,
+                colorVariant: colorVariant,
                 label: nil, // Not editable in this view
                 genre: nil, // Using genres array instead
                 coverUrl: coverURL.isEmpty ? nil : coverURL

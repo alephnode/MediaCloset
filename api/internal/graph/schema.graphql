@@ -104,6 +104,7 @@ input UpdateAlbumInput {
   album: String
   year: Int
   label: String
+  color_variant: String
   genre: String
   coverUrl: String
 }
