@@ -11,16 +11,17 @@ type Config struct {
 	Port        string
 	Environment string
 
-	// Hasura
 	HasuraEndpoint    string
 	HasuraAdminSecret string
 
-	// API Keys
-	APIKey          string // API key for client authentication
-	OMDBAPIKey      string
-	DiscogsKey      string
-	DiscogsSecret   string
-	LastFMAPIKey    string
+	APIKey        string // API key for client authentication (legacy, can be removed later)
+	OMDBAPIKey    string
+	DiscogsKey    string
+	DiscogsSecret string
+	LastFMAPIKey  string
+
+	// Auth
+	JWTSecret string // Secret key for JWT token signing
 
 	// Feature flags
 	EnableCache     bool
@@ -35,7 +36,6 @@ func Load() *Config {
 	viper.AddConfigPath("..")
 	viper.AddConfigPath("../..")
 
-	// Set defaults
 	viper.SetDefault("PORT", "8080")
 	viper.SetDefault("ENVIRONMENT", "development")
 	viper.SetDefault("ENABLE_CACHE", false)
@@ -60,11 +60,11 @@ func Load() *Config {
 		DiscogsKey:        viper.GetString("DISCOGS_CONSUMER_KEY"),
 		DiscogsSecret:     viper.GetString("DISCOGS_CONSUMER_SECRET"),
 		LastFMAPIKey:      viper.GetString("LASTFM_API_KEY"),
+		JWTSecret:         viper.GetString("JWT_SECRET"),
 		EnableCache:       viper.GetBool("ENABLE_CACHE"),
 		EnableRateLimit:   viper.GetBool("ENABLE_RATE_LIMIT"),
 	}
 
-	// Validate required keys
 	if cfg.APIKey == "" {
 		log.Fatal("API_KEY is required")
 	}
@@ -76,6 +76,9 @@ func Load() *Config {
 	}
 	if cfg.HasuraAdminSecret == "" {
 		log.Fatal("HASURA_ADMIN_SECRET is required")
+	}
+	if cfg.JWTSecret == "" {
+		log.Fatal("JWT_SECRET is required")
 	}
 
 	log.Printf("Config loaded: environment=%s, port=%s", cfg.Environment, cfg.Port)

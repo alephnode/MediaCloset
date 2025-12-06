@@ -20,6 +20,7 @@ type Resolver struct {
 	ITunes          *services.ITunesService
 	BarcodeService  *services.BarcodeService
 	HasuraClient    *services.HasuraClient
+	AuthService     *services.AuthService
 	RateLimiter     *ratelimit.ServiceLimiter
 	ServerStartTime time.Time
 }

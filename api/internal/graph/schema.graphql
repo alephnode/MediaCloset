@@ -12,15 +12,27 @@ type Query {
   albumByBarcode(barcode: String!): AlbumData
   album(id: String!): Album  # Get album by ID
 
-  # List all movies/albums from database
+  # List all movies/albums from database (filtered by authenticated user)
   movies: [Movie!]!
   albums: [Album!]!
+
+  # User info
+  me: User  # Get current authenticated user
+  user(id: String!): User  # Get user by ID
+
+  # Get movies/albums for a specific user
+  userMovies(userId: String!): [Movie!]!
+  userAlbums(userId: String!): [Album!]!
 
   # Health check
   health: Health!
 }
 
 type Mutation {
+  # Authentication
+  requestLoginCode(email: String!): RequestLoginCodeResponse!
+  verifyLoginCode(email: String!, code: String!): VerifyLoginCodeResponse!
+
   # Save movie/VHS (auto-fetches poster if missing)
   saveMovie(input: SaveMovieInput!): SaveMovieResponse!
 
@@ -163,7 +175,18 @@ type SavedAlbum {
   coverUrl: String
 }
 
+# User type
+type User {
+  id: String!
+  email: String!
+  createdAt: String!
+  updatedAt: String!
+  movies: [Movie!]!  # Movies in this user's collection
+  albums: [Album!]!  # Albums in this user's collection
+}
+
 # Database list types (from Hasura queries)
+# Movies and Albums are shared entities - multiple users can have the same movie/album in their collection
 type Movie {
   id: String!  # UUID from Hasura
   title: String!
@@ -186,4 +209,18 @@ type Album {
   coverUrl: String
   createdAt: String
   updatedAt: String
+}
+
+# Auth response types
+type RequestLoginCodeResponse {
+  success: Boolean!
+  message: String!
+  error: String
+}
+
+type VerifyLoginCodeResponse {
+  success: Boolean!
+  token: String
+  user: User
+  error: String
 }

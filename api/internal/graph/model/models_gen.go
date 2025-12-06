@@ -64,6 +64,12 @@ type Mutation struct {
 type Query struct {
 }
 
+type RequestLoginCodeResponse struct {
+	Success bool    `json:"success"`
+	Message string  `json:"message"`
+	Error   *string `json:"error,omitempty"`
+}
+
 type SaveAlbumInput struct {
 	Artist        string   `json:"artist"`
 	Album         string   `json:"album"`
@@ -149,5 +155,21 @@ type UpdateMovieInput struct {
 type UpdateMovieResponse struct {
 	Success bool    `json:"success"`
 	Movie   *Movie  `json:"movie,omitempty"`
+	Error   *string `json:"error,omitempty"`
+}
+
+type User struct {
+	ID        string   `json:"id"`
+	Email     string   `json:"email"`
+	CreatedAt string   `json:"createdAt"`
+	UpdatedAt string   `json:"updatedAt"`
+	Movies    []*Movie `json:"movies"`
+	Albums    []*Album `json:"albums"`
+}
+
+type VerifyLoginCodeResponse struct {
+	Success bool    `json:"success"`
+	Token   *string `json:"token,omitempty"`
+	User    *User   `json:"user,omitempty"`
 	Error   *string `json:"error,omitempty"`
 }

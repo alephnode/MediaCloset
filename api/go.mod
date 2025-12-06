@@ -7,6 +7,7 @@ toolchain go1.24.10
 require (
 	github.com/99designs/gqlgen v0.17.84
 	github.com/go-chi/chi/v5 v5.2.3
+	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/spf13/viper v1.21.0
 	github.com/vektah/gqlparser/v2 v2.5.31
 	golang.org/x/time v0.14.0

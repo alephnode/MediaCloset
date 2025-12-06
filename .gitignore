@@ -173,6 +173,7 @@ Notes
 # ----------------------------
 # Binaries
 api/bin/
+api/server
 api/*.exe
 api/*.dll
 api/*.so

@@ -9,11 +9,81 @@ import (
 	"context"
 	"fmt"
 	"mediacloset/api/internal/graph/model"
+	custommw "mediacloset/api/internal/middleware"
 	"time"
 )
 
+// RequestLoginCode is the resolver for the requestLoginCode field.
+func (r *mutationResolver) RequestLoginCode(ctx context.Context, email string) (*model.RequestLoginCodeResponse, error) {
+	// Validate email format (basic check)
+	if email == "" {
+		return &model.RequestLoginCodeResponse{
+			Success: false,
+			Error:   &[]string{"Email is required"}[0],
+		}, nil
+	}
+
+	err := r.AuthService.RequestLoginCode(ctx, email)
+	if err != nil {
+		return &model.RequestLoginCodeResponse{
+			Success: false,
+			Error:   &[]string{fmt.Sprintf("Failed to request login code: %v", err)}[0],
+		}, nil
+	}
+
+	return &model.RequestLoginCodeResponse{
+		Success: true,
+		Message: "Login code sent to your email",
+	}, nil
+}
+
+// VerifyLoginCode is the resolver for the verifyLoginCode field.
+func (r *mutationResolver) VerifyLoginCode(ctx context.Context, email string, code string) (*model.VerifyLoginCodeResponse, error) {
+	// Validate inputs
+	if email == "" {
+		return &model.VerifyLoginCodeResponse{
+			Success: false,
+			Error:   &[]string{"Email is required"}[0],
+		}, nil
+	}
+	if code == "" {
+		return &model.VerifyLoginCodeResponse{
+			Success: false,
+			Error:   &[]string{"Code is required"}[0],
+		}, nil
+	}
+
+	token, user, err := r.AuthService.VerifyLoginCode(ctx, email, code)
+	if err != nil {
+		return &model.VerifyLoginCodeResponse{
+			Success: false,
+			Error:   &[]string{err.Error()}[0],
+		}, nil
+	}
+
+	return &model.VerifyLoginCodeResponse{
+		Success: true,
+		Token:   &token,
+		User: &model.User{
+			ID:        user.ID,
+			Email:     user.Email,
+			CreatedAt: user.CreatedAt.Format(time.RFC3339),
+			UpdatedAt: user.UpdatedAt.Format(time.RFC3339),
+		},
+	}, nil
+}
+
 // SaveMovie is the resolver for the saveMovie field.
 func (r *mutationResolver) SaveMovie(ctx context.Context, input model.SaveMovieInput) (*model.SaveMovieResponse, error) {
+	// Check authentication
+	userInfo, ok := custommw.GetUserFromContext(ctx)
+	if !ok {
+		return &model.SaveMovieResponse{
+			Success: false,
+			Error:   &[]string{"Authentication required"}[0],
+		}, nil
+	}
+
 	// Validate required fields
 	if input.Title == "" {
 		return &model.SaveMovieResponse{
@@ -51,30 +121,57 @@ func (r *mutationResolver) SaveMovie(ctx context.Context, input model.SaveMovieI
 		}
 	}
 
-	// Build VHS object for Hasura
-	vhs := map[string]interface{}{
-		"title": input.Title,
-	}
-
-	if input.Director != nil {
-		vhs["director"] = *input.Director
-	}
-	if input.Year != nil {
-		vhs["year"] = *input.Year
-	}
-	if input.Genre != nil {
-		vhs["genre"] = *input.Genre
-	}
-	if coverURL != "" {
-		vhs["cover_url"] = coverURL
-	}
-
-	// Save to Hasura
-	_, err := r.HasuraClient.InsertVHS(ctx, vhs)
+	// Check if movie already exists (many-to-many: don't duplicate movies)
+	var vhsID string
+	existingMovie, err := r.HasuraClient.FindMovieByTitle(ctx, input.Title, input.Director, input.Year)
 	if err != nil {
 		return &model.SaveMovieResponse{
 			Success: false,
-			Error:   &[]string{fmt.Sprintf("Failed to save movie: %v", err)}[0],
+			Error:   &[]string{fmt.Sprintf("Failed to check for existing movie: %v", err)}[0],
+		}, nil
+	}
+
+	if existingMovie != nil {
+		// Movie exists, use its ID
+		if id, ok := existingMovie["id"].(string); ok {
+			vhsID = id
+		}
+	} else {
+		// Movie doesn't exist, create it
+		vhs := map[string]interface{}{
+			"title": input.Title,
+		}
+
+		if input.Director != nil {
+			vhs["director"] = *input.Director
+		}
+		if input.Year != nil {
+			vhs["year"] = *input.Year
+		}
+		if input.Genre != nil {
+			vhs["genre"] = *input.Genre
+		}
+		if coverURL != "" {
+			vhs["cover_url"] = coverURL
+		}
+
+		// Create the movie
+		createdID, err := r.HasuraClient.InsertVHS(ctx, vhs)
+		if err != nil {
+			return &model.SaveMovieResponse{
+				Success: false,
+				Error:   &[]string{fmt.Sprintf("Failed to create movie: %v", err)}[0],
+			}, nil
+		}
+		vhsID = createdID
+	}
+
+	// Link movie to user via junction table (many-to-many)
+	err = r.HasuraClient.LinkMovieToUser(ctx, userInfo.UserID, vhsID)
+	if err != nil {
+		return &model.SaveMovieResponse{
+			Success: false,
+			Error:   &[]string{fmt.Sprintf("Failed to add movie to collection: %v", err)}[0],
 		}, nil
 	}
 
@@ -95,6 +192,45 @@ func (r *mutationResolver) SaveMovie(ctx context.Context, input model.SaveMovieI
 
 // UpdateMovie is the resolver for the updateMovie field.
 func (r *mutationResolver) UpdateMovie(ctx context.Context, id string, input model.UpdateMovieInput) (*model.UpdateMovieResponse, error) {
+	// Check authentication
+	userInfo, ok := custommw.GetUserFromContext(ctx)
+	if !ok {
+		return &model.UpdateMovieResponse{
+			Success: false,
+			Error:   &[]string{"Authentication required"}[0],
+		}, nil
+	}
+
+	// Verify ownership via junction table
+	owns, err := r.HasuraClient.CheckMovieOwnership(ctx, userInfo.UserID, id)
+	if err != nil {
+		return &model.UpdateMovieResponse{
+			Success: false,
+			Error:   &[]string{fmt.Sprintf("Failed to check ownership: %v", err)}[0],
+		}, nil
+	}
+	if !owns {
+		return &model.UpdateMovieResponse{
+			Success: false,
+			Error:   &[]string{"Not authorized to update this movie"}[0],
+		}, nil
+	}
+
+	// Get movie for response
+	movie, err := r.HasuraClient.GetMovieByID(ctx, id)
+	if err != nil {
+		return &model.UpdateMovieResponse{
+			Success: false,
+			Error:   &[]string{fmt.Sprintf("Failed to fetch movie: %v", err)}[0],
+		}, nil
+	}
+	if movie == nil {
+		return &model.UpdateMovieResponse{
+			Success: false,
+			Error:   &[]string{"Movie not found"}[0],
+		}, nil
+	}
+
 	// Build updates map
 	updates := make(map[string]interface{})
 
@@ -124,42 +260,67 @@ func (r *mutationResolver) UpdateMovie(ctx context.Context, id string, input mod
 	}
 
 	// Convert to model.Movie
-	movie := &model.Movie{}
+	movieModel := &model.Movie{}
 	if movieID, ok := movieData["id"].(string); ok {
-		movie.ID = movieID
+		movieModel.ID = movieID
 	}
 	if title, ok := movieData["title"].(string); ok {
-		movie.Title = title
+		movieModel.Title = title
 	}
 	if director, ok := movieData["director"].(string); ok {
-		movie.Director = &director
+		movieModel.Director = &director
 	}
 	if year, ok := movieData["year"].(float64); ok {
 		yearInt := int(year)
-		movie.Year = &yearInt
+		movieModel.Year = &yearInt
 	}
 	if genre, ok := movieData["genre"].(string); ok {
-		movie.Genre = &genre
+		movieModel.Genre = &genre
 	}
 	if coverURL, ok := movieData["cover_url"].(string); ok {
-		movie.CoverURL = &coverURL
+		movieModel.CoverURL = &coverURL
 	}
 	if createdAt, ok := movieData["created_at"].(string); ok {
-		movie.CreatedAt = &createdAt
+		movieModel.CreatedAt = &createdAt
 	}
 	if updatedAt, ok := movieData["updated_at"].(string); ok {
-		movie.UpdatedAt = &updatedAt
+		movieModel.UpdatedAt = &updatedAt
 	}
 
 	return &model.UpdateMovieResponse{
 		Success: true,
-		Movie:   movie,
+		Movie:   movieModel,
 	}, nil
 }
 
 // DeleteMovie is the resolver for the deleteMovie field.
 func (r *mutationResolver) DeleteMovie(ctx context.Context, id string) (*model.DeleteResponse, error) {
-	err := r.HasuraClient.DeleteMovie(ctx, id)
+	// Check authentication
+	userInfo, ok := custommw.GetUserFromContext(ctx)
+	if !ok {
+		return &model.DeleteResponse{
+			Success: false,
+			Error:   &[]string{"Authentication required"}[0],
+		}, nil
+	}
+
+	// Verify ownership via junction table
+	owns, err := r.HasuraClient.CheckMovieOwnership(ctx, userInfo.UserID, id)
+	if err != nil {
+		return &model.DeleteResponse{
+			Success: false,
+			Error:   &[]string{fmt.Sprintf("Failed to check ownership: %v", err)}[0],
+		}, nil
+	}
+	if !owns {
+		return &model.DeleteResponse{
+			Success: false,
+			Error:   &[]string{"Not authorized to remove this movie from your collection"}[0],
+		}, nil
+	}
+
+	// Remove from user's collection (unlink, don't delete the movie itself)
+	err = r.HasuraClient.UnlinkMovieFromUser(ctx, userInfo.UserID, id)
 	if err != nil {
 		return &model.DeleteResponse{
 			Success: false,
@@ -174,6 +335,15 @@ func (r *mutationResolver) DeleteMovie(ctx context.Context, id string) (*model.D
 
 // SaveAlbum is the resolver for the saveAlbum field.
 func (r *mutationResolver) SaveAlbum(ctx context.Context, input model.SaveAlbumInput) (*model.SaveAlbumResponse, error) {
+	// Check authentication
+	userInfo, ok := custommw.GetUserFromContext(ctx)
+	if !ok {
+		return &model.SaveAlbumResponse{
+			Success: false,
+			Error:   &[]string{"Authentication required"}[0],
+		}, nil
+	}
+
 	// Validate required fields
 	if input.Artist == "" {
 		return &model.SaveAlbumResponse{
@@ -217,34 +387,61 @@ func (r *mutationResolver) SaveAlbum(ctx context.Context, input model.SaveAlbumI
 		}
 	}
 
-	// Build record object for Hasura
-	record := map[string]interface{}{
-		"artist": input.Artist,
-		"album":  input.Album,
-	}
-
-	if input.Year != nil {
-		record["year"] = *input.Year
-	}
-	if input.Label != nil {
-		record["label"] = *input.Label
-	}
-	if len(input.ColorVariants) > 0 {
-		record["color_variants"] = input.ColorVariants
-	}
-	if len(input.Genres) > 0 {
-		record["genres"] = input.Genres
-	}
-	if coverURL != "" {
-		record["cover_url"] = coverURL
-	}
-
-	// Save to Hasura
-	_, err := r.HasuraClient.InsertRecord(ctx, record)
+	// Check if record already exists (many-to-many: don't duplicate albums)
+	var recordID string
+	existingRecord, err := r.HasuraClient.FindRecordByArtistAlbum(ctx, input.Artist, input.Album)
 	if err != nil {
 		return &model.SaveAlbumResponse{
 			Success: false,
-			Error:   &[]string{fmt.Sprintf("Failed to save album: %v", err)}[0],
+			Error:   &[]string{fmt.Sprintf("Failed to check for existing album: %v", err)}[0],
+		}, nil
+	}
+
+	if existingRecord != nil {
+		// Record exists, use its ID
+		if id, ok := existingRecord["id"].(string); ok {
+			recordID = id
+		}
+	} else {
+		// Record doesn't exist, create it
+		record := map[string]interface{}{
+			"artist": input.Artist,
+			"album":  input.Album,
+		}
+
+		if input.Year != nil {
+			record["year"] = *input.Year
+		}
+		if input.Label != nil {
+			record["label"] = *input.Label
+		}
+		if len(input.ColorVariants) > 0 {
+			record["color_variants"] = input.ColorVariants
+		}
+		if len(input.Genres) > 0 {
+			record["genres"] = input.Genres
+		}
+		if coverURL != "" {
+			record["cover_url"] = coverURL
+		}
+
+		// Create the record
+		createdID, err := r.HasuraClient.InsertRecord(ctx, record)
+		if err != nil {
+			return &model.SaveAlbumResponse{
+				Success: false,
+				Error:   &[]string{fmt.Sprintf("Failed to create album: %v", err)}[0],
+			}, nil
+		}
+		recordID = createdID
+	}
+
+	// Link record to user via junction table (many-to-many)
+	err = r.HasuraClient.LinkRecordToUser(ctx, userInfo.UserID, recordID)
+	if err != nil {
+		return &model.SaveAlbumResponse{
+			Success: false,
+			Error:   &[]string{fmt.Sprintf("Failed to add album to collection: %v", err)}[0],
 		}, nil
 	}
 
@@ -267,6 +464,45 @@ func (r *mutationResolver) SaveAlbum(ctx context.Context, input model.SaveAlbumI
 
 // UpdateAlbum is the resolver for the updateAlbum field.
 func (r *mutationResolver) UpdateAlbum(ctx context.Context, id string, input model.UpdateAlbumInput) (*model.UpdateAlbumResponse, error) {
+	// Check authentication
+	userInfo, ok := custommw.GetUserFromContext(ctx)
+	if !ok {
+		return &model.UpdateAlbumResponse{
+			Success: false,
+			Error:   &[]string{"Authentication required"}[0],
+		}, nil
+	}
+
+	// Verify ownership via junction table
+	owns, err := r.HasuraClient.CheckRecordOwnership(ctx, userInfo.UserID, id)
+	if err != nil {
+		return &model.UpdateAlbumResponse{
+			Success: false,
+			Error:   &[]string{fmt.Sprintf("Failed to check ownership: %v", err)}[0],
+		}, nil
+	}
+	if !owns {
+		return &model.UpdateAlbumResponse{
+			Success: false,
+			Error:   &[]string{"Not authorized to update this album"}[0],
+		}, nil
+	}
+
+	// Get album for response
+	album, err := r.HasuraClient.GetAlbumByID(ctx, id)
+	if err != nil {
+		return &model.UpdateAlbumResponse{
+			Success: false,
+			Error:   &[]string{fmt.Sprintf("Failed to fetch album: %v", err)}[0],
+		}, nil
+	}
+	if album == nil {
+		return &model.UpdateAlbumResponse{
+			Success: false,
+			Error:   &[]string{"Album not found"}[0],
+		}, nil
+	}
+
 	// Build updates map
 	updates := make(map[string]interface{})
 
@@ -302,22 +538,22 @@ func (r *mutationResolver) UpdateAlbum(ctx context.Context, id string, input mod
 	}
 
 	// Convert to model.Album
-	album := &model.Album{}
+	albumModel := &model.Album{}
 	if albumID, ok := albumData["id"].(string); ok {
-		album.ID = albumID
+		albumModel.ID = albumID
 	}
 	if artist, ok := albumData["artist"].(string); ok {
-		album.Artist = artist
+		albumModel.Artist = artist
 	}
 	if albumName, ok := albumData["album"].(string); ok {
-		album.Album = albumName
+		albumModel.Album = albumName
 	}
 	if year, ok := albumData["year"].(float64); ok {
 		yearInt := int(year)
-		album.Year = &yearInt
+		albumModel.Year = &yearInt
 	}
 	if label, ok := albumData["label"].(string); ok {
-		album.Label = &label
+		albumModel.Label = &label
 	}
 	if colorVariants, ok := albumData["color_variants"].([]interface{}); ok {
 		variantStrs := make([]string, 0, len(colorVariants))
@@ -327,7 +563,7 @@ func (r *mutationResolver) UpdateAlbum(ctx context.Context, id string, input mod
 			}
 		}
 		if len(variantStrs) > 0 {
-			album.ColorVariants = variantStrs
+			albumModel.ColorVariants = variantStrs
 		}
 	}
 	if genres, ok := albumData["genres"].([]interface{}); ok {
@@ -338,28 +574,53 @@ func (r *mutationResolver) UpdateAlbum(ctx context.Context, id string, input mod
 			}
 		}
 		if len(genreStrs) > 0 {
-			album.Genres = genreStrs
+			albumModel.Genres = genreStrs
 		}
 	}
 	if coverURL, ok := albumData["cover_url"].(string); ok {
-		album.CoverURL = &coverURL
+		albumModel.CoverURL = &coverURL
 	}
 	if createdAt, ok := albumData["created_at"].(string); ok {
-		album.CreatedAt = &createdAt
+		albumModel.CreatedAt = &createdAt
 	}
 	if updatedAt, ok := albumData["updated_at"].(string); ok {
-		album.UpdatedAt = &updatedAt
+		albumModel.UpdatedAt = &updatedAt
 	}
 
 	return &model.UpdateAlbumResponse{
 		Success: true,
-		Album:   album,
+		Album:   albumModel,
 	}, nil
 }
 
 // DeleteAlbum is the resolver for the deleteAlbum field.
 func (r *mutationResolver) DeleteAlbum(ctx context.Context, id string) (*model.DeleteResponse, error) {
-	err := r.HasuraClient.DeleteAlbum(ctx, id)
+	// Check authentication
+	userInfo, ok := custommw.GetUserFromContext(ctx)
+	if !ok {
+		return &model.DeleteResponse{
+			Success: false,
+			Error:   &[]string{"Authentication required"}[0],
+		}, nil
+	}
+
+	// Verify ownership via junction table
+	owns, err := r.HasuraClient.CheckRecordOwnership(ctx, userInfo.UserID, id)
+	if err != nil {
+		return &model.DeleteResponse{
+			Success: false,
+			Error:   &[]string{fmt.Sprintf("Failed to check ownership: %v", err)}[0],
+		}, nil
+	}
+	if !owns {
+		return &model.DeleteResponse{
+			Success: false,
+			Error:   &[]string{"Not authorized to remove this album from your collection"}[0],
+		}, nil
+	}
+
+	// Remove from user's collection (unlink, don't delete the album itself)
+	err = r.HasuraClient.UnlinkRecordFromUser(ctx, userInfo.UserID, id)
 	if err != nil {
 		return &model.DeleteResponse{
 			Success: false,
@@ -384,12 +645,27 @@ func (r *queryResolver) MovieByBarcode(ctx context.Context, barcode string) (*mo
 
 // Movie is the resolver for the movie field.
 func (r *queryResolver) Movie(ctx context.Context, id string) (*model.Movie, error) {
+	// Check authentication
+	userInfo, ok := custommw.GetUserFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("authentication required")
+	}
+
 	movieData, err := r.HasuraClient.GetMovieByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch movie: %w", err)
 	}
 	if movieData == nil {
 		return nil, nil
+	}
+
+	// Check ownership via junction table
+	owns, err := r.HasuraClient.CheckMovieOwnership(ctx, userInfo.UserID, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check ownership: %w", err)
+	}
+	if !owns {
+		return nil, fmt.Errorf("movie not found in your collection")
 	}
 
 	// Convert to model.Movie
@@ -435,12 +711,27 @@ func (r *queryResolver) AlbumByBarcode(ctx context.Context, barcode string) (*mo
 
 // Album is the resolver for the album field.
 func (r *queryResolver) Album(ctx context.Context, id string) (*model.Album, error) {
+	// Check authentication
+	userInfo, ok := custommw.GetUserFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("authentication required")
+	}
+
 	albumData, err := r.HasuraClient.GetAlbumByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch album: %w", err)
 	}
 	if albumData == nil {
 		return nil, nil
+	}
+
+	// Check ownership via junction table
+	owns, err := r.HasuraClient.CheckRecordOwnership(ctx, userInfo.UserID, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check ownership: %w", err)
+	}
+	if !owns {
+		return nil, fmt.Errorf("album not found in your collection")
 	}
 
 	// Convert to model.Album
@@ -498,8 +789,14 @@ func (r *queryResolver) Album(ctx context.Context, id string) (*model.Album, err
 
 // Movies is the resolver for the movies field.
 func (r *queryResolver) Movies(ctx context.Context) ([]*model.Movie, error) {
-	// Fetch all movies from Hasura
-	moviesData, err := r.HasuraClient.GetAllMovies(ctx)
+	// Check authentication
+	userInfo, ok := custommw.GetUserFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("authentication required")
+	}
+
+	// Fetch movies for this user from Hasura
+	moviesData, err := r.HasuraClient.GetMoviesByUserID(ctx, userInfo.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch movies: %w", err)
 	}
@@ -541,14 +838,20 @@ func (r *queryResolver) Movies(ctx context.Context) ([]*model.Movie, error) {
 		movies = append(movies, movie)
 	}
 
-	fmt.Printf("[Movies] Fetched %d movies from Hasura\n", len(movies))
+	fmt.Printf("[Movies] Fetched %d movies from Hasura for user %s\n", len(movies), userInfo.UserID)
 	return movies, nil
 }
 
 // Albums is the resolver for the albums field.
 func (r *queryResolver) Albums(ctx context.Context) ([]*model.Album, error) {
-	// Fetch all albums from Hasura
-	albumsData, err := r.HasuraClient.GetAllAlbums(ctx)
+	// Check authentication
+	userInfo, ok := custommw.GetUserFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("authentication required")
+	}
+
+	// Fetch albums for this user from Hasura
+	albumsData, err := r.HasuraClient.GetAlbumsByUserID(ctx, userInfo.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch albums: %w", err)
 	}
@@ -612,7 +915,169 @@ func (r *queryResolver) Albums(ctx context.Context) ([]*model.Album, error) {
 		albums = append(albums, album)
 	}
 
-	fmt.Printf("[Albums] Fetched %d albums from Hasura\n", len(albums))
+	fmt.Printf("[Albums] Fetched %d albums from Hasura for user %s\n", len(albums), userInfo.UserID)
+	return albums, nil
+}
+
+// Me is the resolver for the me field.
+func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
+	// Get user from context
+	userInfo, ok := custommw.GetUserFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("not authenticated")
+	}
+
+	// Fetch full user details
+	user, err := r.AuthService.GetUserByID(ctx, userInfo.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch user: %w", err)
+	}
+	if user == nil {
+		return nil, fmt.Errorf("user not found")
+	}
+
+	return &model.User{
+		ID:        user.ID,
+		Email:     user.Email,
+		CreatedAt: user.CreatedAt.Format(time.RFC3339),
+		UpdatedAt: user.UpdatedAt.Format(time.RFC3339),
+	}, nil
+}
+
+// User is the resolver for the user field.
+func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error) {
+	// Fetch user by ID
+	user, err := r.AuthService.GetUserByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch user: %w", err)
+	}
+	if user == nil {
+		return nil, nil
+	}
+
+	return &model.User{
+		ID:        user.ID,
+		Email:     user.Email,
+		CreatedAt: user.CreatedAt.Format(time.RFC3339),
+		UpdatedAt: user.UpdatedAt.Format(time.RFC3339),
+	}, nil
+}
+
+// UserMovies is the resolver for the userMovies field.
+func (r *queryResolver) UserMovies(ctx context.Context, userID string) ([]*model.Movie, error) {
+	// Fetch movies for the specified user
+	moviesData, err := r.HasuraClient.GetMoviesByUserID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch movies: %w", err)
+	}
+
+	// Convert to model.Movie
+	movies := make([]*model.Movie, 0, len(moviesData))
+	for _, m := range moviesData {
+		movie := &model.Movie{}
+
+		// Required fields
+		if id, ok := m["id"].(string); ok {
+			movie.ID = id
+		}
+		if title, ok := m["title"].(string); ok {
+			movie.Title = title
+		}
+
+		// Optional fields
+		if director, ok := m["director"].(string); ok {
+			movie.Director = &director
+		}
+		if year, ok := m["year"].(float64); ok {
+			yearInt := int(year)
+			movie.Year = &yearInt
+		}
+		if genre, ok := m["genre"].(string); ok {
+			movie.Genre = &genre
+		}
+		if coverURL, ok := m["cover_url"].(string); ok {
+			movie.CoverURL = &coverURL
+		}
+		if createdAt, ok := m["created_at"].(string); ok {
+			movie.CreatedAt = &createdAt
+		}
+		if updatedAt, ok := m["updated_at"].(string); ok {
+			movie.UpdatedAt = &updatedAt
+		}
+
+		movies = append(movies, movie)
+	}
+
+	return movies, nil
+}
+
+// UserAlbums is the resolver for the userAlbums field.
+func (r *queryResolver) UserAlbums(ctx context.Context, userID string) ([]*model.Album, error) {
+	// Fetch albums for the specified user
+	albumsData, err := r.HasuraClient.GetAlbumsByUserID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch albums: %w", err)
+	}
+
+	// Convert to model.Album
+	albums := make([]*model.Album, 0, len(albumsData))
+	for _, a := range albumsData {
+		album := &model.Album{}
+
+		// Required fields
+		if id, ok := a["id"].(string); ok {
+			album.ID = id
+		}
+		if artist, ok := a["artist"].(string); ok {
+			album.Artist = artist
+		}
+		if albumName, ok := a["album"].(string); ok {
+			album.Album = albumName
+		}
+
+		// Optional fields
+		if year, ok := a["year"].(float64); ok {
+			yearInt := int(year)
+			album.Year = &yearInt
+		}
+		if label, ok := a["label"].(string); ok {
+			album.Label = &label
+		}
+		if colorVariants, ok := a["color_variants"].([]interface{}); ok {
+			variantStrs := make([]string, 0, len(colorVariants))
+			for _, v := range colorVariants {
+				if variantStr, ok := v.(string); ok {
+					variantStrs = append(variantStrs, variantStr)
+				}
+			}
+			if len(variantStrs) > 0 {
+				album.ColorVariants = variantStrs
+			}
+		}
+		if genres, ok := a["genres"].([]interface{}); ok {
+			genreStrs := make([]string, 0, len(genres))
+			for _, g := range genres {
+				if genreStr, ok := g.(string); ok {
+					genreStrs = append(genreStrs, genreStr)
+				}
+			}
+			if len(genreStrs) > 0 {
+				album.Genres = genreStrs
+			}
+		}
+		if coverURL, ok := a["cover_url"].(string); ok {
+			album.CoverURL = &coverURL
+		}
+		if createdAt, ok := a["created_at"].(string); ok {
+			album.CreatedAt = &createdAt
+		}
+		if updatedAt, ok := a["updated_at"].(string); ok {
+			album.UpdatedAt = &updatedAt
+		}
+
+		albums = append(albums, album)
+	}
+
 	return albums, nil
 }
 
@@ -634,3 +1099,128 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+/*
+	func (r *userResolver) Movies(ctx context.Context, obj *model.User) ([]*model.Movie, error) {
+	// Fetch movies for this user
+	moviesData, err := r.HasuraClient.GetMoviesByUserID(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch movies: %w", err)
+	}
+
+	// Convert to model.Movie
+	movies := make([]*model.Movie, 0, len(moviesData))
+	for _, m := range moviesData {
+		movie := &model.Movie{}
+
+		// Required fields
+		if id, ok := m["id"].(string); ok {
+			movie.ID = id
+		}
+		if title, ok := m["title"].(string); ok {
+			movie.Title = title
+		}
+
+		// Optional fields
+		if director, ok := m["director"].(string); ok {
+			movie.Director = &director
+		}
+		if year, ok := m["year"].(float64); ok {
+			yearInt := int(year)
+			movie.Year = &yearInt
+		}
+		if genre, ok := m["genre"].(string); ok {
+			movie.Genre = &genre
+		}
+		if coverURL, ok := m["cover_url"].(string); ok {
+			movie.CoverURL = &coverURL
+		}
+		if createdAt, ok := m["created_at"].(string); ok {
+			movie.CreatedAt = &createdAt
+		}
+		if updatedAt, ok := m["updated_at"].(string); ok {
+			movie.UpdatedAt = &updatedAt
+		}
+
+		movies = append(movies, movie)
+	}
+
+	return movies, nil
+}
+func (r *userResolver) Albums(ctx context.Context, obj *model.User) ([]*model.Album, error) {
+	// Fetch albums for this user
+	albumsData, err := r.HasuraClient.GetAlbumsByUserID(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch albums: %w", err)
+	}
+
+	// Convert to model.Album
+	albums := make([]*model.Album, 0, len(albumsData))
+	for _, a := range albumsData {
+		album := &model.Album{}
+
+		// Required fields
+		if id, ok := a["id"].(string); ok {
+			album.ID = id
+		}
+		if artist, ok := a["artist"].(string); ok {
+			album.Artist = artist
+		}
+		if albumName, ok := a["album"].(string); ok {
+			album.Album = albumName
+		}
+
+		// Optional fields
+		if year, ok := a["year"].(float64); ok {
+			yearInt := int(year)
+			album.Year = &yearInt
+		}
+		if label, ok := a["label"].(string); ok {
+			album.Label = &label
+		}
+		if colorVariants, ok := a["color_variants"].([]interface{}); ok {
+			variantStrs := make([]string, 0, len(colorVariants))
+			for _, v := range colorVariants {
+				if variantStr, ok := v.(string); ok {
+					variantStrs = append(variantStrs, variantStr)
+				}
+			}
+			if len(variantStrs) > 0 {
+				album.ColorVariants = variantStrs
+			}
+		}
+		if genres, ok := a["genres"].([]interface{}); ok {
+			genreStrs := make([]string, 0, len(genres))
+			for _, g := range genres {
+				if genreStr, ok := g.(string); ok {
+					genreStrs = append(genreStrs, genreStr)
+				}
+			}
+			if len(genreStrs) > 0 {
+				album.Genres = genreStrs
+			}
+		}
+		if coverURL, ok := a["cover_url"].(string); ok {
+			album.CoverURL = &coverURL
+		}
+		if createdAt, ok := a["created_at"].(string); ok {
+			album.CreatedAt = &createdAt
+		}
+		if updatedAt, ok := a["updated_at"].(string); ok {
+			album.UpdatedAt = &updatedAt
+		}
+
+		albums = append(albums, album)
+	}
+
+	return albums, nil
+}
+func (r *Resolver) User() UserResolver { return &userResolver{r} }
+type userResolver struct{ *Resolver }
+*/

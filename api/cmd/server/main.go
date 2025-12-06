@@ -23,20 +23,17 @@ var startTime = time.Now()
 func main() {
 	log.Println("Starting MediaCloset GraphQL API...")
 
-	// Load configuration
 	cfg := config.Load()
 
-	// Create router
 	r := chi.NewRouter()
 
-	// Middleware
+	// Middleware block
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))
 
-	// CORS middleware (allow iOS app to connect)
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -50,14 +47,12 @@ func main() {
 		})
 	})
 
-	// API key authentication (skipped for playground in development)
+	// API key authentication for clients
 	r.Use(custommw.APIKeyAuth(cfg.APIKey, cfg.IsDevelopment()))
 
-	// Rate limiting (100 requests per minute)
 	apiRateLimiter := custommw.NewRateLimiter()
 	r.Use(apiRateLimiter.Middleware())
 
-	// Initialize services
 	rateLimiter := ratelimit.NewServiceLimiter()
 	omdbService := services.NewOMDBService(cfg.OMDBAPIKey)
 	musicBrainzService := services.NewMusicBrainzService(rateLimiter)
@@ -70,8 +65,11 @@ func main() {
 		omdbService,
 	)
 	hasuraClient := services.NewHasuraClient(cfg.HasuraEndpoint, cfg.HasuraAdminSecret)
+	authService := services.NewAuthService(hasuraClient, cfg.JWTSecret)
 
-	// Create GraphQL server
+	// JWT authentication middleware (user authentication)
+	r.Use(custommw.JWTAuth(authService))
+
 	resolver := &graph.Resolver{
 		Config:          cfg,
 		OMDBService:     omdbService,
@@ -80,21 +78,19 @@ func main() {
 		ITunes:          itunesService,
 		BarcodeService:  barcodeService,
 		HasuraClient:    hasuraClient,
+		AuthService:     authService,
 		RateLimiter:     rateLimiter,
 		ServerStartTime: startTime,
 	}
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
 
-	// GraphQL playground (development only)
 	if cfg.IsDevelopment() {
 		r.Handle("/", playground.Handler("MediaCloset GraphQL", "/query"))
 		log.Println("GraphQL playground available at http://localhost:" + cfg.Port + "/")
 	}
 
-	// GraphQL endpoint
 	r.Handle("/query", srv)
 
-	// Health check
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		uptime := int(time.Since(startTime).Seconds())
@@ -102,7 +98,6 @@ func main() {
 		w.Write([]byte(response))
 	})
 
-	// Start server
 	addr := cfg.GetServerAddress()
 	log.Printf("Server listening on %s", addr)
 	log.Printf("GraphQL endpoint: http://localhost%s/query", addr)
