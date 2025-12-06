@@ -645,27 +645,12 @@ func (r *queryResolver) MovieByBarcode(ctx context.Context, barcode string) (*mo
 
 // Movie is the resolver for the movie field.
 func (r *queryResolver) Movie(ctx context.Context, id string) (*model.Movie, error) {
-	// Check authentication
-	userInfo, ok := custommw.GetUserFromContext(ctx)
-	if !ok {
-		return nil, fmt.Errorf("authentication required")
-	}
-
 	movieData, err := r.HasuraClient.GetMovieByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch movie: %w", err)
 	}
 	if movieData == nil {
 		return nil, nil
-	}
-
-	// Check ownership via junction table
-	owns, err := r.HasuraClient.CheckMovieOwnership(ctx, userInfo.UserID, id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to check ownership: %w", err)
-	}
-	if !owns {
-		return nil, fmt.Errorf("movie not found in your collection")
 	}
 
 	// Convert to model.Movie
@@ -711,27 +696,12 @@ func (r *queryResolver) AlbumByBarcode(ctx context.Context, barcode string) (*mo
 
 // Album is the resolver for the album field.
 func (r *queryResolver) Album(ctx context.Context, id string) (*model.Album, error) {
-	// Check authentication
-	userInfo, ok := custommw.GetUserFromContext(ctx)
-	if !ok {
-		return nil, fmt.Errorf("authentication required")
-	}
-
 	albumData, err := r.HasuraClient.GetAlbumByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch album: %w", err)
 	}
 	if albumData == nil {
 		return nil, nil
-	}
-
-	// Check ownership via junction table
-	owns, err := r.HasuraClient.CheckRecordOwnership(ctx, userInfo.UserID, id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to check ownership: %w", err)
-	}
-	if !owns {
-		return nil, fmt.Errorf("album not found in your collection")
 	}
 
 	// Convert to model.Album
@@ -789,14 +759,8 @@ func (r *queryResolver) Album(ctx context.Context, id string) (*model.Album, err
 
 // Movies is the resolver for the movies field.
 func (r *queryResolver) Movies(ctx context.Context) ([]*model.Movie, error) {
-	// Check authentication
-	userInfo, ok := custommw.GetUserFromContext(ctx)
-	if !ok {
-		return nil, fmt.Errorf("authentication required")
-	}
-
-	// Fetch movies for this user from Hasura
-	moviesData, err := r.HasuraClient.GetMoviesByUserID(ctx, userInfo.UserID)
+	// Fetch all movies from Hasura
+	moviesData, err := r.HasuraClient.GetAllMovies(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch movies: %w", err)
 	}
@@ -838,20 +802,14 @@ func (r *queryResolver) Movies(ctx context.Context) ([]*model.Movie, error) {
 		movies = append(movies, movie)
 	}
 
-	fmt.Printf("[Movies] Fetched %d movies from Hasura for user %s\n", len(movies), userInfo.UserID)
+	fmt.Printf("[Movies] Fetched %d movies from Hasura\n", len(movies))
 	return movies, nil
 }
 
 // Albums is the resolver for the albums field.
 func (r *queryResolver) Albums(ctx context.Context) ([]*model.Album, error) {
-	// Check authentication
-	userInfo, ok := custommw.GetUserFromContext(ctx)
-	if !ok {
-		return nil, fmt.Errorf("authentication required")
-	}
-
-	// Fetch albums for this user from Hasura
-	albumsData, err := r.HasuraClient.GetAlbumsByUserID(ctx, userInfo.UserID)
+	// Fetch all albums from Hasura
+	albumsData, err := r.HasuraClient.GetAllAlbums(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch albums: %w", err)
 	}
@@ -915,7 +873,7 @@ func (r *queryResolver) Albums(ctx context.Context) ([]*model.Album, error) {
 		albums = append(albums, album)
 	}
 
-	fmt.Printf("[Albums] Fetched %d albums from Hasura for user %s\n", len(albums), userInfo.UserID)
+	fmt.Printf("[Albums] Fetched %d albums from Hasura\n", len(albums))
 	return albums, nil
 }
 

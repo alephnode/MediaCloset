@@ -172,7 +172,7 @@ func (h *HasuraClient) InsertRecord(ctx context.Context, record map[string]inter
 	return "", fmt.Errorf("failed to extract record ID from response")
 }
 
-// GetAllMovies fetches all VHS movies from Hasura (deprecated - use GetMoviesByUserID)
+// GetAllMovies fetches all VHS movies from Hasura
 func (h *HasuraClient) GetAllMovies(ctx context.Context) ([]map[string]interface{}, error) {
 	query := `
 		query GetAllMovies {
@@ -183,7 +183,6 @@ func (h *HasuraClient) GetAllMovies(ctx context.Context) ([]map[string]interface
 				year
 				genre
 				cover_url
-				user_id
 				created_at
 				updated_at
 			}
@@ -278,7 +277,7 @@ func (h *HasuraClient) GetMoviesByUserID(ctx context.Context, userID string) ([]
 	return movies, nil
 }
 
-// GetAllAlbums fetches all records/albums from Hasura (deprecated - use GetAlbumsByUserID)
+// GetAllAlbums fetches all records/albums from Hasura
 func (h *HasuraClient) GetAllAlbums(ctx context.Context) ([]map[string]interface{}, error) {
 	query := `
 		query GetAllAlbums {
@@ -291,7 +290,6 @@ func (h *HasuraClient) GetAllAlbums(ctx context.Context) ([]map[string]interface
 				color_variants
 				genres
 				cover_url
-				user_id
 				created_at
 				updated_at
 			}
