@@ -285,7 +285,7 @@ func (r *mutationResolver) UpdateAlbum(ctx context.Context, id string, input mod
 		updates["color_variant"] = *input.ColorVariant
 	}
 	if input.Genre != nil {
-		updates["genre"] = *input.Genre
+		updates["genres"] = []string{*input.Genre}
 	}
 	if input.CoverURL != nil {
 		updates["cover_url"] = *input.CoverURL

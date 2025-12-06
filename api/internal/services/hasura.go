@@ -141,6 +141,7 @@ func (h *HasuraClient) InsertRecord(ctx context.Context, record map[string]inter
 				album
 				year
 				label
+				color_variant
 				genres
 				cover_url
 			}
