@@ -16,7 +16,7 @@ struct RecordDetailView: View {
             if let obj = recordJSON {
                 VStack(alignment: .leading, spacing: 16) {
                     // Large album art spanning across the view with padding
-                    AsyncImage(url: URL(string: obj["cover_url"] as? String ?? "")) { phase in
+                    CachedAsyncImage(url: URL(string: obj["cover_url"] as? String ?? "")) { phase in
                         switch phase {
                         case .empty:
                             ZStack {
@@ -40,8 +40,6 @@ struct RecordDetailView: View {
                                     .font(.system(size: 60))
                                     .foregroundColor(.gray)
                             }
-                        @unknown default:
-                            EmptyView()
                         }
                     }
                     .frame(maxWidth: .infinity)

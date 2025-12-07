@@ -96,6 +96,14 @@ Native iOS app built with SwiftUI for managing your media collection.
 - Search and filter your collection
 - Clean, modern SwiftUI interface
 
+**Image Caching:**
+
+Cover art images are cached using a two-tier strategy to minimize redundant API requests:
+- **Memory cache** (NSCache): Fast in-memory lookups for recently viewed images
+- **Disk cache**: Persistent storage that survives app restarts, with 30-day expiration
+
+Images are fetched from the network only on first view; subsequent loads use the cache.
+
 **Quick Start:**
 
 ```bash

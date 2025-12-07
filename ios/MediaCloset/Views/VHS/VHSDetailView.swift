@@ -22,7 +22,7 @@ struct VHSDetailView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         // Large cover art spanning across the view with padding
                         if let coverUrl = vhs.coverUrl {
-                            AsyncImage(url: URL(string: coverUrl)) { phase in
+                            CachedAsyncImage(url: URL(string: coverUrl)) { phase in
                                 switch phase {
                                 case .empty:
                                     ZStack {
@@ -46,8 +46,6 @@ struct VHSDetailView: View {
                                             .font(.system(size: 60))
                                             .foregroundColor(.gray)
                                     }
-                                @unknown default:
-                                    EmptyView()
                                 }
                             }
                             .frame(maxWidth: .infinity)

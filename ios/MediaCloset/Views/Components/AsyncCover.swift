@@ -12,12 +12,11 @@ struct AsyncCover: View {
         ZStack {
             RoundedRectangle(cornerRadius: 8).fill(Color.gray.opacity(0.15))
             if let url, let u = URL(string: url) {
-                AsyncImage(url: u) { phase in
+                CachedAsyncImage(url: u) { phase in
                     switch phase {
                     case .empty: ProgressView()
                     case .success(let img): img.resizable().scaledToFill()
                     case .failure: Image(systemName: "photo").imageScale(.large)
-                    @unknown default: EmptyView()
                     }
                 }
             } else {
