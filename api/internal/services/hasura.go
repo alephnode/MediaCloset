@@ -397,7 +397,6 @@ func (h *HasuraClient) GetMovieByID(ctx context.Context, id string) (map[string]
 				year
 				genre
 				cover_url
-				user_id
 				created_at
 				updated_at
 			}
@@ -444,7 +443,6 @@ func (h *HasuraClient) GetAlbumByID(ctx context.Context, id string) (map[string]
 				color_variants
 				genres
 				cover_url
-				user_id
 				created_at
 				updated_at
 			}
@@ -489,7 +487,6 @@ func (h *HasuraClient) UpdateMovie(ctx context.Context, id string, updates map[s
 				year
 				genre
 				cover_url
-				user_id
 				created_at
 				updated_at
 			}
@@ -537,7 +534,6 @@ func (h *HasuraClient) UpdateAlbum(ctx context.Context, id string, updates map[s
 				color_variants
 				genres
 				cover_url
-				user_id
 				created_at
 				updated_at
 			}

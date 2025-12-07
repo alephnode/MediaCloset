@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct WelcomeView: View {
-    @State private var appear = false
     @State private var showLogin = false
     
     var body: some View {
@@ -37,17 +36,11 @@ struct WelcomeView: View {
                                 .frame(width: 88, height: 10)
                         }
                     }
-                    .scaleEffect(appear ? 1.0 : 0.85)
-                    .opacity(appear ? 1.0 : 0.0)
-                    .animation(.spring(response: 0.6, dampingFraction: 0.8), value: appear)
                     
                     Text("MediaCloset")
                         .font(.system(size: 32, weight: .bold, design: .default))
                         .foregroundStyle(.black)
                         .padding(.top, 24)
-                        .opacity(appear ? 1.0 : 0.0)
-                        .offset(y: appear ? 0 : 8)
-                        .animation(.easeOut(duration: 0.4).delay(0.15), value: appear)
                     
                     Text("A centralized location to keep track\nof your physical media collection")
                         .font(.system(size: 17, weight: .regular))
@@ -55,8 +48,6 @@ struct WelcomeView: View {
                         .multilineTextAlignment(.center)
                         .padding(.top, 12)
                         .padding(.horizontal, 32)
-                        .opacity(appear ? 1.0 : 0.0)
-                        .animation(.easeOut(duration: 0.4).delay(0.25), value: appear)
                     
                     Spacer()
                     
@@ -74,16 +65,12 @@ struct WelcomeView: View {
                     }
                     .padding(.horizontal, 24)
                     .padding(.bottom, 48)
-                    .opacity(appear ? 1.0 : 0.0)
-                    .offset(y: appear ? 0 : 20)
-                    .animation(.easeOut(duration: 0.4).delay(0.35), value: appear)
                 }
             }
             .navigationDestination(isPresented: $showLogin) {
                 LoginView()
             }
         }
-        .onAppear { appear = true }
     }
 }
 

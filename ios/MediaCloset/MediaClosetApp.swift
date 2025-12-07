@@ -9,44 +9,66 @@ import SwiftUI
 @main
 struct MediaClosetApp: App {
     @StateObject private var authManager = AuthManager.shared
-    @State private var showSplash = true
+    @State private var appPhase: AppPhase = .splash
+
+    enum AppPhase {
+        case splash
+        case loading
+        case ready
+    }
 
     var body: some Scene {
         WindowGroup {
-            Group {
-                if showSplash {
+            ZStack {
+                Color.white.ignoresSafeArea()
+                
+                switch appPhase {
+                case .splash:
                     LaunchSplash()
-                        .transition(.opacity)
-                } else {
-                    // Show view based on auth state
+                    
+                case .loading:
+                    ProgressView()
+                    
+                case .ready:
                     switch authManager.authState {
                     case .unknown:
-                        // Still checking auth status
-                        ZStack {
-                            Color.white.ignoresSafeArea()
-                            ProgressView()
-                        }
+                        ProgressView()
                     case .unauthenticated:
                         WelcomeView()
                             .environmentObject(authManager)
-                            .transition(.opacity)
                     case .authenticated:
                         RootTabView()
                             .environmentObject(authManager)
-                            .transition(.opacity)
                     }
                 }
             }
-            .animation(.easeInOut(duration: 0.35), value: authManager.authState)
             .onAppear {
-                // Keeping splash brief per Apple's guidance
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    withAnimation(.easeOut(duration: 0.35)) {
-                        showSplash = false
-                    }
-                    // Check auth status after splash
-                    Task {
-                        await authManager.checkAuthStatus()
+                startLaunchSequence()
+            }
+        }
+    }
+    
+    private func startLaunchSequence() {
+        // Phase 1: Show splash for 1.5 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            withAnimation(.easeOut(duration: 0.4)) {
+                appPhase = .loading
+            }
+            
+            // Phase 2: Check auth and wait minimum time for smooth transition
+            Task {
+                // Start auth check
+                async let authCheck: () = authManager.checkAuthStatus()
+                // Minimum loading time for visual polish
+                async let minDelay: () = Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+                
+                // Wait for both to complete
+                _ = await (authCheck, try? minDelay)
+                
+                // Phase 3: Transition to ready state
+                await MainActor.run {
+                    withAnimation(.easeOut(duration: 0.4)) {
+                        appPhase = .ready
                     }
                 }
             }
