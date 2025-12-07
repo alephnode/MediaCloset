@@ -13,16 +13,20 @@ import (
 // AuthService handles user authentication with login codes
 type AuthService struct {
 	hasuraClient *HasuraClient
+	emailService *EmailService
 	jwtSecret    string
 	codeExpiry   time.Duration // Default: 5 minutes
+	isDev        bool          // Skip email sending in development
 }
 
 // NewAuthService creates a new authentication service
-func NewAuthService(hasuraClient *HasuraClient, jwtSecret string) *AuthService {
+func NewAuthService(hasuraClient *HasuraClient, emailService *EmailService, jwtSecret string, isDev bool) *AuthService {
 	return &AuthService{
 		hasuraClient: hasuraClient,
+		emailService: emailService,
 		jwtSecret:    jwtSecret,
 		codeExpiry:   5 * time.Minute, // Industry standard: 5-10 minutes
+		isDev:        isDev,
 	}
 }
 
@@ -72,9 +76,18 @@ func (a *AuthService) RequestLoginCode(ctx context.Context, email string) error 
 		return fmt.Errorf("failed to store login code: %w", err)
 	}
 
-	// TODO: Send email with login code
-	// For now, we'll log it (in development)
-	fmt.Printf("[Auth] Login code for %s: %s (expires in %v)\n", email, code, a.codeExpiry)
+	if a.isDev {
+		fmt.Printf("[Auth] Login code for %s: %s (expires in %v)\n", email, code, a.codeExpiry)
+	}
+
+	if a.emailService != nil {
+		err = a.emailService.SendLoginCode(ctx, email, code)
+		if err != nil {
+			return fmt.Errorf("failed to send login code email: %w", err)
+		}
+	} else {
+		fmt.Printf("Email service not configured, skipping email send\n")
+	}
 
 	return nil
 }

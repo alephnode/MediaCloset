@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -65,7 +66,26 @@ func main() {
 		omdbService,
 	)
 	hasuraClient := services.NewHasuraClient(cfg.HasuraEndpoint, cfg.HasuraAdminSecret)
-	authService := services.NewAuthService(hasuraClient, cfg.JWTSecret)
+
+	var emailService *services.EmailService
+	if cfg.AWSSESFromEmail != "" && cfg.AWSAccessKeyID != "" && cfg.AWSSecretAccessKey != "" {
+		var err error
+		emailService, err = services.NewEmailService(
+			context.Background(),
+			cfg.AWSRegion,
+			cfg.AWSAccessKeyID,
+			cfg.AWSSecretAccessKey,
+			cfg.AWSSESFromEmail,
+		)
+		if err != nil {
+			log.Printf("Warning: Failed to initialize email service: %v", err)
+			log.Println("Login codes will be logged to console instead")
+		}
+	} else if !cfg.IsDevelopment() {
+		log.Println("Warning: AWS SES not fully configured ")
+	}
+
+	authService := services.NewAuthService(hasuraClient, emailService, cfg.JWTSecret, cfg.IsDevelopment())
 
 	// JWT authentication middleware (user authentication)
 	r.Use(custommw.JWTAuth(authService))
