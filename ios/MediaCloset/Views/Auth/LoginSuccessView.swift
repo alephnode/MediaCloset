@@ -17,27 +17,27 @@ struct LoginSuccessView: View {
     
     var body: some View {
         ZStack {
-            Color.white.ignoresSafeArea()
+            Color(.systemBackground).ignoresSafeArea()
             
             VStack(spacing: 24) {
                 // Animated checkmark circle
                 ZStack {
                     // Background circle
                     Circle()
-                        .stroke(Color.black.opacity(0.1), lineWidth: 4)
+                        .stroke(Color.primary.opacity(0.1), lineWidth: 4)
                         .frame(width: 100, height: 100)
                     
                     // Animated progress circle
                     Circle()
                         .trim(from: 0, to: circleProgress)
-                        .stroke(Color.black, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                        .stroke(Color.primary, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                         .frame(width: 100, height: 100)
                         .rotationEffect(.degrees(-90))
                     
                     // Checkmark
                     Image(systemName: "checkmark")
                         .font(.system(size: 44, weight: .bold))
-                        .foregroundStyle(.black)
+                        .foregroundStyle(.primary)
                         .scaleEffect(showCheckmark ? 1.0 : checkmarkScale)
                         .opacity(showCheckmark ? 1.0 : 0.0)
                 }
@@ -46,7 +46,7 @@ struct LoginSuccessView: View {
                 VStack(spacing: 8) {
                     Text("Welcome!")
                         .font(.system(size: 32, weight: .bold))
-                        .foregroundStyle(.black)
+                        .foregroundStyle(.primary)
                     
                     if let user = authManager.currentUser {
                         Text(user.email)

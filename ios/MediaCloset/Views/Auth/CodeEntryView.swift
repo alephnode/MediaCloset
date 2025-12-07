@@ -43,7 +43,7 @@ struct CodeEntryView: View {
                 VStack(spacing: 12) {
                     Image(systemName: "lock.circle.fill")
                         .font(.system(size: 64))
-                        .foregroundStyle(.black)
+                        .foregroundStyle(.primary)
                     
                     Text("Enter your code")
                         .font(.system(size: 28, weight: .bold))
@@ -125,7 +125,7 @@ struct CodeEntryView: View {
                         } label: {
                             Text("Resend code")
                                 .font(.system(size: 17, weight: .medium))
-                                .foregroundStyle(.black)
+                                .foregroundStyle(.primary)
                         }
                         .disabled(isLoading)
                     }
@@ -137,16 +137,16 @@ struct CodeEntryView: View {
                         HStack {
                             if isLoading {
                                 ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .progressViewStyle(CircularProgressViewStyle(tint: Color(.systemBackground)))
                             } else {
                                 Text("Verify")
                                     .font(.system(size: 17, weight: .semibold))
                             }
                         }
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Color(.systemBackground))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(isValidCode && !isLoading && timeRemaining > 0 ? Color.black : Color.gray)
+                        .background(isValidCode && !isLoading && timeRemaining > 0 ? Color.primary : Color.gray)
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     }
                     .disabled(!isValidCode || isLoading || timeRemaining == 0)
@@ -232,7 +232,7 @@ struct CodeDigitBox: View {
                 .frame(width: 48, height: 56)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(isFocused ? Color.black : Color.clear, lineWidth: 2)
+                        .stroke(isFocused ? Color.primary : Color.clear, lineWidth: 2)
                 )
             
             Text(digit)

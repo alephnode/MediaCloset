@@ -32,7 +32,7 @@ struct LoginView: View {
                 VStack(spacing: 12) {
                     Image(systemName: "envelope.circle.fill")
                         .font(.system(size: 64))
-                        .foregroundStyle(.black)
+                        .foregroundStyle(.primary)
                     
                     Text("Enter your email")
                         .font(.system(size: 28, weight: .bold))
@@ -79,16 +79,16 @@ struct LoginView: View {
                     HStack {
                         if isLoading {
                             ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .progressViewStyle(CircularProgressViewStyle(tint: Color(.systemBackground)))
                         } else {
                             Text("Continue")
                                 .font(.system(size: 17, weight: .semibold))
                         }
                     }
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color(.systemBackground))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(isValidEmail && !isLoading ? Color.black : Color.gray)
+                    .background(isValidEmail && !isLoading ? Color.primary : Color.gray)
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
                 .disabled(!isValidEmail || isLoading)
