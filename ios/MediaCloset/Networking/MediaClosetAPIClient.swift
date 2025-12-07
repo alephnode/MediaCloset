@@ -54,6 +54,11 @@ final class MediaClosetAPIClient {
             #endif
         }
 
+        // Add JWT token if available (for authenticated requests)
+        if let token = TokenManager.shared.getToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+
         return headers
     }
 
@@ -902,5 +907,117 @@ final class MediaClosetAPIClient {
             #endif
             return false
         }
+    }
+
+    // MARK: - Authentication
+
+    /// Response from requestLoginCode mutation
+    struct RequestLoginCodeResponse: Decodable {
+        let success: Bool
+        let message: String?
+        let error: String?
+    }
+
+    /// Response from verifyLoginCode mutation
+    struct VerifyLoginCodeResponse: Decodable {
+        let success: Bool
+        let token: String?
+        let user: AuthUser?
+        let error: String?
+    }
+
+    /// Requests a login code to be sent to the user's email
+    /// - Parameter email: The user's email address
+    /// - Returns: RequestLoginCodeResponse with success status and message
+    func requestLoginCode(email: String) async throws -> RequestLoginCodeResponse {
+        struct Response: Decodable {
+            let requestLoginCode: RequestLoginCodeResponse
+        }
+
+        let query = """
+        mutation RequestLoginCode($email: String!) {
+          requestLoginCode(email: $email) {
+            success
+            message
+            error
+          }
+        }
+        """
+
+        let variables: [String: Any] = ["email": email]
+
+        let response: Response = try await execute(
+            operationName: "RequestLoginCode",
+            query: query,
+            variables: variables
+        )
+
+        return response.requestLoginCode
+    }
+
+    /// Verifies the login code and returns a JWT token
+    /// - Parameters:
+    ///   - email: The user's email address
+    ///   - code: The 6-digit verification code
+    /// - Returns: VerifyLoginCodeResponse with token and user info
+    func verifyLoginCode(email: String, code: String) async throws -> VerifyLoginCodeResponse {
+        struct Response: Decodable {
+            let verifyLoginCode: VerifyLoginCodeResponse
+        }
+
+        let query = """
+        mutation VerifyLoginCode($email: String!, $code: String!) {
+          verifyLoginCode(email: $email, code: $code) {
+            success
+            token
+            user {
+              id
+              email
+              createdAt
+              updatedAt
+            }
+            error
+          }
+        }
+        """
+
+        let variables: [String: Any] = [
+            "email": email,
+            "code": code
+        ]
+
+        let response: Response = try await execute(
+            operationName: "VerifyLoginCode",
+            query: query,
+            variables: variables
+        )
+
+        return response.verifyLoginCode
+    }
+
+    /// Fetches the current authenticated user
+    /// - Returns: AuthUser if authenticated, nil otherwise
+    func fetchCurrentUser() async throws -> AuthUser? {
+        struct Response: Decodable {
+            let me: AuthUser?
+        }
+
+        let query = """
+        query Me {
+          me {
+            id
+            email
+            createdAt
+            updatedAt
+          }
+        }
+        """
+
+        let response: Response = try await execute(
+            operationName: "Me",
+            query: query
+        )
+
+        return response.me
     }
 }

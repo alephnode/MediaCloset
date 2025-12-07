@@ -1,5 +1,17 @@
 import Foundation
 
+// MARK: - Auth Models
+
+/// User information returned from the API
+struct AuthUser: Codable, Equatable {
+    let id: String
+    let email: String
+    let createdAt: String?
+    let updatedAt: String?
+}
+
+// MARK: - Record Models
+
 struct RecordListItem: Identifiable, Hashable {
     let id: String;
     let artist: String;

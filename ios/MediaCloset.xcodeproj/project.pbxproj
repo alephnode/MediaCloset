@@ -64,6 +64,7 @@
 		42322CFB2E9B0F6D00615173 /* Networking */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Networking; sourceTree = "<group>"; };
 		42322D062E9B101A00615173 /* Models */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Models; sourceTree = "<group>"; };
 		42322D0B2E9B134300615173 /* ViewModels */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ViewModels; sourceTree = "<group>"; };
+		42322D102E9B200000615173 /* Services */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Services; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -115,6 +116,7 @@
 		42D72CB22E9AF79E00EA0F43 /* MediaCloset */ = {
 			isa = PBXGroup;
 			children = (
+				42322D102E9B200000615173 /* Services */,
 				42322D0B2E9B134300615173 /* ViewModels */,
 				42322D062E9B101A00615173 /* Models */,
 				42322CFB2E9B0F6D00615173 /* Networking */,
@@ -183,6 +185,7 @@
 				42322CFB2E9B0F6D00615173 /* Networking */,
 				42322D062E9B101A00615173 /* Models */,
 				42322D0B2E9B134300615173 /* ViewModels */,
+				42322D102E9B200000615173 /* Services */,
 			);
 			name = MediaCloset;
 			productName = MediaCloset;

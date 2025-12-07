@@ -8,6 +8,7 @@ import SwiftUI
 
 @main
 struct MediaClosetApp: App {
+    @StateObject private var authManager = AuthManager.shared
     @State private var showSplash = true
 
     var body: some Scene {
@@ -17,14 +18,35 @@ struct MediaClosetApp: App {
                     LaunchSplash()
                         .transition(.opacity)
                 } else {
-                    RootTabView()
+                    // Show view based on auth state
+                    switch authManager.authState {
+                    case .unknown:
+                        // Still checking auth status
+                        ZStack {
+                            Color.white.ignoresSafeArea()
+                            ProgressView()
+                        }
+                    case .unauthenticated:
+                        WelcomeView()
+                            .environmentObject(authManager)
+                            .transition(.opacity)
+                    case .authenticated:
+                        RootTabView()
+                            .environmentObject(authManager)
+                            .transition(.opacity)
+                    }
                 }
             }
+            .animation(.easeInOut(duration: 0.35), value: authManager.authState)
             .onAppear {
                 // Keeping splash brief per Apple's guidance
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                     withAnimation(.easeOut(duration: 0.35)) {
                         showSplash = false
+                    }
+                    // Check auth status after splash
+                    Task {
+                        await authManager.checkAuthStatus()
                     }
                 }
             }
