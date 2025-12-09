@@ -75,6 +75,13 @@ actor ImageCache {
         _ = await image(for: url)
     }
     
+    /// Stores an image in both memory and disk cache
+    func store(_ image: UIImage, for url: URL) {
+        let key = cacheKey(for: url)
+        memoryCache.setObject(image, forKey: key as NSString)
+        saveToDisk(image: image, key: key)
+    }
+    
     /// Clears all cached images
     func clearCache() {
         memoryCache.removeAllObjects()

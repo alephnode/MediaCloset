@@ -41,10 +41,28 @@ struct CachedAsyncImage<Content: View>: View {
             return
         }
         
+        // First try to get from cache (memory or disk)
         if let uiImage = await ImageCache.shared.image(for: url) {
             phase = .success(Image(uiImage: uiImage))
-        } else {
-            phase = .failure(URLError(.cannotLoadFromNetwork))
+            return
+        }
+        
+        // Cache miss - fetch from network and store in cache
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            
+            guard let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200,
+                  let uiImage = UIImage(data: data) else {
+                phase = .failure(URLError(.cannotLoadFromNetwork))
+                return
+            }
+            
+            // Store in cache for future use
+            await ImageCache.shared.store(uiImage, for: url)
+            phase = .success(Image(uiImage: uiImage))
+        } catch {
+            phase = .failure(error)
         }
     }
 }

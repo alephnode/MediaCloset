@@ -13,6 +13,7 @@ enum MediaClosetAPIError: Error {
     case networkError(Error)
     case parsingError(String)
     case noData
+    case notAuthenticated
 }
 
 /// Client for the MediaCloset Go GraphQL API
@@ -519,16 +520,20 @@ final class MediaClosetAPIClient {
         var colorVariants: [String]? { color_variants }
     }
 
-    /// Fetches all movies from the database
-    /// - Returns: Array of Movie records
+    /// Fetches movies for the current user's collection
+    /// - Returns: Array of Movie records owned by the current user
     func fetchMovies() async throws -> [Movie] {
+        guard let userId = TokenManager.shared.getUserId() else {
+            throw MediaClosetAPIError.notAuthenticated
+        }
+
         struct Response: Decodable {
-            let movies: [Movie]
+            let userMovies: [Movie]
         }
 
         let query = """
-        query GetMovies {
-          movies {
+        query GetUserMovies($userId: String!) {
+          userMovies(userId: $userId) {
             id
             title
             director
@@ -541,24 +546,31 @@ final class MediaClosetAPIClient {
         }
         """
 
+        let variables: [String: Any] = ["userId": userId]
+
         let response: Response = try await execute(
-            operationName: "GetMovies",
-            query: query
+            operationName: "GetUserMovies",
+            query: query,
+            variables: variables
         )
 
-        return response.movies
+        return response.userMovies
     }
 
-    /// Fetches all albums from the database
-    /// - Returns: Array of Album records
+    /// Fetches albums for the current user's collection
+    /// - Returns: Array of Album records owned by the current user
     func fetchAlbums() async throws -> [Album] {
+        guard let userId = TokenManager.shared.getUserId() else {
+            throw MediaClosetAPIError.notAuthenticated
+        }
+
         struct Response: Decodable {
-            let albums: [Album]
+            let userAlbums: [Album]
         }
 
         let query = """
-        query GetAlbums {
-          albums {
+        query GetUserAlbums($userId: String!) {
+          userAlbums(userId: $userId) {
             id
             artist
             album
@@ -573,12 +585,15 @@ final class MediaClosetAPIClient {
         }
         """
 
+        let variables: [String: Any] = ["userId": userId]
+
         let response: Response = try await execute(
-            operationName: "GetAlbums",
-            query: query
+            operationName: "GetUserAlbums",
+            query: query,
+            variables: variables
         )
 
-        return response.albums
+        return response.userAlbums
     }
 
     /// Fetches a single movie by ID

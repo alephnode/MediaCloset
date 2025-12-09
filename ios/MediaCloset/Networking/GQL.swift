@@ -69,13 +69,6 @@ enum GQL {
     }
     """
 
-    // DELETE BY PK
-    static let deleteRecord = """
-    mutation DeleteRecord($id: uuid!) {
-      delete_records_by_pk(id: $id) { id }
-    }
-    """
-
     // VHS LIST
     static let queryVHSList = """
     query VHSList($pattern: String = "%%", $limit: Int = 50, $offset: Int = 0) {
@@ -111,13 +104,6 @@ enum GQL {
     static let updateVHS = """
     mutation UpdateVHS($id: uuid!, $set: vhs_set_input!) {
       update_vhs_by_pk(pk_columns: {id: $id}, _set: $set) { id }
-    }
-    """
-
-    // VHS DELETE
-    static let deleteVHS = """
-    mutation DeleteVHS($id: uuid!) {
-      delete_vhs_by_pk(id: $id) { id }
     }
     """
 
