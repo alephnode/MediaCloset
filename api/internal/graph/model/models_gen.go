@@ -66,7 +66,7 @@ type Query struct {
 
 type RequestLoginCodeResponse struct {
 	Success bool    `json:"success"`
-	Message string  `json:"message"`
+	Message *string `json:"message,omitempty"`
 	Error   *string `json:"error,omitempty"`
 }
 
@@ -159,12 +159,19 @@ type UpdateMovieResponse struct {
 }
 
 type User struct {
-	ID        string   `json:"id"`
-	Email     string   `json:"email"`
-	CreatedAt string   `json:"createdAt"`
-	UpdatedAt string   `json:"updatedAt"`
-	Movies    []*Movie `json:"movies"`
-	Albums    []*Album `json:"albums"`
+	ID          string   `json:"id"`
+	Email       *string  `json:"email,omitempty"`
+	PhoneNumber *string  `json:"phoneNumber,omitempty"`
+	CreatedAt   string   `json:"createdAt"`
+	UpdatedAt   string   `json:"updatedAt"`
+	Movies      []*Movie `json:"movies"`
+	Albums      []*Album `json:"albums"`
+}
+
+type LinkAccountResponse struct {
+	Success bool    `json:"success"`
+	User    *User   `json:"user,omitempty"`
+	Error   *string `json:"error,omitempty"`
 }
 
 type VerifyLoginCodeResponse struct {

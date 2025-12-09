@@ -49,7 +49,7 @@ struct LoginSuccessView: View {
                         .foregroundStyle(.primary)
                     
                     if let user = authManager.currentUser {
-                        Text(user.email)
+                        Text(user.displayIdentifier)
                             .font(.system(size: 17))
                             .foregroundStyle(.secondary)
                     }

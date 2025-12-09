@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"mediacloset/api/internal/graph/model"
 	custommw "mediacloset/api/internal/middleware"
+	"mediacloset/api/internal/services"
 	"time"
 )
 
@@ -33,7 +34,7 @@ func (r *mutationResolver) RequestLoginCode(ctx context.Context, email string) (
 
 	return &model.RequestLoginCodeResponse{
 		Success: true,
-		Message: "Login code sent to your email",
+		Message: strPtr("Login code sent to your email"),
 	}, nil
 }
 
@@ -64,13 +65,168 @@ func (r *mutationResolver) VerifyLoginCode(ctx context.Context, email string, co
 	return &model.VerifyLoginCodeResponse{
 		Success: true,
 		Token:   &token,
-		User: &model.User{
-			ID:        user.ID,
-			Email:     user.Email,
-			CreatedAt: user.CreatedAt.Format(time.RFC3339),
-			UpdatedAt: user.UpdatedAt.Format(time.RFC3339),
-		},
+		User:    userToModel(user),
 	}, nil
+}
+
+// RequestLoginCodeByPhone is the resolver for the requestLoginCodeByPhone field.
+func (r *mutationResolver) RequestLoginCodeByPhone(ctx context.Context, phoneNumber string) (*model.RequestLoginCodeResponse, error) {
+	// Validate phone number
+	if phoneNumber == "" {
+		return &model.RequestLoginCodeResponse{
+			Success: false,
+			Error:   &[]string{"Phone number is required"}[0],
+		}, nil
+	}
+
+	err := r.AuthService.RequestLoginCodeByPhone(ctx, phoneNumber)
+	if err != nil {
+		return &model.RequestLoginCodeResponse{
+			Success: false,
+			Error:   &[]string{fmt.Sprintf("Failed to request login code: %v", err)}[0],
+		}, nil
+	}
+
+	return &model.RequestLoginCodeResponse{
+		Success: true,
+		Message: strPtr("Login code sent to your phone"),
+	}, nil
+}
+
+// VerifyLoginCodeByPhone is the resolver for the verifyLoginCodeByPhone field.
+func (r *mutationResolver) VerifyLoginCodeByPhone(ctx context.Context, phoneNumber string, code string) (*model.VerifyLoginCodeResponse, error) {
+	// Validate inputs
+	if phoneNumber == "" {
+		return &model.VerifyLoginCodeResponse{
+			Success: false,
+			Error:   &[]string{"Phone number is required"}[0],
+		}, nil
+	}
+	if code == "" {
+		return &model.VerifyLoginCodeResponse{
+			Success: false,
+			Error:   &[]string{"Code is required"}[0],
+		}, nil
+	}
+
+	token, user, err := r.AuthService.VerifyLoginCodeByPhone(ctx, phoneNumber, code)
+	if err != nil {
+		return &model.VerifyLoginCodeResponse{
+			Success: false,
+			Error:   &[]string{err.Error()}[0],
+		}, nil
+	}
+
+	return &model.VerifyLoginCodeResponse{
+		Success: true,
+		Token:   &token,
+		User:    userToModel(user),
+	}, nil
+}
+
+// LinkPhoneToAccount is the resolver for the linkPhoneToAccount field.
+func (r *mutationResolver) LinkPhoneToAccount(ctx context.Context, phoneNumber string) (*model.LinkAccountResponse, error) {
+	// Check authentication
+	userInfo, ok := custommw.GetUserFromContext(ctx)
+	if !ok {
+		return &model.LinkAccountResponse{
+			Success: false,
+			Error:   &[]string{"Authentication required"}[0],
+		}, nil
+	}
+
+	if phoneNumber == "" {
+		return &model.LinkAccountResponse{
+			Success: false,
+			Error:   &[]string{"Phone number is required"}[0],
+		}, nil
+	}
+
+	err := r.AuthService.LinkPhoneToUser(ctx, userInfo.UserID, phoneNumber)
+	if err != nil {
+		return &model.LinkAccountResponse{
+			Success: false,
+			Error:   &[]string{err.Error()}[0],
+		}, nil
+	}
+
+	// Fetch updated user
+	user, err := r.AuthService.GetUserByID(ctx, userInfo.UserID)
+	if err != nil {
+		return &model.LinkAccountResponse{
+			Success: true, // Link succeeded, just couldn't fetch user
+			Error:   &[]string{"Phone linked but failed to fetch updated user"}[0],
+		}, nil
+	}
+
+	return &model.LinkAccountResponse{
+		Success: true,
+		User:    userToModel(user),
+	}, nil
+}
+
+// LinkEmailToAccount is the resolver for the linkEmailToAccount field.
+func (r *mutationResolver) LinkEmailToAccount(ctx context.Context, email string) (*model.LinkAccountResponse, error) {
+	// Check authentication
+	userInfo, ok := custommw.GetUserFromContext(ctx)
+	if !ok {
+		return &model.LinkAccountResponse{
+			Success: false,
+			Error:   &[]string{"Authentication required"}[0],
+		}, nil
+	}
+
+	if email == "" {
+		return &model.LinkAccountResponse{
+			Success: false,
+			Error:   &[]string{"Email is required"}[0],
+		}, nil
+	}
+
+	err := r.AuthService.LinkEmailToUser(ctx, userInfo.UserID, email)
+	if err != nil {
+		return &model.LinkAccountResponse{
+			Success: false,
+			Error:   &[]string{err.Error()}[0],
+		}, nil
+	}
+
+	// Fetch updated user
+	user, err := r.AuthService.GetUserByID(ctx, userInfo.UserID)
+	if err != nil {
+		return &model.LinkAccountResponse{
+			Success: true, // Link succeeded, just couldn't fetch user
+			Error:   &[]string{"Email linked but failed to fetch updated user"}[0],
+		}, nil
+	}
+
+	return &model.LinkAccountResponse{
+		Success: true,
+		User:    userToModel(user),
+	}, nil
+}
+
+// userToModel converts a services.User to a model.User
+func userToModel(user *services.User) *model.User {
+	if user == nil {
+		return nil
+	}
+	var email *string
+	if user.Email != "" {
+		email = &user.Email
+	}
+	return &model.User{
+		ID:          user.ID,
+		Email:       email,
+		PhoneNumber: user.PhoneNumber,
+		CreatedAt:   user.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   user.UpdatedAt.Format(time.RFC3339),
+	}
+}
+
+// strPtr returns a pointer to the given string
+func strPtr(s string) *string {
+	return &s
 }
 
 // SaveMovie is the resolver for the saveMovie field.
@@ -894,12 +1050,7 @@ func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 		return nil, fmt.Errorf("user not found")
 	}
 
-	return &model.User{
-		ID:        user.ID,
-		Email:     user.Email,
-		CreatedAt: user.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: user.UpdatedAt.Format(time.RFC3339),
-	}, nil
+	return userToModel(user), nil
 }
 
 // User is the resolver for the user field.
@@ -913,12 +1064,7 @@ func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error
 		return nil, nil
 	}
 
-	return &model.User{
-		ID:        user.ID,
-		Email:     user.Email,
-		CreatedAt: user.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: user.UpdatedAt.Format(time.RFC3339),
-	}, nil
+	return userToModel(user), nil
 }
 
 // UserMovies is the resolver for the userMovies field.

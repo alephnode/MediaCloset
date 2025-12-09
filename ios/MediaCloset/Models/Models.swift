@@ -5,9 +5,15 @@ import Foundation
 /// User information returned from the API
 struct AuthUser: Codable, Equatable {
     let id: String
-    let email: String
+    let email: String?
+    let phoneNumber: String?
     let createdAt: String?
     let updatedAt: String?
+    
+    /// Returns the primary identifier for display (email or phone)
+    var displayIdentifier: String {
+        email ?? phoneNumber ?? id
+    }
 }
 
 // MARK: - Record Models

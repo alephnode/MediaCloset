@@ -51,7 +51,8 @@ final class AuthManager: ObservableObject {
                 authState = .authenticated
                 
                 #if DEBUG
-                print("[AuthManager] Token valid, user: \(user.email)")
+                let identifier = user.email ?? user.phoneNumber ?? user.id
+                print("[AuthManager] Token valid, user: \(identifier)")
                 #endif
             } else {
                 // Token invalid or expired
@@ -65,6 +66,8 @@ final class AuthManager: ObservableObject {
             await logout()
         }
     }
+    
+    // MARK: - Email Authentication
     
     /// Requests a login code to be sent to the email
     /// - Parameter email: User's email address
@@ -85,7 +88,7 @@ final class AuthManager: ObservableObject {
         }
     }
     
-    /// Verifies the login code and completes authentication
+    /// Verifies the login code sent via email and completes authentication
     /// - Parameters:
     ///   - email: User's email address
     ///   - code: 6-digit verification code
@@ -113,11 +116,73 @@ final class AuthManager: ObservableObject {
         if let user = response.user {
             currentUser = user
             tokenManager.saveUserId(user.id)
-            tokenManager.saveUserEmail(user.email)
+            if let email = user.email {
+                tokenManager.saveUserEmail(email)
+            }
         }
         
         #if DEBUG
         print("[AuthManager] Login successful for: \(email)")
+        #endif
+    }
+    
+    // MARK: - Phone Authentication
+    
+    /// Requests a login code to be sent via SMS
+    /// - Parameter phoneNumber: User's phone number in E.164 format (e.g., +15551234567)
+    /// - Returns: Success message or throws error
+    func requestLoginCodeByPhone(phoneNumber: String) async throws -> String {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+        
+        let response = try await MediaClosetAPIClient.shared.requestLoginCodeByPhone(phoneNumber: phoneNumber)
+        
+        if response.success {
+            return response.message ?? "Login code sent to your phone"
+        } else {
+            let error = response.error ?? "Failed to send login code"
+            errorMessage = error
+            throw AuthError.requestFailed(error)
+        }
+    }
+    
+    /// Verifies the login code sent via SMS and completes authentication
+    /// - Parameters:
+    ///   - phoneNumber: User's phone number in E.164 format
+    ///   - code: 6-digit verification code
+    func verifyLoginCodeByPhone(phoneNumber: String, code: String) async throws {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+        
+        let response = try await MediaClosetAPIClient.shared.verifyLoginCodeByPhone(phoneNumber: phoneNumber, code: code)
+        
+        guard response.success else {
+            let error = response.error ?? "Invalid or expired code"
+            errorMessage = error
+            throw AuthError.verificationFailed(error)
+        }
+        
+        guard let token = response.token else {
+            errorMessage = "No token received"
+            throw AuthError.noToken
+        }
+        
+        // Store token and user info
+        tokenManager.saveToken(token)
+        
+        if let user = response.user {
+            currentUser = user
+            tokenManager.saveUserId(user.id)
+            if let email = user.email {
+                tokenManager.saveUserEmail(email)
+            }
+            // Note: Could also store phone number if needed
+        }
+        
+        #if DEBUG
+        print("[AuthManager] Login successful for phone: \(phoneNumber)")
         #endif
     }
     

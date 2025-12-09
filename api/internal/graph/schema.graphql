@@ -29,9 +29,17 @@ type Query {
 }
 
 type Mutation {
-  # Authentication
+  # Authentication (Email)
   requestLoginCode(email: String!): RequestLoginCodeResponse!
   verifyLoginCode(email: String!, code: String!): VerifyLoginCodeResponse!
+
+  # Authentication (Phone/SMS)
+  requestLoginCodeByPhone(phoneNumber: String!): RequestLoginCodeResponse!
+  verifyLoginCodeByPhone(phoneNumber: String!, code: String!): VerifyLoginCodeResponse!
+
+  # Account linking (requires authentication)
+  linkPhoneToAccount(phoneNumber: String!): LinkAccountResponse!
+  linkEmailToAccount(email: String!): LinkAccountResponse!
 
   # Save movie/VHS (auto-fetches poster if missing)
   saveMovie(input: SaveMovieInput!): SaveMovieResponse!
@@ -178,7 +186,8 @@ type SavedAlbum {
 # User type
 type User {
   id: String!
-  email: String!
+  email: String
+  phoneNumber: String
   createdAt: String!
   updatedAt: String!
   movies: [Movie!]!  # Movies in this user's collection
@@ -214,13 +223,19 @@ type Album {
 # Auth response types
 type RequestLoginCodeResponse {
   success: Boolean!
-  message: String!
+  message: String
   error: String
 }
 
 type VerifyLoginCodeResponse {
   success: Boolean!
   token: String
+  user: User
+  error: String
+}
+
+type LinkAccountResponse {
+  success: Boolean!
   user: User
   error: String
 }

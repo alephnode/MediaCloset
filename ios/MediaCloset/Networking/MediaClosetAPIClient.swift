@@ -988,6 +988,7 @@ final class MediaClosetAPIClient {
             user {
               id
               email
+              phoneNumber
               createdAt
               updatedAt
             }
@@ -1010,6 +1011,78 @@ final class MediaClosetAPIClient {
         return response.verifyLoginCode
     }
 
+    // MARK: - Phone Authentication
+
+    /// Requests a login code to be sent via SMS
+    /// - Parameter phoneNumber: The user's phone number in E.164 format (e.g., +15551234567)
+    /// - Returns: RequestLoginCodeResponse with success status and message
+    func requestLoginCodeByPhone(phoneNumber: String) async throws -> RequestLoginCodeResponse {
+        struct Response: Decodable {
+            let requestLoginCodeByPhone: RequestLoginCodeResponse
+        }
+
+        let query = """
+        mutation RequestLoginCodeByPhone($phoneNumber: String!) {
+          requestLoginCodeByPhone(phoneNumber: $phoneNumber) {
+            success
+            message
+            error
+          }
+        }
+        """
+
+        let variables: [String: Any] = ["phoneNumber": phoneNumber]
+
+        let response: Response = try await execute(
+            operationName: "RequestLoginCodeByPhone",
+            query: query,
+            variables: variables
+        )
+
+        return response.requestLoginCodeByPhone
+    }
+
+    /// Verifies the login code sent via SMS and returns a JWT token
+    /// - Parameters:
+    ///   - phoneNumber: The user's phone number in E.164 format
+    ///   - code: The 6-digit verification code
+    /// - Returns: VerifyLoginCodeResponse with token and user info
+    func verifyLoginCodeByPhone(phoneNumber: String, code: String) async throws -> VerifyLoginCodeResponse {
+        struct Response: Decodable {
+            let verifyLoginCodeByPhone: VerifyLoginCodeResponse
+        }
+
+        let query = """
+        mutation VerifyLoginCodeByPhone($phoneNumber: String!, $code: String!) {
+          verifyLoginCodeByPhone(phoneNumber: $phoneNumber, code: $code) {
+            success
+            token
+            user {
+              id
+              email
+              phoneNumber
+              createdAt
+              updatedAt
+            }
+            error
+          }
+        }
+        """
+
+        let variables: [String: Any] = [
+            "phoneNumber": phoneNumber,
+            "code": code
+        ]
+
+        let response: Response = try await execute(
+            operationName: "VerifyLoginCodeByPhone",
+            query: query,
+            variables: variables
+        )
+
+        return response.verifyLoginCodeByPhone
+    }
+
     /// Fetches the current authenticated user
     /// - Returns: AuthUser if authenticated, nil otherwise
     func fetchCurrentUser() async throws -> AuthUser? {
@@ -1022,6 +1095,7 @@ final class MediaClosetAPIClient {
           me {
             id
             email
+            phoneNumber
             createdAt
             updatedAt
           }

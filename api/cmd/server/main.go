@@ -82,10 +82,29 @@ func main() {
 			log.Println("Login codes will be logged to console instead")
 		}
 	} else if !cfg.IsDevelopment() {
-		log.Println("Warning: AWS SES not fully configured ")
+		log.Println("Warning: AWS SES not fully configured")
 	}
 
-	authService := services.NewAuthService(hasuraClient, emailService, cfg.JWTSecret, cfg.IsDevelopment())
+	var textMessageService *services.TextMessageService
+	if cfg.AWSSNSEnabled && cfg.AWSAccessKeyID != "" && cfg.AWSSecretAccessKey != "" {
+		var err error
+		textMessageService, err = services.NewTextMessageService(
+			context.Background(),
+			cfg.AWSRegion,
+			cfg.AWSAccessKeyID,
+			cfg.AWSSecretAccessKey,
+		)
+		if err != nil {
+			log.Printf("Warning: Failed to initialize text message service: %v", err)
+			log.Println("SMS login codes will be logged to console instead")
+		} else {
+			log.Println("SMS login codes enabled via AWS SNS")
+		}
+	} else if !cfg.IsDevelopment() {
+		log.Println("Info: AWS SNS not enabled (set AWS_SNS_ENABLED=true to enable SMS login)")
+	}
+
+	authService := services.NewAuthService(hasuraClient, emailService, textMessageService, cfg.JWTSecret, cfg.IsDevelopment())
 
 	// JWT authentication middleware (user authentication)
 	r.Use(custommw.JWTAuth(authService))

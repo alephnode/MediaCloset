@@ -23,11 +23,12 @@ type Config struct {
 	// Auth
 	JWTSecret string // Secret key for JWT token signing
 
-	// AWS SES Email
+	// AWS Services (SES for Email, SNS for SMS)
 	AWSRegion          string
 	AWSAccessKeyID     string
 	AWSSecretAccessKey string
 	AWSSESFromEmail    string // Verified sender email in SES
+	AWSSNSEnabled      bool   // Enable SMS via SNS (requires SNS permissions)
 
 	// Feature flags
 	EnableCache     bool
@@ -47,6 +48,7 @@ func Load() *Config {
 	viper.SetDefault("ENABLE_CACHE", false)
 	viper.SetDefault("ENABLE_RATE_LIMIT", true)
 	viper.SetDefault("AWS_REGION", "us-east-1")
+	viper.SetDefault("AWS_SNS_ENABLED", false)
 
 	// Read config file (optional - env vars take precedence)
 	if err := viper.ReadInConfig(); err != nil {
@@ -72,6 +74,7 @@ func Load() *Config {
 		AWSAccessKeyID:     viper.GetString("AWS_ACCESS_KEY_ID"),
 		AWSSecretAccessKey: viper.GetString("AWS_SECRET_ACCESS_KEY"),
 		AWSSESFromEmail:    viper.GetString("AWS_SES_FROM_EMAIL"),
+		AWSSNSEnabled:      viper.GetBool("AWS_SNS_ENABLED"),
 		EnableCache:        viper.GetBool("ENABLE_CACHE"),
 		EnableRateLimit:    viper.GetBool("ENABLE_RATE_LIMIT"),
 	}

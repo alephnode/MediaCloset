@@ -24,13 +24,13 @@ struct ProfileView: View {
                                     .fill(Color.black)
                                     .frame(width: 60, height: 60)
                                 
-                                Text(String(user.email.prefix(1)).uppercased())
+                                Text(avatarInitial(for: user))
                                     .font(.system(size: 24, weight: .semibold))
                                     .foregroundStyle(.white)
                             }
                             
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(user.email)
+                                Text(user.displayIdentifier)
                                     .font(.headline)
                                 
                                 if let createdAt = user.createdAt {
@@ -100,6 +100,16 @@ struct ProfileView: View {
                 Text("Are you sure you want to sign out?")
             }
         }
+    }
+    
+    private func avatarInitial(for user: AuthUser) -> String {
+        // Use first letter of email, or phone icon indicator, or fallback to "U"
+        if let email = user.email, !email.isEmpty {
+            return String(email.prefix(1)).uppercased()
+        } else if user.phoneNumber != nil {
+            return "📱"  // Phone emoji for phone-only users
+        }
+        return "U"
     }
     
     private func formatDate(_ dateString: String) -> String {

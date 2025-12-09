@@ -3,13 +3,38 @@
 //  MediaCloset
 //
 //  6-digit code entry screen with expiration timer
+//  Supports both email and phone verification
 //
 
 import SwiftUI
 
+// MARK: - Identifier Type
+
+enum IdentifierType {
+    case email
+    case phone
+    
+    var displayName: String {
+        switch self {
+        case .email: return "email"
+        case .phone: return "phone"
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .email: return "envelope.circle.fill"
+        case .phone: return "phone.circle.fill"
+        }
+    }
+}
+
+// MARK: - Code Entry View
+
 struct CodeEntryView: View {
     @EnvironmentObject private var authManager: AuthManager
-    let email: String
+    let identifier: String
+    let identifierType: IdentifierType
     
     @State private var code = ""
     @State private var isLoading = false
@@ -32,6 +57,34 @@ struct CodeEntryView: View {
         code.count == 6 && code.allSatisfy { $0.isNumber }
     }
     
+    /// Formats the identifier for display (e.g., masks part of phone/email)
+    private var displayIdentifier: String {
+        switch identifierType {
+        case .email:
+            return identifier
+        case .phone:
+            // Format phone number nicely, e.g., +1 (555) 123-4567
+            return formatPhoneForDisplay(identifier)
+        }
+    }
+    
+    /// Formats phone number for display
+    private func formatPhoneForDisplay(_ phone: String) -> String {
+        // Remove all non-digits except +
+        var digits = phone.filter { $0.isNumber || $0 == "+" }
+        
+        // If it's a US/Canada number (+1), format nicely
+        if digits.hasPrefix("+1") && digits.count == 12 {
+            let areaCode = String(digits.dropFirst(2).prefix(3))
+            let middle = String(digits.dropFirst(5).prefix(3))
+            let last = String(digits.suffix(4))
+            return "+1 (\(areaCode)) \(middle)-\(last)"
+        }
+        
+        // For other numbers, just add spaces
+        return digits
+    }
+    
     var body: some View {
         ZStack {
             Color(.systemBackground).ignoresSafeArea()
@@ -49,13 +102,18 @@ struct CodeEntryView: View {
                         .font(.system(size: 28, weight: .bold))
                         .foregroundStyle(.primary)
                     
-                    Text("We sent a 6-digit code to")
+                    Text(identifierType == .email ? "We sent a 6-digit code to" : "We texted a 6-digit code to")
                         .font(.system(size: 17))
                         .foregroundStyle(.secondary)
                     
-                    Text(email)
-                        .font(.system(size: 17, weight: .medium))
-                        .foregroundStyle(.primary)
+                    HStack(spacing: 6) {
+                        Image(systemName: identifierType.icon)
+                            .font(.system(size: 14))
+                            .foregroundStyle(.secondary)
+                        Text(displayIdentifier)
+                            .font(.system(size: 17, weight: .medium))
+                            .foregroundStyle(.primary)
+                    }
                 }
                 .padding(.bottom, 40)
                 
@@ -181,7 +239,12 @@ struct CodeEntryView: View {
         
         Task {
             do {
-                try await authManager.verifyLoginCode(email: email, code: code)
+                switch identifierType {
+                case .email:
+                    try await authManager.verifyLoginCode(email: identifier, code: code)
+                case .phone:
+                    try await authManager.verifyLoginCodeByPhone(phoneNumber: identifier, code: code)
+                }
                 await MainActor.run {
                     isLoading = false
                     showSuccess = true
@@ -202,7 +265,12 @@ struct CodeEntryView: View {
         
         Task {
             do {
-                _ = try await authManager.requestLoginCode(email: email)
+                switch identifierType {
+                case .email:
+                    _ = try await authManager.requestLoginCode(email: identifier)
+                case .phone:
+                    _ = try await authManager.requestLoginCodeByPhone(phoneNumber: identifier)
+                }
                 await MainActor.run {
                     isLoading = false
                     timeRemaining = 300 // Reset timer
@@ -242,9 +310,16 @@ struct CodeDigitBox: View {
     }
 }
 
-#Preview {
+#Preview("Email") {
     NavigationStack {
-        CodeEntryView(email: "test@example.com")
+        CodeEntryView(identifier: "test@example.com", identifierType: .email)
+            .environmentObject(AuthManager.shared)
+    }
+}
+
+#Preview("Phone") {
+    NavigationStack {
+        CodeEntryView(identifier: "+15551234567", identifierType: .phone)
             .environmentObject(AuthManager.shared)
     }
 }
