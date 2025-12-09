@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Dark mode: black background, white strokes -->
+  <rect x="0" y="0" width="1024" height="1024" fill="#000000"/>
+  <!-- Rounded square border -->
+  <rect x="64" y="64" width="896" height="896" rx="224" ry="224" fill="none" stroke="#ffffff" stroke-width="48"/>
+  <!-- Vinyl record circle -->
+  <circle cx="512" cy="512" r="384" fill="none" stroke="#ffffff" stroke-width="40"/>
+  <!-- Center dot -->
+  <circle cx="512" cy="512" r="40" fill="#ffffff"/>
+  <!-- VHS stripe -->
+  <rect x="160" y="472" width="704" height="80" fill="#ffffff"/>
+</svg>
