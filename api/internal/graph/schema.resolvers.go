@@ -402,6 +402,21 @@ func (r *mutationResolver) SaveAlbum(ctx context.Context, input model.SaveAlbumI
 		if id, ok := existingRecord["id"].(string); ok {
 			recordID = id
 		}
+
+		// Update the existing record's cover URL if we fetched a new one and it doesn't have one
+		existingCoverURL, _ := existingRecord["cover_url"].(string)
+		if coverURL != "" && existingCoverURL == "" {
+			updates := map[string]interface{}{
+				"cover_url": coverURL,
+			}
+			_, err := r.HasuraClient.UpdateAlbum(ctx, recordID, updates)
+			if err != nil {
+				// Log the error but don't fail - the album was still found
+				fmt.Printf("[SaveAlbum] Failed to update cover URL for existing album '%s - %s': %v\n", input.Artist, input.Album, err)
+			} else {
+				fmt.Printf("[SaveAlbum] Updated cover URL for existing album '%s - %s'\n", input.Artist, input.Album)
+			}
+		}
 	} else {
 		// Record doesn't exist, create it
 		record := map[string]interface{}{
