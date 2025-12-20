@@ -863,3 +863,237 @@ func (h *HasuraClient) UnlinkRecordFromUser(ctx context.Context, userID string, 
 
 	return nil
 }
+
+// PaginatedResult holds paginated query results
+type PaginatedResult struct {
+	Items      []map[string]interface{}
+	TotalCount int
+}
+
+// GetMoviesByUserIDPaginated fetches movies for a user with pagination, sorting, and search
+func (h *HasuraClient) GetMoviesByUserIDPaginated(ctx context.Context, userID string, limit, offset int, sortField, sortOrder string, search *string) (*PaginatedResult, error) {
+	// Build order_by clause based on sort field
+	orderByClause := h.buildMovieOrderBy(sortField, sortOrder)
+
+	// Build where clause with optional search
+	whereClause := fmt.Sprintf(`user_id: {_eq: $user_id}`)
+	if search != nil && *search != "" {
+		// Search in movie title (case-insensitive)
+		whereClause = fmt.Sprintf(`user_id: {_eq: $user_id}, vhs: {title: {_ilike: $search}}`)
+	}
+
+	query := fmt.Sprintf(`
+		query GetMoviesByUserIDPaginated($user_id: uuid!, $limit: Int!, $offset: Int!, $search: String) {
+			user_vhs(
+				where: {%s}
+				limit: $limit
+				offset: $offset
+				order_by: %s
+			) {
+				vhs {
+					id
+					title
+					director
+					year
+					genre
+					cover_url
+					created_at
+					updated_at
+				}
+			}
+			user_vhs_aggregate(where: {%s}) {
+				aggregate {
+					count
+				}
+			}
+		}
+	`, whereClause, orderByClause, whereClause)
+
+	variables := map[string]interface{}{
+		"user_id": userID,
+		"limit":   limit,
+		"offset":  offset,
+	}
+	if search != nil && *search != "" {
+		variables["search"] = "%" + *search + "%"
+	}
+
+	req := GraphQLRequest{
+		Query:         query,
+		OperationName: "GetMoviesByUserIDPaginated",
+		Variables:     variables,
+	}
+
+	resp, err := h.Execute(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+
+	// Extract user_vhs array from response
+	userVHSData, ok := resp.Data["user_vhs"]
+	if !ok {
+		return &PaginatedResult{Items: []map[string]interface{}{}, TotalCount: 0}, nil
+	}
+
+	userVHSList, ok := userVHSData.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("unexpected user_vhs data type")
+	}
+
+	// Extract vhs objects from user_vhs entries
+	movies := make([]map[string]interface{}, 0, len(userVHSList))
+	for _, entry := range userVHSList {
+		if entryMap, ok := entry.(map[string]interface{}); ok {
+			if vhs, ok := entryMap["vhs"].(map[string]interface{}); ok {
+				movies = append(movies, vhs)
+			}
+		}
+	}
+
+	// Extract total count
+	totalCount := 0
+	if aggData, ok := resp.Data["user_vhs_aggregate"].(map[string]interface{}); ok {
+		if agg, ok := aggData["aggregate"].(map[string]interface{}); ok {
+			if count, ok := agg["count"].(float64); ok {
+				totalCount = int(count)
+			}
+		}
+	}
+
+	return &PaginatedResult{Items: movies, TotalCount: totalCount}, nil
+}
+
+// GetAlbumsByUserIDPaginated fetches albums for a user with pagination, sorting, and search
+func (h *HasuraClient) GetAlbumsByUserIDPaginated(ctx context.Context, userID string, limit, offset int, sortField, sortOrder string, search *string) (*PaginatedResult, error) {
+	// Build order_by clause based on sort field
+	orderByClause := h.buildAlbumOrderBy(sortField, sortOrder)
+
+	// Build where clause with optional search
+	whereClause := fmt.Sprintf(`user_id: {_eq: $user_id}`)
+	if search != nil && *search != "" {
+		// Search in artist or album name (case-insensitive)
+		whereClause = fmt.Sprintf(`user_id: {_eq: $user_id}, _or: [{record: {artist: {_ilike: $search}}}, {record: {album: {_ilike: $search}}}]`)
+	}
+
+	query := fmt.Sprintf(`
+		query GetAlbumsByUserIDPaginated($user_id: uuid!, $limit: Int!, $offset: Int!, $search: String) {
+			user_records(
+				where: {%s}
+				limit: $limit
+				offset: $offset
+				order_by: %s
+			) {
+				record {
+					id
+					artist
+					album
+					year
+					label
+					color_variants
+					genres
+					cover_url
+					created_at
+					updated_at
+				}
+			}
+			user_records_aggregate(where: {%s}) {
+				aggregate {
+					count
+				}
+			}
+		}
+	`, whereClause, orderByClause, whereClause)
+
+	variables := map[string]interface{}{
+		"user_id": userID,
+		"limit":   limit,
+		"offset":  offset,
+	}
+	if search != nil && *search != "" {
+		variables["search"] = "%" + *search + "%"
+	}
+
+	req := GraphQLRequest{
+		Query:         query,
+		OperationName: "GetAlbumsByUserIDPaginated",
+		Variables:     variables,
+	}
+
+	resp, err := h.Execute(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+
+	// Extract user_records array from response
+	userRecordsData, ok := resp.Data["user_records"]
+	if !ok {
+		return &PaginatedResult{Items: []map[string]interface{}{}, TotalCount: 0}, nil
+	}
+
+	userRecordsList, ok := userRecordsData.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("unexpected user_records data type")
+	}
+
+	// Extract record objects from user_records entries
+	albums := make([]map[string]interface{}, 0, len(userRecordsList))
+	for _, entry := range userRecordsList {
+		if entryMap, ok := entry.(map[string]interface{}); ok {
+			if record, ok := entryMap["record"].(map[string]interface{}); ok {
+				albums = append(albums, record)
+			}
+		}
+	}
+
+	// Extract total count
+	totalCount := 0
+	if aggData, ok := resp.Data["user_records_aggregate"].(map[string]interface{}); ok {
+		if agg, ok := aggData["aggregate"].(map[string]interface{}); ok {
+			if count, ok := agg["count"].(float64); ok {
+				totalCount = int(count)
+			}
+		}
+	}
+
+	return &PaginatedResult{Items: albums, TotalCount: totalCount}, nil
+}
+
+// buildMovieOrderBy builds the order_by clause for movie queries
+func (h *HasuraClient) buildMovieOrderBy(sortField, sortOrder string) string {
+	order := "desc"
+	if sortOrder == "ASC" {
+		order = "asc"
+	}
+
+	switch sortField {
+	case "TITLE":
+		return fmt.Sprintf(`{vhs: {title: %s}}`, order)
+	case "YEAR":
+		return fmt.Sprintf(`{vhs: {year: %s}}`, order)
+	case "CREATED_AT":
+		fallthrough
+	default:
+		return fmt.Sprintf(`{created_at: %s}`, order)
+	}
+}
+
+// buildAlbumOrderBy builds the order_by clause for album queries
+func (h *HasuraClient) buildAlbumOrderBy(sortField, sortOrder string) string {
+	order := "desc"
+	if sortOrder == "ASC" {
+		order = "asc"
+	}
+
+	switch sortField {
+	case "ARTIST":
+		return fmt.Sprintf(`{record: {artist: %s}}`, order)
+	case "TITLE":
+		return fmt.Sprintf(`{record: {album: %s}}`, order)
+	case "YEAR":
+		return fmt.Sprintf(`{record: {year: %s}}`, order)
+	case "CREATED_AT":
+		fallthrough
+	default:
+		return fmt.Sprintf(`{created_at: %s}`, order)
+	}
+}

@@ -1,6 +1,45 @@
 # MediaCloset GraphQL Schema
 # Proxies external APIs (OMDB, MusicBrainz, Discogs, iTunes, UPC Database)
 
+# Pagination and sorting inputs
+input PaginationInput {
+  limit: Int! = 25
+  offset: Int! = 0
+}
+
+enum SortField {
+  CREATED_AT
+  TITLE
+  ARTIST
+  YEAR
+}
+
+enum SortOrder {
+  ASC
+  DESC
+}
+
+input SortInput {
+  field: SortField!
+  order: SortOrder! = DESC
+}
+
+# Pagination response types
+type PageInfo {
+  hasNextPage: Boolean!
+  totalCount: Int!
+}
+
+type MovieConnection {
+  items: [Movie!]!
+  pageInfo: PageInfo!
+}
+
+type AlbumConnection {
+  items: [Album!]!
+  pageInfo: PageInfo!
+}
+
 type Query {
   # Movie/VHS lookups
   movieByTitle(title: String!, director: String, year: Int): MovieData
@@ -13,16 +52,32 @@ type Query {
   album(id: String!): Album  # Get album by ID
 
   # List all movies/albums from database (filtered by authenticated user)
-  movies: [Movie!]!
-  albums: [Album!]!
+  # Legacy non-paginated queries (deprecated - use paginated versions)
+  movies: [Movie!]! @deprecated(reason: "Use userMoviesPaginated instead")
+  albums: [Album!]! @deprecated(reason: "Use userAlbumsPaginated instead")
 
   # User info
   me: User  # Get current authenticated user
   user(id: String!): User  # Get user by ID
 
-  # Get movies/albums for a specific user
-  userMovies(userId: String!): [Movie!]!
-  userAlbums(userId: String!): [Album!]!
+  # Get movies/albums for a specific user (legacy)
+  userMovies(userId: String!): [Movie!]! @deprecated(reason: "Use userMoviesPaginated instead")
+  userAlbums(userId: String!): [Album!]! @deprecated(reason: "Use userAlbumsPaginated instead")
+
+  # Paginated queries with search, sort, and filtering
+  userMoviesPaginated(
+    userId: String!
+    pagination: PaginationInput
+    sort: SortInput
+    search: String
+  ): MovieConnection!
+
+  userAlbumsPaginated(
+    userId: String!
+    pagination: PaginationInput
+    sort: SortInput
+    search: String
+  ): AlbumConnection!
 
   # Health check
   health: Health!

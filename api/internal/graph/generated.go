@@ -60,6 +60,11 @@ type ComplexityRoot struct {
 		Year          func(childComplexity int) int
 	}
 
+	AlbumConnection struct {
+		Items    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
 	AlbumData struct {
 		Album    func(childComplexity int) int
 		Artist   func(childComplexity int) int
@@ -93,6 +98,11 @@ type ComplexityRoot struct {
 		Year      func(childComplexity int) int
 	}
 
+	MovieConnection struct {
+		Items    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
 	MovieData struct {
 		Director  func(childComplexity int) int
 		Genre     func(childComplexity int) int
@@ -114,6 +124,11 @@ type ComplexityRoot struct {
 		VerifyLoginCode  func(childComplexity int, email string, code string) int
 	}
 
+	PageInfo struct {
+		HasNextPage func(childComplexity int) int
+		TotalCount  func(childComplexity int) int
+	}
+
 	Query struct {
 		Album                 func(childComplexity int, id string) int
 		AlbumByArtistAndTitle func(childComplexity int, artist string, album string) int
@@ -127,7 +142,9 @@ type ComplexityRoot struct {
 		Movies                func(childComplexity int) int
 		User                  func(childComplexity int, id string) int
 		UserAlbums            func(childComplexity int, userID string) int
+		UserAlbumsPaginated   func(childComplexity int, userID string, pagination *model.PaginationInput, sort *model.SortInput, search *string) int
 		UserMovies            func(childComplexity int, userID string) int
+		UserMoviesPaginated   func(childComplexity int, userID string, pagination *model.PaginationInput, sort *model.SortInput, search *string) int
 	}
 
 	RequestLoginCodeResponse struct {
@@ -228,6 +245,8 @@ type QueryResolver interface {
 	User(ctx context.Context, id string) (*model.User, error)
 	UserMovies(ctx context.Context, userID string) ([]*model.Movie, error)
 	UserAlbums(ctx context.Context, userID string) ([]*model.Album, error)
+	UserMoviesPaginated(ctx context.Context, userID string, pagination *model.PaginationInput, sort *model.SortInput, search *string) (*model.MovieConnection, error)
+	UserAlbumsPaginated(ctx context.Context, userID string, pagination *model.PaginationInput, sort *model.SortInput, search *string) (*model.AlbumConnection, error)
 	Health(ctx context.Context) (*model.Health, error)
 }
 
@@ -310,6 +329,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Album.Year(childComplexity), true
+
+	case "AlbumConnection.items":
+		if e.complexity.AlbumConnection.Items == nil {
+			break
+		}
+
+		return e.complexity.AlbumConnection.Items(childComplexity), true
+	case "AlbumConnection.pageInfo":
+		if e.complexity.AlbumConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.AlbumConnection.PageInfo(childComplexity), true
 
 	case "AlbumData.album":
 		if e.complexity.AlbumData.Album == nil {
@@ -440,6 +472,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Movie.Year(childComplexity), true
+
+	case "MovieConnection.items":
+		if e.complexity.MovieConnection.Items == nil {
+			break
+		}
+
+		return e.complexity.MovieConnection.Items(childComplexity), true
+	case "MovieConnection.pageInfo":
+		if e.complexity.MovieConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.MovieConnection.PageInfo(childComplexity), true
 
 	case "MovieData.director":
 		if e.complexity.MovieData.Director == nil {
@@ -573,6 +618,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.VerifyLoginCode(childComplexity, args["email"].(string), args["code"].(string)), true
 
+	case "PageInfo.hasNextPage":
+		if e.complexity.PageInfo.HasNextPage == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.HasNextPage(childComplexity), true
+	case "PageInfo.totalCount":
+		if e.complexity.PageInfo.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.TotalCount(childComplexity), true
+
 	case "Query.album":
 		if e.complexity.Query.Album == nil {
 			break
@@ -685,6 +743,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.UserAlbums(childComplexity, args["userId"].(string)), true
+	case "Query.userAlbumsPaginated":
+		if e.complexity.Query.UserAlbumsPaginated == nil {
+			break
+		}
+
+		args, err := ec.field_Query_userAlbumsPaginated_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.UserAlbumsPaginated(childComplexity, args["userId"].(string), args["pagination"].(*model.PaginationInput), args["sort"].(*model.SortInput), args["search"].(*string)), true
 	case "Query.userMovies":
 		if e.complexity.Query.UserMovies == nil {
 			break
@@ -696,6 +765,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.UserMovies(childComplexity, args["userId"].(string)), true
+	case "Query.userMoviesPaginated":
+		if e.complexity.Query.UserMoviesPaginated == nil {
+			break
+		}
+
+		args, err := ec.field_Query_userMoviesPaginated_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.UserMoviesPaginated(childComplexity, args["userId"].(string), args["pagination"].(*model.PaginationInput), args["sort"].(*model.SortInput), args["search"].(*string)), true
 
 	case "RequestLoginCodeResponse.error":
 		if e.complexity.RequestLoginCodeResponse.Error == nil {
@@ -979,8 +1059,10 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputPaginationInput,
 		ec.unmarshalInputSaveAlbumInput,
 		ec.unmarshalInputSaveMovieInput,
+		ec.unmarshalInputSortInput,
 		ec.unmarshalInputUpdateAlbumInput,
 		ec.unmarshalInputUpdateMovieInput,
 	)
@@ -1294,6 +1376,32 @@ func (ec *executionContext) field_Query_movie_args(ctx context.Context, rawArgs 
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_userAlbumsPaginated_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "userId", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["userId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "pagination", ec.unmarshalOPaginationInput2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐPaginationInput)
+	if err != nil {
+		return nil, err
+	}
+	args["pagination"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "sort", ec.unmarshalOSortInput2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSortInput)
+	if err != nil {
+		return nil, err
+	}
+	args["sort"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "search", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["search"] = arg3
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_userAlbums_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1302,6 +1410,32 @@ func (ec *executionContext) field_Query_userAlbums_args(ctx context.Context, raw
 		return nil, err
 	}
 	args["userId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_userMoviesPaginated_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "userId", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["userId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "pagination", ec.unmarshalOPaginationInput2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐPaginationInput)
+	if err != nil {
+		return nil, err
+	}
+	args["pagination"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "sort", ec.unmarshalOSortInput2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSortInput)
+	if err != nil {
+		return nil, err
+	}
+	args["sort"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "search", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["search"] = arg3
 	return args, nil
 }
 
@@ -1664,6 +1798,92 @@ func (ec *executionContext) fieldContext_Album_updatedAt(_ context.Context, fiel
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AlbumConnection_items(ctx context.Context, field graphql.CollectedField, obj *model.AlbumConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AlbumConnection_items,
+		func(ctx context.Context) (any, error) {
+			return obj.Items, nil
+		},
+		nil,
+		ec.marshalNAlbum2ᚕᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐAlbumᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AlbumConnection_items(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AlbumConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Album_id(ctx, field)
+			case "artist":
+				return ec.fieldContext_Album_artist(ctx, field)
+			case "album":
+				return ec.fieldContext_Album_album(ctx, field)
+			case "year":
+				return ec.fieldContext_Album_year(ctx, field)
+			case "label":
+				return ec.fieldContext_Album_label(ctx, field)
+			case "color_variants":
+				return ec.fieldContext_Album_color_variants(ctx, field)
+			case "genres":
+				return ec.fieldContext_Album_genres(ctx, field)
+			case "coverUrl":
+				return ec.fieldContext_Album_coverUrl(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Album_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Album_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Album", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AlbumConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.AlbumConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AlbumConnection_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AlbumConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AlbumConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_PageInfo_totalCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
 		},
 	}
 	return fc, nil
@@ -2286,6 +2506,88 @@ func (ec *executionContext) fieldContext_Movie_updatedAt(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _MovieConnection_items(ctx context.Context, field graphql.CollectedField, obj *model.MovieConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MovieConnection_items,
+		func(ctx context.Context) (any, error) {
+			return obj.Items, nil
+		},
+		nil,
+		ec.marshalNMovie2ᚕᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐMovieᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MovieConnection_items(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MovieConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Movie_id(ctx, field)
+			case "title":
+				return ec.fieldContext_Movie_title(ctx, field)
+			case "director":
+				return ec.fieldContext_Movie_director(ctx, field)
+			case "year":
+				return ec.fieldContext_Movie_year(ctx, field)
+			case "genre":
+				return ec.fieldContext_Movie_genre(ctx, field)
+			case "coverUrl":
+				return ec.fieldContext_Movie_coverUrl(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Movie_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Movie_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Movie", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MovieConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.MovieConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MovieConnection_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MovieConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MovieConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_PageInfo_totalCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _MovieData_title(ctx context.Context, field graphql.CollectedField, obj *model.MovieData) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2879,6 +3181,64 @@ func (ec *executionContext) fieldContext_Mutation_deleteAlbum(ctx context.Contex
 	if fc.Args, err = ec.field_Mutation_deleteAlbum_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PageInfo_hasNextPage(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PageInfo_hasNextPage,
+		func(ctx context.Context) (any, error) {
+			return obj.HasNextPage, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_hasNextPage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PageInfo_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PageInfo_totalCount,
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -3549,6 +3909,100 @@ func (ec *executionContext) fieldContext_Query_userAlbums(ctx context.Context, f
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_userAlbums_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_userMoviesPaginated(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_userMoviesPaginated,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().UserMoviesPaginated(ctx, fc.Args["userId"].(string), fc.Args["pagination"].(*model.PaginationInput), fc.Args["sort"].(*model.SortInput), fc.Args["search"].(*string))
+		},
+		nil,
+		ec.marshalNMovieConnection2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐMovieConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_userMoviesPaginated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "items":
+				return ec.fieldContext_MovieConnection_items(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_MovieConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MovieConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_userMoviesPaginated_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_userAlbumsPaginated(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_userAlbumsPaginated,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().UserAlbumsPaginated(ctx, fc.Args["userId"].(string), fc.Args["pagination"].(*model.PaginationInput), fc.Args["sort"].(*model.SortInput), fc.Args["search"].(*string))
+		},
+		nil,
+		ec.marshalNAlbumConnection2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐAlbumConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_userAlbumsPaginated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "items":
+				return ec.fieldContext_AlbumConnection_items(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_AlbumConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AlbumConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_userAlbumsPaginated_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -6548,6 +7002,47 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputPaginationInput(ctx context.Context, obj any) (model.PaginationInput, error) {
+	var it model.PaginationInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	if _, present := asMap["limit"]; !present {
+		asMap["limit"] = 25
+	}
+	if _, present := asMap["offset"]; !present {
+		asMap["offset"] = 0
+	}
+
+	fieldsInOrder := [...]string{"limit", "offset"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "limit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Limit = data
+		case "offset":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Offset = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputSaveAlbumInput(ctx context.Context, obj any) (model.SaveAlbumInput, error) {
 	var it model.SaveAlbumInput
 	asMap := map[string]any{}
@@ -6666,6 +7161,44 @@ func (ec *executionContext) unmarshalInputSaveMovieInput(ctx context.Context, ob
 				return it, err
 			}
 			it.CoverURL = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputSortInput(ctx context.Context, obj any) (model.SortInput, error) {
+	var it model.SortInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	if _, present := asMap["order"]; !present {
+		asMap["order"] = "DESC"
+	}
+
+	fieldsInOrder := [...]string{"field", "order"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNSortField2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSortField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		case "order":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("order"))
+			data, err := ec.unmarshalNSortOrder2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSortOrder(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Order = data
 		}
 	}
 
@@ -6844,6 +7377,50 @@ func (ec *executionContext) _Album(ctx context.Context, sel ast.SelectionSet, ob
 			out.Values[i] = ec._Album_createdAt(ctx, field, obj)
 		case "updatedAt":
 			out.Values[i] = ec._Album_updatedAt(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var albumConnectionImplementors = []string{"AlbumConnection"}
+
+func (ec *executionContext) _AlbumConnection(ctx context.Context, sel ast.SelectionSet, obj *model.AlbumConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, albumConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AlbumConnection")
+		case "items":
+			out.Values[i] = ec._AlbumConnection_items(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._AlbumConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7066,6 +7643,50 @@ func (ec *executionContext) _Movie(ctx context.Context, sel ast.SelectionSet, ob
 	return out
 }
 
+var movieConnectionImplementors = []string{"MovieConnection"}
+
+func (ec *executionContext) _MovieConnection(ctx context.Context, sel ast.SelectionSet, obj *model.MovieConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, movieConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MovieConnection")
+		case "items":
+			out.Values[i] = ec._MovieConnection_items(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._MovieConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var movieDataImplementors = []string{"MovieData"}
 
 func (ec *executionContext) _MovieData(ctx context.Context, sel ast.SelectionSet, obj *model.MovieData) graphql.Marshaler {
@@ -7192,6 +7813,50 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteAlbum(ctx, field)
 			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var pageInfoImplementors = []string{"PageInfo"}
+
+func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet, obj *model.PageInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, pageInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PageInfo")
+		case "hasNextPage":
+			out.Values[i] = ec._PageInfo_hasNextPage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._PageInfo_totalCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -7465,6 +8130,50 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_userAlbums(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "userMoviesPaginated":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_userMoviesPaginated(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "userAlbumsPaginated":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_userAlbumsPaginated(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -8404,6 +9113,20 @@ func (ec *executionContext) marshalNAlbum2ᚖmediaclosetᚋapiᚋinternalᚋgrap
 	return ec._Album(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNAlbumConnection2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐAlbumConnection(ctx context.Context, sel ast.SelectionSet, v model.AlbumConnection) graphql.Marshaler {
+	return ec._AlbumConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAlbumConnection2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐAlbumConnection(ctx context.Context, sel ast.SelectionSet, v *model.AlbumConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AlbumConnection(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -8518,6 +9241,30 @@ func (ec *executionContext) marshalNMovie2ᚖmediaclosetᚋapiᚋinternalᚋgrap
 	return ec._Movie(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNMovieConnection2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐMovieConnection(ctx context.Context, sel ast.SelectionSet, v model.MovieConnection) graphql.Marshaler {
+	return ec._MovieConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNMovieConnection2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐMovieConnection(ctx context.Context, sel ast.SelectionSet, v *model.MovieConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MovieConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPageInfo2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PageInfo(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNRequestLoginCodeResponse2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐRequestLoginCodeResponse(ctx context.Context, sel ast.SelectionSet, v model.RequestLoginCodeResponse) graphql.Marshaler {
 	return ec._RequestLoginCodeResponse(ctx, sel, &v)
 }
@@ -8568,6 +9315,26 @@ func (ec *executionContext) marshalNSaveMovieResponse2ᚖmediaclosetᚋapiᚋint
 		return graphql.Null
 	}
 	return ec._SaveMovieResponse(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNSortField2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSortField(ctx context.Context, v any) (model.SortField, error) {
+	var res model.SortField
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSortField2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSortField(ctx context.Context, sel ast.SelectionSet, v model.SortField) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNSortOrder2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSortOrder(ctx context.Context, v any) (model.SortOrder, error) {
+	var res model.SortOrder
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSortOrder2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSortOrder(ctx context.Context, sel ast.SelectionSet, v model.SortOrder) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
@@ -8977,6 +9744,14 @@ func (ec *executionContext) marshalOMovieData2ᚖmediaclosetᚋapiᚋinternalᚋ
 	return ec._MovieData(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalOPaginationInput2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐPaginationInput(ctx context.Context, v any) (*model.PaginationInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputPaginationInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalOSavedAlbum2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSavedAlbum(ctx context.Context, sel ast.SelectionSet, v *model.SavedAlbum) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -8989,6 +9764,14 @@ func (ec *executionContext) marshalOSavedMovie2ᚖmediaclosetᚋapiᚋinternal�
 		return graphql.Null
 	}
 	return ec._SavedMovie(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOSortInput2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSortInput(ctx context.Context, v any) (*model.SortInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputSortInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {

@@ -2,6 +2,13 @@
 
 package model
 
+import (
+	"bytes"
+	"fmt"
+	"io"
+	"strconv"
+)
+
 type Album struct {
 	ID            string   `json:"id"`
 	Artist        string   `json:"artist"`
@@ -13,6 +20,11 @@ type Album struct {
 	CoverURL      *string  `json:"coverUrl,omitempty"`
 	CreatedAt     *string  `json:"createdAt,omitempty"`
 	UpdatedAt     *string  `json:"updatedAt,omitempty"`
+}
+
+type AlbumConnection struct {
+	Items    []*Album  `json:"items"`
+	PageInfo *PageInfo `json:"pageInfo"`
 }
 
 type AlbumData struct {
@@ -48,6 +60,11 @@ type Movie struct {
 	UpdatedAt *string `json:"updatedAt,omitempty"`
 }
 
+type MovieConnection struct {
+	Items    []*Movie  `json:"items"`
+	PageInfo *PageInfo `json:"pageInfo"`
+}
+
 type MovieData struct {
 	Title     string  `json:"title"`
 	Director  *string `json:"director,omitempty"`
@@ -59,6 +76,16 @@ type MovieData struct {
 }
 
 type Mutation struct {
+}
+
+type PageInfo struct {
+	HasNextPage bool `json:"hasNextPage"`
+	TotalCount  int  `json:"totalCount"`
+}
+
+type PaginationInput struct {
+	Limit  int `json:"limit"`
+	Offset int `json:"offset"`
 }
 
 type Query struct {
@@ -122,6 +149,11 @@ type SavedMovie struct {
 	CoverURL *string `json:"coverUrl,omitempty"`
 }
 
+type SortInput struct {
+	Field SortField `json:"field"`
+	Order SortOrder `json:"order"`
+}
+
 type TrackData struct {
 	Title           string `json:"title"`
 	TrackNumber     *int   `json:"trackNumber,omitempty"`
@@ -172,4 +204,118 @@ type VerifyLoginCodeResponse struct {
 	Token   *string `json:"token,omitempty"`
 	User    *User   `json:"user,omitempty"`
 	Error   *string `json:"error,omitempty"`
+}
+
+type SortField string
+
+const (
+	SortFieldCreatedAt SortField = "CREATED_AT"
+	SortFieldTitle     SortField = "TITLE"
+	SortFieldArtist    SortField = "ARTIST"
+	SortFieldYear      SortField = "YEAR"
+)
+
+var AllSortField = []SortField{
+	SortFieldCreatedAt,
+	SortFieldTitle,
+	SortFieldArtist,
+	SortFieldYear,
+}
+
+func (e SortField) IsValid() bool {
+	switch e {
+	case SortFieldCreatedAt, SortFieldTitle, SortFieldArtist, SortFieldYear:
+		return true
+	}
+	return false
+}
+
+func (e SortField) String() string {
+	return string(e)
+}
+
+func (e *SortField) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SortField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SortField", str)
+	}
+	return nil
+}
+
+func (e SortField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SortField) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SortField) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type SortOrder string
+
+const (
+	SortOrderAsc  SortOrder = "ASC"
+	SortOrderDesc SortOrder = "DESC"
+)
+
+var AllSortOrder = []SortOrder{
+	SortOrderAsc,
+	SortOrderDesc,
+}
+
+func (e SortOrder) IsValid() bool {
+	switch e {
+	case SortOrderAsc, SortOrderDesc:
+		return true
+	}
+	return false
+}
+
+func (e SortOrder) String() string {
+	return string(e)
+}
+
+func (e *SortOrder) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SortOrder(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SortOrder", str)
+	}
+	return nil
+}
+
+func (e SortOrder) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SortOrder) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SortOrder) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }

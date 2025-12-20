@@ -1035,4 +1035,146 @@ final class MediaClosetAPIClient {
 
         return response.me
     }
+
+    // MARK: - Paginated List Queries
+
+    /// Fetches movies for the current user with pagination, sorting, and search
+    /// - Parameters:
+    ///   - limit: Number of items per page (default: 25)
+    ///   - offset: Number of items to skip (default: 0)
+    ///   - sortField: Field to sort by (default: .createdAt)
+    ///   - sortOrder: Sort direction (default: .desc)
+    ///   - search: Optional search term to filter results
+    /// - Returns: MovieConnection with items and page info
+    func fetchMoviesPaginated(
+        limit: Int = 25,
+        offset: Int = 0,
+        sortField: SortField = .createdAt,
+        sortOrder: SortOrder = .desc,
+        search: String? = nil
+    ) async throws -> MovieConnection {
+        guard let userId = TokenManager.shared.getUserId() else {
+            throw MediaClosetAPIError.notAuthenticated
+        }
+
+        struct Response: Decodable {
+            let userMoviesPaginated: MovieConnection
+        }
+
+        let query = """
+        query GetUserMoviesPaginated($userId: String!, $pagination: PaginationInput, $sort: SortInput, $search: String) {
+          userMoviesPaginated(userId: $userId, pagination: $pagination, sort: $sort, search: $search) {
+            items {
+              id
+              title
+              director
+              year
+              genre
+              coverUrl
+              createdAt
+              updatedAt
+            }
+            pageInfo {
+              hasNextPage
+              totalCount
+            }
+          }
+        }
+        """
+
+        var variables: [String: Any] = [
+            "userId": userId,
+            "pagination": [
+                "limit": limit,
+                "offset": offset
+            ],
+            "sort": [
+                "field": sortField.rawValue,
+                "order": sortOrder.rawValue
+            ]
+        ]
+
+        if let search = search, !search.isEmpty {
+            variables["search"] = search
+        }
+
+        let response: Response = try await execute(
+            operationName: "GetUserMoviesPaginated",
+            query: query,
+            variables: variables
+        )
+
+        return response.userMoviesPaginated
+    }
+
+    /// Fetches albums for the current user with pagination, sorting, and search
+    /// - Parameters:
+    ///   - limit: Number of items per page (default: 25)
+    ///   - offset: Number of items to skip (default: 0)
+    ///   - sortField: Field to sort by (default: .createdAt)
+    ///   - sortOrder: Sort direction (default: .desc)
+    ///   - search: Optional search term to filter results
+    /// - Returns: AlbumConnection with items and page info
+    func fetchAlbumsPaginated(
+        limit: Int = 25,
+        offset: Int = 0,
+        sortField: SortField = .createdAt,
+        sortOrder: SortOrder = .desc,
+        search: String? = nil
+    ) async throws -> AlbumConnection {
+        guard let userId = TokenManager.shared.getUserId() else {
+            throw MediaClosetAPIError.notAuthenticated
+        }
+
+        struct Response: Decodable {
+            let userAlbumsPaginated: AlbumConnection
+        }
+
+        let query = """
+        query GetUserAlbumsPaginated($userId: String!, $pagination: PaginationInput, $sort: SortInput, $search: String) {
+          userAlbumsPaginated(userId: $userId, pagination: $pagination, sort: $sort, search: $search) {
+            items {
+              id
+              artist
+              album
+              year
+              label
+              color_variants
+              genres
+              coverUrl
+              createdAt
+              updatedAt
+            }
+            pageInfo {
+              hasNextPage
+              totalCount
+            }
+          }
+        }
+        """
+
+        var variables: [String: Any] = [
+            "userId": userId,
+            "pagination": [
+                "limit": limit,
+                "offset": offset
+            ],
+            "sort": [
+                "field": sortField.rawValue,
+                "order": sortOrder.rawValue
+            ]
+        ]
+
+        if let search = search, !search.isEmpty {
+            variables["search"] = search
+        }
+
+        let response: Response = try await execute(
+            operationName: "GetUserAlbumsPaginated",
+            query: query,
+            variables: variables
+        )
+
+        return response.userAlbumsPaginated
+    }
 }

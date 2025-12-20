@@ -34,6 +34,11 @@ struct RecordListView: View {
                             }
                         }
                     }
+                    .onAppear {
+                        if vm.shouldLoadMore(currentItem: item) {
+                            Task { await vm.loadMore() }
+                        }
+                    }
                 }
                 .onDelete { indexSet in
                     Task {
@@ -42,16 +47,30 @@ struct RecordListView: View {
                         }
                     }
                 }
+
+                // Loading indicator at bottom
+                if vm.isLoadingMore {
+                    HStack {
+                        Spacer()
+                        ProgressView()
+                            .padding()
+                        Spacer()
+                    }
+                    .listRowSeparator(.hidden)
+                }
+            }
+            .refreshable {
+                await vm.loadInitial()
             }
             .searchable(text: $searchText)
             .onChange(of: searchText) { _, newValue in
                 vm.search = newValue
-                Task { await vm.load() }
+                vm.searchChanged()
             }
-            .overlay { 
-                if vm.isLoading { 
-                    ProgressView() 
-                } else if let errorMessage = vm.errorMessage {
+            .overlay {
+                if vm.isLoading && vm.items.isEmpty {
+                    ProgressView()
+                } else if let errorMessage = vm.errorMessage, vm.items.isEmpty {
                     VStack(spacing: 16) {
                         Image(systemName: "exclamationmark.triangle")
                             .font(.largeTitle)
@@ -69,10 +88,44 @@ struct RecordListView: View {
                         .buttonStyle(.borderedProminent)
                     }
                     .padding()
+                } else if vm.items.isEmpty && !vm.isLoading {
+                    ContentUnavailableView(
+                        searchText.isEmpty ? "No Albums" : "No Results",
+                        systemImage: searchText.isEmpty ? "music.note.list" : "magnifyingglass",
+                        description: Text(searchText.isEmpty ? "Add your first album to get started." : "Try a different search term.")
+                    )
                 }
             }
             .navigationTitle("Records")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Menu {
+                        Picker("Sort By", selection: Binding(
+                            get: { vm.sortField },
+                            set: { newValue in
+                                vm.sortField = newValue
+                                vm.sortChanged()
+                            }
+                        )) {
+                            Label("Date Added", systemImage: "calendar").tag(SortField.createdAt)
+                            Label("Artist", systemImage: "person").tag(SortField.artist)
+                            Label("Title", systemImage: "textformat").tag(SortField.title)
+                        }
+                        Divider()
+                        Picker("Order", selection: Binding(
+                            get: { vm.sortOrder },
+                            set: { newValue in
+                                vm.sortOrder = newValue
+                                vm.sortChanged()
+                            }
+                        )) {
+                            Label("Descending", systemImage: "arrow.down").tag(SortOrder.desc)
+                            Label("Ascending", systemImage: "arrow.up").tag(SortOrder.asc)
+                        }
+                    } label: {
+                        Image(systemName: "arrow.up.arrow.down")
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { showNew = true } label: { Image(systemName: "plus") }
                 }
@@ -85,9 +138,5 @@ struct RecordListView: View {
             RecordFormView { Task { await vm.load() } }
         }
         .task { await vm.load() }
-        
     }
 }
-
-
-

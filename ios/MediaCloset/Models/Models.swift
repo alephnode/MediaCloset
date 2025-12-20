@@ -10,6 +10,75 @@ struct AuthUser: Codable, Equatable {
     let updatedAt: String?
 }
 
+// MARK: - Pagination Models
+
+/// Sort field options for list queries
+enum SortField: String, Codable, CaseIterable {
+    case createdAt = "CREATED_AT"
+    case title = "TITLE"
+    case artist = "ARTIST"
+    case year = "YEAR"
+
+    var displayName: String {
+        switch self {
+        case .createdAt: return "Date Added"
+        case .title: return "Title"
+        case .artist: return "Artist"
+        case .year: return "Year"
+        }
+    }
+}
+
+/// Sort order options
+enum SortOrder: String, Codable {
+    case asc = "ASC"
+    case desc = "DESC"
+}
+
+/// Page info returned from paginated queries
+struct PageInfo: Codable {
+    let hasNextPage: Bool
+    let totalCount: Int
+}
+
+/// Paginated response wrapper for movies
+struct MovieConnection: Codable {
+    let items: [MovieItem]
+    let pageInfo: PageInfo
+
+    struct MovieItem: Codable {
+        let id: String
+        let title: String
+        let director: String?
+        let year: Int?
+        let genre: String?
+        let coverUrl: String?
+        let createdAt: String?
+        let updatedAt: String?
+    }
+}
+
+/// Paginated response wrapper for albums
+struct AlbumConnection: Codable {
+    let items: [AlbumItem]
+    let pageInfo: PageInfo
+
+    struct AlbumItem: Codable {
+        let id: String
+        let artist: String
+        let album: String
+        let year: Int?
+        let label: String?
+        let color_variants: [String]?
+        let genres: [String]?
+        let coverUrl: String?
+        let createdAt: String?
+        let updatedAt: String?
+
+        var colorVariants: [String] { color_variants ?? [] }
+    }
+}
+
 // MARK: - Record Models
 
 struct RecordListItem: Identifiable, Hashable {

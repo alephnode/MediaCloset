@@ -1039,53 +1039,41 @@ func (r *queryResolver) UserAlbums(ctx context.Context, userID string) ([]*model
 	return albums, nil
 }
 
-// Health is the resolver for the health field.
-func (r *queryResolver) Health(ctx context.Context) (*model.Health, error) {
-	uptime := int(time.Since(r.ServerStartTime).Seconds())
-	return &model.Health{
-		Status:  "ok",
-		Version: "1.0.0",
-		Uptime:  uptime,
-	}, nil
-}
+// UserMoviesPaginated is the resolver for the userMoviesPaginated field.
+func (r *queryResolver) UserMoviesPaginated(ctx context.Context, userID string, pagination *model.PaginationInput, sort *model.SortInput, search *string) (*model.MovieConnection, error) {
+	// Default pagination values
+	limit := 25
+	offset := 0
+	if pagination != nil {
+		limit = pagination.Limit
+		offset = pagination.Offset
+	}
 
-// Mutation returns MutationResolver implementation.
-func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+	// Default sort values
+	sortField := "CREATED_AT"
+	sortOrder := "DESC"
+	if sort != nil {
+		sortField = string(sort.Field)
+		sortOrder = string(sort.Order)
+	}
 
-// Query returns QueryResolver implementation.
-func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
-
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *userResolver) Movies(ctx context.Context, obj *model.User) ([]*model.Movie, error) {
-	// Fetch movies for this user
-	moviesData, err := r.HasuraClient.GetMoviesByUserID(ctx, obj.ID)
+	// Fetch paginated movies from Hasura
+	result, err := r.HasuraClient.GetMoviesByUserIDPaginated(ctx, userID, limit, offset, sortField, sortOrder, search)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch movies: %w", err)
 	}
 
 	// Convert to model.Movie
-	movies := make([]*model.Movie, 0, len(moviesData))
-	for _, m := range moviesData {
+	movies := make([]*model.Movie, 0, len(result.Items))
+	for _, m := range result.Items {
 		movie := &model.Movie{}
 
-		// Required fields
 		if id, ok := m["id"].(string); ok {
 			movie.ID = id
 		}
 		if title, ok := m["title"].(string); ok {
 			movie.Title = title
 		}
-
-		// Optional fields
 		if director, ok := m["director"].(string); ok {
 			movie.Director = &director
 		}
@@ -1109,21 +1097,47 @@ type queryResolver struct{ *Resolver }
 		movies = append(movies, movie)
 	}
 
-	return movies, nil
+	// Calculate hasNextPage
+	hasNextPage := offset+len(movies) < result.TotalCount
+
+	return &model.MovieConnection{
+		Items: movies,
+		PageInfo: &model.PageInfo{
+			HasNextPage: hasNextPage,
+			TotalCount:  result.TotalCount,
+		},
+	}, nil
 }
-func (r *userResolver) Albums(ctx context.Context, obj *model.User) ([]*model.Album, error) {
-	// Fetch albums for this user
-	albumsData, err := r.HasuraClient.GetAlbumsByUserID(ctx, obj.ID)
+
+// UserAlbumsPaginated is the resolver for the userAlbumsPaginated field.
+func (r *queryResolver) UserAlbumsPaginated(ctx context.Context, userID string, pagination *model.PaginationInput, sort *model.SortInput, search *string) (*model.AlbumConnection, error) {
+	// Default pagination values
+	limit := 25
+	offset := 0
+	if pagination != nil {
+		limit = pagination.Limit
+		offset = pagination.Offset
+	}
+
+	// Default sort values
+	sortField := "CREATED_AT"
+	sortOrder := "DESC"
+	if sort != nil {
+		sortField = string(sort.Field)
+		sortOrder = string(sort.Order)
+	}
+
+	// Fetch paginated albums from Hasura
+	result, err := r.HasuraClient.GetAlbumsByUserIDPaginated(ctx, userID, limit, offset, sortField, sortOrder, search)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch albums: %w", err)
 	}
 
 	// Convert to model.Album
-	albums := make([]*model.Album, 0, len(albumsData))
-	for _, a := range albumsData {
+	albums := make([]*model.Album, 0, len(result.Items))
+	for _, a := range result.Items {
 		album := &model.Album{}
 
-		// Required fields
 		if id, ok := a["id"].(string); ok {
 			album.ID = id
 		}
@@ -1133,8 +1147,6 @@ func (r *userResolver) Albums(ctx context.Context, obj *model.User) ([]*model.Al
 		if albumName, ok := a["album"].(string); ok {
 			album.Album = albumName
 		}
-
-		// Optional fields
 		if year, ok := a["year"].(float64); ok {
 			yearInt := int(year)
 			album.Year = &yearInt
@@ -1177,8 +1189,33 @@ func (r *userResolver) Albums(ctx context.Context, obj *model.User) ([]*model.Al
 		albums = append(albums, album)
 	}
 
-	return albums, nil
+	// Calculate hasNextPage
+	hasNextPage := offset+len(albums) < result.TotalCount
+
+	return &model.AlbumConnection{
+		Items: albums,
+		PageInfo: &model.PageInfo{
+			HasNextPage: hasNextPage,
+			TotalCount:  result.TotalCount,
+		},
+	}, nil
 }
-func (r *Resolver) User() UserResolver { return &userResolver{r} }
-type userResolver struct{ *Resolver }
-*/
+
+// Health is the resolver for the health field.
+func (r *queryResolver) Health(ctx context.Context) (*model.Health, error) {
+	uptime := int(time.Since(r.ServerStartTime).Seconds())
+	return &model.Health{
+		Status:  "ok",
+		Version: "1.0.0",
+		Uptime:  uptime,
+	}, nil
+}
+
+// Mutation returns MutationResolver implementation.
+func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+
+// Query returns QueryResolver implementation.
+func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
+
+type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }

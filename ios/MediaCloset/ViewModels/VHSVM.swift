@@ -6,14 +6,29 @@
 //
 import Foundation
 import UIKit
+import Combine
 
 @MainActor
 final class VHSVM: ObservableObject {
+    // MARK: - Published Properties
     @Published var items: [VHSListItem] = []
     @Published var search = ""
     @Published var isLoading = false
+    @Published var isLoadingMore = false
     @Published var errorMessage: String? = nil
-    
+    @Published var sortField: SortField = .createdAt
+    @Published var sortOrder: SortOrder = .desc
+
+    // MARK: - Pagination State
+    private var hasNextPage = true
+    private var totalCount = 0
+    private var currentOffset = 0
+    private let pageSize = 25
+
+    // MARK: - Debounce
+    private var searchDebounceTask: Task<Void, Never>?
+    private let debounceDelay: UInt64 = 300_000_000 // 300ms in nanoseconds
+
     init() {
         // Listen for app becoming active to retry loading if there was a configuration error
         NotificationCenter.default.addObserver(
@@ -21,63 +36,63 @@ final class VHSVM: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            // Always retry loading when app becomes active, especially if there was an error
             Task {
                 await self?.retryLoadWithSecretRefresh()
             }
         }
     }
-    
+
     deinit {
         NotificationCenter.default.removeObserver(self)
-    }
-    
-    /// Retries loading with secret refresh if there was a configuration error
-    private func retryLoadWithSecretRefresh() async {
-        // Always ensure secrets are available before retrying
-        let secretsAvailable = SecretsManager.shared.ensureSecretsAvailable()
-        
-        #if DEBUG
-        if !secretsAvailable {
-            print("[VHSVM] Secrets still not available after refresh attempt")
-        } else {
-            print("[VHSVM] Secrets are now available, retrying load...")
-        }
-        #endif
-        
-        // Always retry loading
-        await load()
+        searchDebounceTask?.cancel()
     }
 
+    // MARK: - Public Methods
+
+    /// Performs initial load or refresh - clears existing data and fetches first page
     func load() async {
+        await loadInitial()
+    }
+
+    /// Loads the first page of data (used for initial load and pull-to-refresh)
+    func loadInitial() async {
         isLoading = true
         errorMessage = nil
+
+        // Reset pagination state
+        currentOffset = 0
+        hasNextPage = true
+        items = []
+
         defer { isLoading = false }
 
         do {
-            // Fetch movies from MediaCloset Go API
-            let movies = try await MediaClosetAPIClient.shared.fetchMovies()
+            let searchTerm = search.isEmpty ? nil : search
+            let connection = try await MediaClosetAPIClient.shared.fetchMoviesPaginated(
+                limit: pageSize,
+                offset: 0,
+                sortField: sortField,
+                sortOrder: sortOrder,
+                search: searchTerm
+            )
 
-            // Filter by search text if provided
-            let filteredMovies = search.isEmpty ? movies : movies.filter { movie in
-                movie.title.localizedCaseInsensitiveContains(search) ||
-                (movie.director?.localizedCaseInsensitiveContains(search) ?? false)
-            }
-
-            // Convert to VHSListItem
-            self.items = filteredMovies.map { movie in
+            items = connection.items.map { movie in
                 VHSListItem(
                     id: movie.id,
                     title: movie.title,
-                    director: movie.director ?? "",
+                    director: movie.director,
                     year: movie.year,
                     genre: movie.genre,
-                    coverUrl: movie.coverURL
+                    coverUrl: movie.coverUrl
                 )
             }
 
+            hasNextPage = connection.pageInfo.hasNextPage
+            totalCount = connection.pageInfo.totalCount
+            currentOffset = items.count
+
             #if DEBUG
-            print("[VHSVM] Loaded \(movies.count) movies from MediaCloset API, filtered to \(self.items.count)")
+            print("[VHSVM] Loaded \(items.count) of \(totalCount) movies, hasNextPage: \(hasNextPage)")
             #endif
         } catch {
             print("[VHSVM] VHS fetch error:", error)
@@ -85,11 +100,83 @@ final class VHSVM: ObservableObject {
         }
     }
 
+    /// Loads the next page of data (for infinite scroll)
+    func loadMore() async {
+        guard !isLoadingMore && !isLoading && hasNextPage else { return }
+
+        isLoadingMore = true
+        defer { isLoadingMore = false }
+
+        do {
+            let searchTerm = search.isEmpty ? nil : search
+            let connection = try await MediaClosetAPIClient.shared.fetchMoviesPaginated(
+                limit: pageSize,
+                offset: currentOffset,
+                sortField: sortField,
+                sortOrder: sortOrder,
+                search: searchTerm
+            )
+
+            let newItems = connection.items.map { movie in
+                VHSListItem(
+                    id: movie.id,
+                    title: movie.title,
+                    director: movie.director,
+                    year: movie.year,
+                    genre: movie.genre,
+                    coverUrl: movie.coverUrl
+                )
+            }
+
+            items.append(contentsOf: newItems)
+            hasNextPage = connection.pageInfo.hasNextPage
+            currentOffset = items.count
+
+            #if DEBUG
+            print("[VHSVM] Loaded more: now \(items.count) of \(totalCount) movies, hasNextPage: \(hasNextPage)")
+            #endif
+        } catch {
+            print("[VHSVM] Load more error:", error)
+        }
+    }
+
+    /// Called when search text changes - debounces and triggers a new search
+    func searchChanged() {
+        searchDebounceTask?.cancel()
+        searchDebounceTask = Task {
+            do {
+                try await Task.sleep(nanoseconds: debounceDelay)
+                await loadInitial()
+            } catch {
+                // Task was cancelled, ignore
+            }
+        }
+    }
+
+    /// Called when sort options change - triggers a new load
+    func sortChanged() {
+        Task {
+            await loadInitial()
+        }
+    }
+
+    /// Check if we should load more (called when item appears)
+    func shouldLoadMore(currentItem: VHSListItem) -> Bool {
+        guard let index = items.firstIndex(where: { $0.id == currentItem.id }) else {
+            return false
+        }
+        // Load more when we're 5 items from the end
+        return index >= items.count - 5 && hasNextPage && !isLoadingMore && !isLoading
+    }
+
+    /// Deletes a movie by ID
     func delete(id: String) async {
         do {
             let response = try await MediaClosetAPIClient.shared.deleteMovie(id: id)
             if response.success {
-                self.items.removeAll { $0.id == id }
+                items.removeAll { $0.id == id }
+                totalCount -= 1
+                currentOffset = items.count
                 #if DEBUG
                 print("[VHSVM] Successfully deleted movie \(id)")
                 #endif
@@ -100,5 +187,21 @@ final class VHSVM: ObservableObject {
         } catch {
             print("[VHSVM] Delete VHS error:", error)
         }
+    }
+
+    // MARK: - Private Methods
+
+    private func retryLoadWithSecretRefresh() async {
+        let secretsAvailable = SecretsManager.shared.ensureSecretsAvailable()
+
+        #if DEBUG
+        if !secretsAvailable {
+            print("[VHSVM] Secrets still not available after refresh attempt")
+        } else {
+            print("[VHSVM] Secrets are now available, retrying load...")
+        }
+        #endif
+
+        await load()
     }
 }
