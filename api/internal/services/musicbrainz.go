@@ -144,12 +144,23 @@ func (s *MusicBrainzService) SearchByBarcode(ctx context.Context, barcode string
 		albumTitle = &release.Title
 	}
 
+	// Try to fetch cover art from multiple releases until we find one
 	var coverURL *string
-	if release.ID != "" {
-		if url, err := s.fetchCoverArtURL(ctx, release.ID); err == nil {
-			coverURL = url
-		} else {
-			fmt.Printf("Failed to fetch cover art for barcode release %s: %v\n", release.ID, err)
+	if len(searchResp.Releases) > 0 {
+		var lastErr error
+		for _, rel := range searchResp.Releases {
+			if rel.ID == "" {
+				continue
+			}
+			url, err := s.fetchCoverArtURL(ctx, rel.ID)
+			if err == nil && url != nil {
+				coverURL = url
+				break
+			}
+			lastErr = err
+		}
+		if coverURL == nil && lastErr != nil {
+			fmt.Printf("Failed to fetch cover art for barcode releases (tried %d): %v\n", len(searchResp.Releases), lastErr)
 		}
 	}
 
@@ -172,17 +183,27 @@ func (s *MusicBrainzService) SearchAlbum(ctx context.Context, artist string, alb
 		return nil, fmt.Errorf("rate limit wait failed: %w", err)
 	}
 
-	// Step 1: Search for release ID
-	releaseID, err := s.searchRelease(ctx, artist, album)
+	// Step 1: Search for releases
+	releaseIDs, err := s.searchReleases(ctx, artist, album)
 	if err != nil {
-		return nil, fmt.Errorf("failed to search release: %w", err)
+		return nil, fmt.Errorf("failed to search releases: %w", err)
 	}
 
-	// Step 2: Fetch cover art URL
-	coverURL, err := s.fetchCoverArtURL(ctx, releaseID)
-	if err != nil {
+	// Step 2: Try to fetch cover art URL from multiple releases until we find one
+	var coverURL *string
+	var lastErr error
+	for _, releaseID := range releaseIDs {
+		url, err := s.fetchCoverArtURL(ctx, releaseID)
+		if err == nil && url != nil {
+			coverURL = url
+			break
+		}
+		lastErr = err
+	}
+
+	if coverURL == nil && lastErr != nil {
 		// Cover art is optional, log but don't fail
-		fmt.Printf("Failed to fetch cover art for release %s: %v\n", releaseID, err)
+		fmt.Printf("Failed to fetch cover art for releases (tried %d): %v\n", len(releaseIDs), lastErr)
 	}
 
 	// Build album data model
@@ -199,8 +220,8 @@ func (s *MusicBrainzService) SearchAlbum(ctx context.Context, artist string, alb
 	return albumData, nil
 }
 
-// searchRelease searches MusicBrainz for a release and returns the first match's ID
-func (s *MusicBrainzService) searchRelease(ctx context.Context, artist string, album string) (string, error) {
+// searchReleases searches MusicBrainz for releases and returns all matching release IDs
+func (s *MusicBrainzService) searchReleases(ctx context.Context, artist string, album string) ([]string, error) {
 	// Build search query: release:"album" AND artist:"artist"
 	query := fmt.Sprintf("release:\"%s\" AND artist:\"%s\"", album, artist)
 
@@ -208,13 +229,15 @@ func (s *MusicBrainzService) searchRelease(ctx context.Context, artist string, a
 	params := url.Values{}
 	params.Set("query", query)
 	params.Set("fmt", "json")
+	// Limit to first 10 releases to avoid too many API calls
+	params.Set("limit", "10")
 
 	apiURL := fmt.Sprintf("%s/ws/2/release/?%s", s.baseURL, params.Encode())
 
 	// Create request
 	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
 	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("User-Agent", "MediaCloset/1.0 (Go API)")
@@ -222,34 +245,38 @@ func (s *MusicBrainzService) searchRelease(ctx context.Context, artist string, a
 	// Execute request
 	resp, err := s.client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("failed to execute request: %w", err)
+		return nil, fmt.Errorf("failed to execute request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	// Read response
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("failed to read response: %w", err)
+		return nil, fmt.Errorf("failed to read response: %w", err)
 	}
 
 	// Check HTTP status
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, string(body))
 	}
 
 	// Parse JSON
 	var searchResp MusicBrainzSearchResponse
 	if err := json.Unmarshal(body, &searchResp); err != nil {
-		return "", fmt.Errorf("failed to parse JSON: %w", err)
+		return nil, fmt.Errorf("failed to parse JSON: %w", err)
 	}
 
 	// Check if we got any results
 	if len(searchResp.Releases) == 0 {
-		return "", fmt.Errorf("no releases found for artist '%s', album '%s'", artist, album)
+		return nil, fmt.Errorf("no releases found for artist '%s', album '%s'", artist, album)
 	}
 
-	// Return first release ID
-	return searchResp.Releases[0].ID, nil
+	// Return all release IDs
+	releaseIDs := make([]string, 0, len(searchResp.Releases))
+	for _, release := range searchResp.Releases {
+		releaseIDs = append(releaseIDs, release.ID)
+	}
+	return releaseIDs, nil
 }
 
 // fetchCoverArtURL fetches the cover art URL for a given release ID
