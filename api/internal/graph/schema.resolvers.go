@@ -1226,6 +1226,16 @@ func (r *queryResolver) Health(ctx context.Context) (*model.Health, error) {
 	}, nil
 }
 
+// AppVersionConfig is the resolver for the appVersionConfig field.
+func (r *queryResolver) AppVersionConfig(ctx context.Context) (*model.AppVersionConfig, error) {
+	return &model.AppVersionConfig{
+		MinimumIOSVersion: r.Config.MinimumIOSVersion,
+		UpdateMessage:     r.Config.ForceUpdateMessage,
+		ForceUpdate:       true,
+		StoreURL:          r.Config.AppStoreURL,
+	}, nil
+}
+
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 

@@ -81,6 +81,9 @@ type Query {
 
   # Health check
   health: Health!
+
+  # App version config (for forced update checks)
+  appVersionConfig: AppVersionConfig!
 }
 
 type Mutation {
@@ -138,6 +141,14 @@ type Health {
   status: String!
   version: String!
   uptime: Int!
+}
+
+# App version gating for forced updates
+type AppVersionConfig {
+  minimumIOSVersion: String!
+  updateMessage: String!
+  forceUpdate: Boolean!
+  storeURL: String!
 }
 
 # Input types for mutations

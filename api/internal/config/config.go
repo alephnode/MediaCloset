@@ -32,6 +32,11 @@ type Config struct {
 	// Feature flags
 	EnableCache     bool
 	EnableRateLimit bool
+
+	// App version gating (forced updates)
+	MinimumIOSVersion  string
+	ForceUpdateMessage string
+	AppStoreURL        string
 }
 
 func Load() *Config {
@@ -47,6 +52,11 @@ func Load() *Config {
 	viper.SetDefault("ENABLE_CACHE", false)
 	viper.SetDefault("ENABLE_RATE_LIMIT", true)
 	viper.SetDefault("AWS_REGION", "us-east-1")
+
+	// App version gating defaults
+	viper.SetDefault("MINIMUM_IOS_VERSION", "1.0.0")
+	viper.SetDefault("FORCE_UPDATE_MESSAGE", "Please update to the latest version to continue using MediaCloset.")
+	viper.SetDefault("APP_STORE_URL", "")
 
 	// Read config file (optional - env vars take precedence)
 	if err := viper.ReadInConfig(); err != nil {
@@ -74,6 +84,10 @@ func Load() *Config {
 		AWSSESFromEmail:    viper.GetString("AWS_SES_FROM_EMAIL"),
 		EnableCache:        viper.GetBool("ENABLE_CACHE"),
 		EnableRateLimit:    viper.GetBool("ENABLE_RATE_LIMIT"),
+
+		MinimumIOSVersion:  viper.GetString("MINIMUM_IOS_VERSION"),
+		ForceUpdateMessage: viper.GetString("FORCE_UPDATE_MESSAGE"),
+		AppStoreURL:        viper.GetString("APP_STORE_URL"),
 	}
 
 	if cfg.APIKey == "" {

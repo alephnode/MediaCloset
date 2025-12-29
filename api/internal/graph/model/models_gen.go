@@ -38,6 +38,13 @@ type AlbumData struct {
 	Source   string       `json:"source"`
 }
 
+type AppVersionConfig struct {
+	MinimumIOSVersion string `json:"minimumIOSVersion"`
+	UpdateMessage     string `json:"updateMessage"`
+	ForceUpdate       bool   `json:"forceUpdate"`
+	StoreURL          string `json:"storeURL"`
+}
+
 type DeleteResponse struct {
 	Success bool    `json:"success"`
 	Error   *string `json:"error,omitempty"`

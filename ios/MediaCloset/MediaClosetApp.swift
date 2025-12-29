@@ -9,6 +9,7 @@ import SwiftUI
 @main
 struct MediaClosetApp: App {
     @StateObject private var authManager = AuthManager.shared
+    @StateObject private var versionManager = VersionGateManager.shared
     @State private var appPhase: AppPhase = .splash
 
     enum AppPhase {
@@ -21,24 +22,38 @@ struct MediaClosetApp: App {
         WindowGroup {
             ZStack {
                 Color.white.ignoresSafeArea()
-                
+
                 switch appPhase {
                 case .splash:
                     LaunchSplash()
-                    
+
                 case .loading:
                     ProgressView()
-                    
+
                 case .ready:
-                    switch authManager.authState {
-                    case .unknown:
+                    // Version gate has highest priority - checked before auth
+                    switch versionManager.gateState {
+                    case .checking:
                         ProgressView()
-                    case .unauthenticated:
-                        WelcomeView()
-                            .environmentObject(authManager)
-                    case .authenticated:
-                        RootTabView()
-                            .environmentObject(authManager)
+
+                    case .blocked:
+                        ForceUpdateView(versionManager: versionManager)
+
+                    case .offlineBlocked:
+                        OfflineBlockedView()
+
+                    case .passed, .offlineGrace:
+                        // Version OK, proceed with auth-based routing
+                        switch authManager.authState {
+                        case .unknown:
+                            ProgressView()
+                        case .unauthenticated:
+                            WelcomeView()
+                                .environmentObject(authManager)
+                        case .authenticated:
+                            RootTabView()
+                                .environmentObject(authManager)
+                        }
                     }
                 }
             }
@@ -47,24 +62,25 @@ struct MediaClosetApp: App {
             }
         }
     }
-    
+
     private func startLaunchSequence() {
         // Phase 1: Show splash for 1.5 seconds
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             withAnimation(.easeOut(duration: 0.4)) {
                 appPhase = .loading
             }
-            
-            // Phase 2: Check auth and wait minimum time for smooth transition
+
+            // Phase 2: Check version and auth in parallel
             Task {
-                // Start auth check
+                // Start both checks in parallel
+                async let versionCheck: () = versionManager.checkVersion()
                 async let authCheck: () = authManager.checkAuthStatus()
                 // Minimum loading time for visual polish
                 async let minDelay: () = Task.sleep(nanoseconds: 1_000_000_000) // 1 second
-                
-                // Wait for both to complete
-                _ = await (authCheck, try? minDelay)
-                
+
+                // Wait for all to complete
+                _ = await (versionCheck, authCheck, try? minDelay)
+
                 // Phase 3: Transition to ready state
                 await MainActor.run {
                     withAnimation(.easeOut(duration: 0.4)) {

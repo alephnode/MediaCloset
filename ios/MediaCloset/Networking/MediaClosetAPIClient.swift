@@ -1107,6 +1107,42 @@ final class MediaClosetAPIClient {
         return response.userMoviesPaginated
     }
 
+    // MARK: - App Version Config
+
+    /// Response type for app version configuration
+    struct AppVersionConfig: Decodable {
+        let minimumIOSVersion: String
+        let updateMessage: String
+        let forceUpdate: Bool
+        let storeURL: String
+    }
+
+    /// Fetches the app version configuration for forced update checks
+    /// - Returns: AppVersionConfig with minimum version requirements
+    func fetchAppVersionConfig() async throws -> AppVersionConfig {
+        struct Response: Decodable {
+            let appVersionConfig: AppVersionConfig
+        }
+
+        let query = """
+        query AppVersionConfig {
+          appVersionConfig {
+            minimumIOSVersion
+            updateMessage
+            forceUpdate
+            storeURL
+          }
+        }
+        """
+
+        let response: Response = try await execute(
+            operationName: "AppVersionConfig",
+            query: query
+        )
+
+        return response.appVersionConfig
+    }
+
     /// Fetches albums for the current user with pagination, sorting, and search
     /// - Parameters:
     ///   - limit: Number of items per page (default: 25)

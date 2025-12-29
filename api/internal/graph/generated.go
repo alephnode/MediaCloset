@@ -76,6 +76,13 @@ type ComplexityRoot struct {
 		Year     func(childComplexity int) int
 	}
 
+	AppVersionConfig struct {
+		ForceUpdate       func(childComplexity int) int
+		MinimumIOSVersion func(childComplexity int) int
+		StoreURL          func(childComplexity int) int
+		UpdateMessage     func(childComplexity int) int
+	}
+
 	DeleteResponse struct {
 		Error   func(childComplexity int) int
 		Success func(childComplexity int) int
@@ -134,6 +141,7 @@ type ComplexityRoot struct {
 		AlbumByArtistAndTitle func(childComplexity int, artist string, album string) int
 		AlbumByBarcode        func(childComplexity int, barcode string) int
 		Albums                func(childComplexity int) int
+		AppVersionConfig      func(childComplexity int) int
 		Health                func(childComplexity int) int
 		Me                    func(childComplexity int) int
 		Movie                 func(childComplexity int, id string) int
@@ -248,6 +256,7 @@ type QueryResolver interface {
 	UserMoviesPaginated(ctx context.Context, userID string, pagination *model.PaginationInput, sort *model.SortInput, search *string) (*model.MovieConnection, error)
 	UserAlbumsPaginated(ctx context.Context, userID string, pagination *model.PaginationInput, sort *model.SortInput, search *string) (*model.AlbumConnection, error)
 	Health(ctx context.Context) (*model.Health, error)
+	AppVersionConfig(ctx context.Context) (*model.AppVersionConfig, error)
 }
 
 type executableSchema struct {
@@ -391,6 +400,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.AlbumData.Year(childComplexity), true
+
+	case "AppVersionConfig.forceUpdate":
+		if e.complexity.AppVersionConfig.ForceUpdate == nil {
+			break
+		}
+
+		return e.complexity.AppVersionConfig.ForceUpdate(childComplexity), true
+	case "AppVersionConfig.minimumIOSVersion":
+		if e.complexity.AppVersionConfig.MinimumIOSVersion == nil {
+			break
+		}
+
+		return e.complexity.AppVersionConfig.MinimumIOSVersion(childComplexity), true
+	case "AppVersionConfig.storeURL":
+		if e.complexity.AppVersionConfig.StoreURL == nil {
+			break
+		}
+
+		return e.complexity.AppVersionConfig.StoreURL(childComplexity), true
+	case "AppVersionConfig.updateMessage":
+		if e.complexity.AppVersionConfig.UpdateMessage == nil {
+			break
+		}
+
+		return e.complexity.AppVersionConfig.UpdateMessage(childComplexity), true
 
 	case "DeleteResponse.error":
 		if e.complexity.DeleteResponse.Error == nil {
@@ -670,6 +704,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Albums(childComplexity), true
+	case "Query.appVersionConfig":
+		if e.complexity.Query.AppVersionConfig == nil {
+			break
+		}
+
+		return e.complexity.Query.AppVersionConfig(childComplexity), true
 	case "Query.health":
 		if e.complexity.Query.Health == nil {
 			break
@@ -2119,6 +2159,122 @@ func (ec *executionContext) _AlbumData_source(ctx context.Context, field graphql
 func (ec *executionContext) fieldContext_AlbumData_source(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AlbumData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AppVersionConfig_minimumIOSVersion(ctx context.Context, field graphql.CollectedField, obj *model.AppVersionConfig) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AppVersionConfig_minimumIOSVersion,
+		func(ctx context.Context) (any, error) {
+			return obj.MinimumIOSVersion, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AppVersionConfig_minimumIOSVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AppVersionConfig",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AppVersionConfig_updateMessage(ctx context.Context, field graphql.CollectedField, obj *model.AppVersionConfig) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AppVersionConfig_updateMessage,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdateMessage, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AppVersionConfig_updateMessage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AppVersionConfig",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AppVersionConfig_forceUpdate(ctx context.Context, field graphql.CollectedField, obj *model.AppVersionConfig) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AppVersionConfig_forceUpdate,
+		func(ctx context.Context) (any, error) {
+			return obj.ForceUpdate, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AppVersionConfig_forceUpdate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AppVersionConfig",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AppVersionConfig_storeURL(ctx context.Context, field graphql.CollectedField, obj *model.AppVersionConfig) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AppVersionConfig_storeURL,
+		func(ctx context.Context) (any, error) {
+			return obj.StoreURL, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AppVersionConfig_storeURL(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AppVersionConfig",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -4041,6 +4197,45 @@ func (ec *executionContext) fieldContext_Query_health(_ context.Context, field g
 				return ec.fieldContext_Health_uptime(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Health", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_appVersionConfig(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_appVersionConfig,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Query().AppVersionConfig(ctx)
+		},
+		nil,
+		ec.marshalNAppVersionConfig2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐAppVersionConfig,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_appVersionConfig(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "minimumIOSVersion":
+				return ec.fieldContext_AppVersionConfig_minimumIOSVersion(ctx, field)
+			case "updateMessage":
+				return ec.fieldContext_AppVersionConfig_updateMessage(ctx, field)
+			case "forceUpdate":
+				return ec.fieldContext_AppVersionConfig_forceUpdate(ctx, field)
+			case "storeURL":
+				return ec.fieldContext_AppVersionConfig_storeURL(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AppVersionConfig", field.Name)
 		},
 	}
 	return fc, nil
@@ -7497,6 +7692,60 @@ func (ec *executionContext) _AlbumData(ctx context.Context, sel ast.SelectionSet
 	return out
 }
 
+var appVersionConfigImplementors = []string{"AppVersionConfig"}
+
+func (ec *executionContext) _AppVersionConfig(ctx context.Context, sel ast.SelectionSet, obj *model.AppVersionConfig) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, appVersionConfigImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AppVersionConfig")
+		case "minimumIOSVersion":
+			out.Values[i] = ec._AppVersionConfig_minimumIOSVersion(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateMessage":
+			out.Values[i] = ec._AppVersionConfig_updateMessage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "forceUpdate":
+			out.Values[i] = ec._AppVersionConfig_forceUpdate(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "storeURL":
+			out.Values[i] = ec._AppVersionConfig_storeURL(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var deleteResponseImplementors = []string{"DeleteResponse"}
 
 func (ec *executionContext) _DeleteResponse(ctx context.Context, sel ast.SelectionSet, obj *model.DeleteResponse) graphql.Marshaler {
@@ -8196,6 +8445,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_health(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "appVersionConfig":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_appVersionConfig(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -9125,6 +9396,20 @@ func (ec *executionContext) marshalNAlbumConnection2ᚖmediaclosetᚋapiᚋinter
 		return graphql.Null
 	}
 	return ec._AlbumConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNAppVersionConfig2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐAppVersionConfig(ctx context.Context, sel ast.SelectionSet, v model.AppVersionConfig) graphql.Marshaler {
+	return ec._AppVersionConfig(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAppVersionConfig2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐAppVersionConfig(ctx context.Context, sel ast.SelectionSet, v *model.AppVersionConfig) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AppVersionConfig(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v any) (bool, error) {
