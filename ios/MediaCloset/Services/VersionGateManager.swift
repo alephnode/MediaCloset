@@ -34,8 +34,7 @@ final class VersionGateManager: ObservableObject {
     private let lastUpdateMessageKey = "VersionGate.lastUpdateMessage"
     private let lastStoreURLKey = "VersionGate.lastStoreURL"
 
-    // Grace periods (in seconds)
-    private let freshCacheThreshold: TimeInterval = 24 * 60 * 60  // 24 hours
+    // Grace period for offline scenarios (in seconds)
     private let maxGracePeriod: TimeInterval = 48 * 60 * 60       // 48 hours
 
     private init() {}
@@ -43,7 +42,7 @@ final class VersionGateManager: ObservableObject {
     // MARK: - Public Methods
 
     /// Checks the app version against the backend minimum version
-    /// Uses cached results for offline resilience
+    /// Always fetches from network; uses cached results only for offline resilience
     func checkVersion() async {
         let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
 
@@ -51,20 +50,7 @@ final class VersionGateManager: ObservableObject {
         print("[VersionGateManager] Current app version: \(currentVersion)")
         #endif
 
-        // Check if we have a fresh cached result
-        if let cachedResult = getCachedResult() {
-            let cacheAge = Date().timeIntervalSince(cachedResult.checkDate)
-
-            if cacheAge < freshCacheThreshold && cachedResult.passed {
-                #if DEBUG
-                print("[VersionGateManager] Using fresh cache (age: \(Int(cacheAge/3600))h) - passed")
-                #endif
-                gateState = .passed
-                return
-            }
-        }
-
-        // Try to fetch from network
+        // Always try to fetch from network first
         do {
             let config = try await MediaClosetAPIClient.shared.fetchAppVersionConfig()
 
