@@ -1,8 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <!-- Light mode: white background, black strokes -->
+  <!-- Light mode: white background, black outer area -->
   <rect x="0" y="0" width="1024" height="1024" fill="#ffffff"/>
-  <!-- Rounded square border -->
-  <rect x="64" y="64" width="896" height="896" rx="224" ry="224" fill="none" stroke="#000000" stroke-width="48"/>
+  <!-- Filled rounded square (black area between border and circle) -->
+  <rect x="40" y="40" width="944" height="944" rx="236" ry="236" fill="#000000"/>
+  <!-- White circle to cut out the inner area -->
+  <circle cx="512" cy="512" r="404" fill="#ffffff"/>
   <!-- Vinyl record circle (outer) -->
   <circle cx="512" cy="512" r="384" fill="none" stroke="#000000" stroke-width="40"/>
   <!-- VHS inner hub circle -->
