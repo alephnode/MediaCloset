@@ -21,7 +21,7 @@ struct MediaClosetApp: App {
     var body: some Scene {
         WindowGroup {
             ZStack {
-                Color.white.ignoresSafeArea()
+                Color(.systemBackground).ignoresSafeArea()
 
                 switch appPhase {
                 case .splash:
