@@ -21,6 +21,8 @@ struct VHSDetailView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         // Large cover art spanning across the view with padding
+                        Spacer().frame(height: 8)
+                        
                         if let coverUrl = vhs.coverUrl {
                             CachedAsyncImage(url: URL(string: coverUrl)) { phase in
                                 switch phase {
@@ -87,8 +89,6 @@ struct VHSDetailView: View {
                     .foregroundColor(.secondary)
             }
         }
-        .navigationTitle("VHS Details")
-        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Edit") {

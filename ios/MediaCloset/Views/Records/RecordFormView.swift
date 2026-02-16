@@ -29,71 +29,94 @@ struct RecordFormView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Barcode Scanner") {
-                    Button("Scan Barcode") {
+                Section {
+                    Button {
                         showingBarcodeScanner = true
+                    } label: {
+                        Label("Scan Barcode", systemImage: "barcode.viewfinder")
+                            .font(.body.weight(.medium))
+                            .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
-                    .frame(maxWidth: .infinity)
-                    
+                    .controlSize(.large)
+
                     if isFetchingBarcodeData {
-                        HStack {
+                        HStack(spacing: 8) {
                             ProgressView()
-                                .scaleEffect(0.8)
+                                .controlSize(.small)
                             Text("Looking up album information...")
-                                .font(.caption)
+                                .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
                     }
-                    
+
                     if let errorMessage = barcodeErrorMessage {
-                        HStack {
+                        HStack(spacing: 8) {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .foregroundColor(.orange)
                             Text(errorMessage)
-                                .font(.caption)
+                                .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
                     }
-                    
+
                     if showBarcodeResult && !artist.isEmpty {
-                        HStack {
+                        HStack(spacing: 8) {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundColor(.green)
                             Text("Album information found and populated")
-                                .font(.caption)
+                                .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
                     }
-                }
-                
-                Section("Cover Image") {
-                    CoverImagePicker(existingURL: nil, selectedImage: $selectedCoverImage)
                 }
 
                 Section("Main") {
                     TextField("Artist", text: $artist)
                     TextField("Album", text: $album)
                     TextField("Year", value: $year, formatter: NumberFormatter())
+                        .keyboardType(.numberPad)
                     ColorVariantTagEditor(variants: $colorVariantsArray)
                     TextField("Genres (comma-separated)", text: $genres)
                 }
+
+                Section("Cover Image") {
+                    CoverImagePicker(existingURL: nil, selectedImage: $selectedCoverImage)
+                }
+
                 Section("Tracks") {
                     ForEach($tracks) { $row in
                         HStack {
-                            TextField("#", value: $row.trackNo, formatter: NumberFormatter()).frame(width: 40)
+                            TextField("#", value: $row.trackNo, formatter: NumberFormatter())
+                                .frame(width: 40)
+                                .keyboardType(.numberPad)
                             TextField("Title", text: $row.title)
-                            TextField("Duration sec", value: $row.durationSec, formatter: NumberFormatter()).frame(width: 120)
+                            TextField("Duration", value: $row.durationSec, formatter: NumberFormatter())
+                                .frame(width: 80)
+                                .keyboardType(.numberPad)
                         }
                     }
-                    Button("Add Track") { tracks.append(TrackRow()) }
+                    Button {
+                        tracks.append(TrackRow())
+                    } label: {
+                        Label("Add Track", systemImage: "plus.circle.fill")
+                    }
                 }
             }
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
                 ToolbarItem(placement: .confirmationAction) {
-                  Button("Save") { Task { await save() } }
-                    .disabled(artist.isEmpty || album.isEmpty || isSaving)
+                    if isSaving {
+                        ProgressView()
+                    } else {
+                        Button("Save") {
+                            Task { await save() }
+                        }
+                        .fontWeight(.semibold)
+                        .disabled(artist.isEmpty || album.isEmpty)
+                    }
                 }
             }
             .navigationTitle("New Record")
@@ -109,28 +132,29 @@ struct RecordFormView: View {
                     }
                 }
             }
-            .overlay {
-                if isSaving {
-                    ZStack {
-                        Color.black.opacity(0.3)
-                            .ignoresSafeArea()
-                        VStack(spacing: 16) {
-                            ProgressView()
-                                .scaleEffect(1.2)
-                            Text("Saving album...")
-                                .font(.headline)
-                                .foregroundColor(.white)
+        }
+        .overlay {
+            if isSaving {
+                ZStack {
+                    Color.black.opacity(0.2)
+                        .ignoresSafeArea()
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .controlSize(.large)
+                        Text("Saving album...")
+                            .font(.headline)
+                        if !savingStatus.isEmpty {
                             Text(savingStatus)
-                                .font(.caption)
-                                .foregroundColor(.white.opacity(0.8))
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
                         }
-                        .padding()
-                        .background(Color.black.opacity(0.7))
-                        .cornerRadius(12)
                     }
+                    .padding(28)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
                 }
             }
         }
+        .interactiveDismissDisabled(isSaving)
     }
 
     func save() async {

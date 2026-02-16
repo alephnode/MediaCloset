@@ -26,103 +26,129 @@ struct VHSFormView: View {
     @State private var showingErrorAlert = false
 
     var body: some View {
-        Form {
-            Section("Barcode Scanner") {
-                Button("Scan Barcode") {
-                    showingBarcodeScanner = true
+        NavigationStack {
+            Form {
+                Section {
+                    Button {
+                        showingBarcodeScanner = true
+                    } label: {
+                        Label("Scan Barcode", systemImage: "barcode.viewfinder")
+                            .font(.body.weight(.medium))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+
+                    if isFetchingBarcodeData {
+                        HStack(spacing: 8) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text("Looking up barcode data...")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
-                .buttonStyle(.borderedProminent)
-                .frame(maxWidth: .infinity)
-                
-                if isFetchingBarcodeData {
-                    HStack {
+
+                Section("Details") {
+                    TextField("Title", text: $title)
+                    TextField("Director", text: $director)
+                    TextField("Year", value: $year, format: .number.grouping(.never))
+                        .keyboardType(.numberPad)
+                    TextField("Genre", text: $genre)
+                }
+
+                if !title.isEmpty {
+                    Section {
+                        Button {
+                            Task { await fetchMovieData() }
+                        } label: {
+                            HStack(spacing: 8) {
+                                if isFetchingData {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                } else {
+                                    Image(systemName: "sparkles")
+                                }
+                                Text("Auto-fill from Title")
+                                    .font(.body.weight(.medium))
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                        .disabled(isFetchingData)
+                    } footer: {
+                        Text("Fetches director, year, and poster based on the title.")
+                    }
+                }
+
+                Section("Cover Image") {
+                    CoverImagePicker(
+                        existingURL: coverURL.isEmpty ? nil : coverURL,
+                        selectedImage: $selectedCoverImage
+                    )
+                }
+            }
+            .navigationTitle(existing == nil ? "New VHS" : "Edit VHS")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    if isSaving {
                         ProgressView()
-                            .scaleEffect(0.8)
-                        Text("Looking up barcode data...")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                    } else {
+                        Button("Save") {
+                            Task { await save() }
+                        }
+                        .fontWeight(.semibold)
+                        .disabled(title.isEmpty)
                     }
                 }
             }
-            
-            Section("Info") {
-                TextField("Title", text: $title)
-                TextField("Director", text: $director)
-                TextField("Year", value: $year, format: .number.grouping(.never))
-                TextField("Genre", text: $genre)
+            .alert("Error", isPresented: $showingErrorAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(errorAlert ?? "An unknown error occurred")
             }
-            
-            Section("Cover Image") {
-                CoverImagePicker(
-                    existingURL: coverURL.isEmpty ? nil : coverURL,
-                    selectedImage: $selectedCoverImage
-                )
-
-                Button("Fetch Movie Data") {
-                    Task { await fetchMovieData() }
-                }
-                .disabled(title.isEmpty || isFetchingData)
-                if isFetchingData {
-                    HStack {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                        Text("Fetching movie data...")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+            .sheet(isPresented: $showingBarcodeScanner) {
+                BarcodeScannerView { barcode in
+                    Task {
+                        await handleBarcodeScanned(barcode)
                     }
                 }
             }
-
-            Button("Save") {
-                Task { await save() }
+            .onAppear {
+                if let v = existing {
+                    title = v.title
+                    director = v.director ?? ""
+                    year = v.year
+                    genre = v.genre ?? ""
+                    coverURL = v.coverUrl ?? ""
+                }
             }
-            .buttonStyle(.borderedProminent)
-            .frame(maxWidth: .infinity)
-            .disabled(isSaving)
         }
         .overlay {
             if isSaving {
                 ZStack {
-                    Color.black.opacity(0.3)
+                    Color.black.opacity(0.2)
                         .ignoresSafeArea()
-                        VStack(spacing: 16) {
-                            ProgressView()
-                                .scaleEffect(1.2)
-                            Text("Saving movie...")
-                                .font(.headline)
-                                .foregroundColor(.white)
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .controlSize(.large)
+                        Text("Saving movie...")
+                            .font(.headline)
+                        if !savingStatus.isEmpty {
                             Text(savingStatus)
-                                .font(.caption)
-                                .foregroundColor(.white.opacity(0.8))
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
                         }
-                    .padding()
-                    .background(Color.black.opacity(0.7))
-                    .cornerRadius(12)
+                    }
+                    .padding(28)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
                 }
             }
         }
-        .navigationTitle(existing == nil ? "New VHS" : "Edit VHS")
-        .alert("Error", isPresented: $showingErrorAlert) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text(errorAlert ?? "An unknown error occurred")
-        }
-        .sheet(isPresented: $showingBarcodeScanner) {
-            BarcodeScannerView { barcode in
-                Task {
-                    await handleBarcodeScanned(barcode)
-                }
-            }
-        }
-        .onAppear {
-            if let v = existing {
-                title = v.title
-                director = v.director ?? ""
-                year = v.year
-                genre = v.genre ?? ""
-                coverURL = v.coverUrl ?? ""
-            }
-        }
+        .interactiveDismissDisabled(isSaving)
     }
 
     func save() async {

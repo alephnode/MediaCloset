@@ -24,6 +24,9 @@ struct RecordEditView: View {
 
     @State private var isLoading = false
     @State private var isSaving = false
+    @State private var savingStatus = ""
+    @State private var errorAlert: String? = nil
+    @State private var showingErrorAlert = false
 
     var body: some View {
         NavigationStack {
@@ -32,8 +35,10 @@ struct RecordEditView: View {
                     TextField("Artist", text: $artist)
                     TextField("Album", text: $album)
                     TextField("Year", value: $year, format: .number.grouping(.never))
+                        .keyboardType(.numberPad)
                     ColorVariantTagEditor(variants: $colorVariantsArray)
                 }
+
                 Section("Cover Image") {
                     CoverImagePicker(existingURL: coverURL.isEmpty ? nil : coverURL, selectedImage: $selectedCoverImage)
                 }
@@ -52,12 +57,44 @@ struct RecordEditView: View {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { Task { await save() } }
-                        .disabled(artist.trimmingCharacters(in: .whitespaces).isEmpty ||
-                                  album.trimmingCharacters(in: .whitespaces).isEmpty)
+                    if isSaving {
+                        ProgressView()
+                    } else {
+                        Button("Save") { Task { await save() } }
+                            .fontWeight(.semibold)
+                            .disabled(artist.trimmingCharacters(in: .whitespaces).isEmpty ||
+                                      album.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
+                }
+            }
+            .alert("Error", isPresented: $showingErrorAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(errorAlert ?? "An unknown error occurred")
+            }
+        }
+        .overlay {
+            if isSaving {
+                ZStack {
+                    Color.black.opacity(0.2)
+                        .ignoresSafeArea()
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .controlSize(.large)
+                        Text("Saving changes...")
+                            .font(.headline)
+                        if !savingStatus.isEmpty {
+                            Text(savingStatus)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(28)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
                 }
             }
         }
+        .interactiveDismissDisabled(isSaving)
         .task { await load() }
     }
 
@@ -92,13 +129,20 @@ struct RecordEditView: View {
         // Upload new cover image if selected
         var finalCoverUrl: String? = coverURL.isEmpty ? nil : coverURL
         if let image = selectedCoverImage {
+            savingStatus = "Uploading cover image..."
             do {
                 finalCoverUrl = try await ImageUploadService.shared.upload(image)
             } catch {
+                #if DEBUG
                 print("[RecordEditView] Image upload failed: \(error)")
+                #endif
+                errorAlert = "Failed to upload image: \(error.localizedDescription)"
+                showingErrorAlert = true
                 return
             }
         }
+
+        savingStatus = "Saving changes..."
 
         // Use tag editor array directly; convert genres from CSV
         let colorVariants: [String]? = colorVariantsArray.isEmpty ? nil : colorVariantsArray
@@ -114,7 +158,7 @@ struct RecordEditView: View {
                 artist: artist,
                 album: album,
                 year: year,
-                label: nil, // Not editable in this view
+                label: nil,
                 colorVariants: colorVariants,
                 genres: genresArray,
                 coverUrl: finalCoverUrl
@@ -125,10 +169,18 @@ struct RecordEditView: View {
                 dismiss()
             } else {
                 let errorMsg = response.error ?? "Unknown error"
+                #if DEBUG
                 print("[RecordEditView] Failed to update album: \(errorMsg)")
+                #endif
+                errorAlert = errorMsg
+                showingErrorAlert = true
             }
         } catch {
+            #if DEBUG
             print("[RecordEditView] Save error:", error)
+            #endif
+            errorAlert = "Failed to save: \(error.localizedDescription)"
+            showingErrorAlert = true
         }
     }
 }

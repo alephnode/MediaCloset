@@ -20,6 +20,9 @@ struct VHSEditView: View {
     @State private var coverURL: String
     @State private var selectedCoverImage: UIImage? = nil
     @State private var isSaving = false
+    @State private var savingStatus = ""
+    @State private var errorAlert: String? = nil
+    @State private var showingErrorAlert = false
     
     init(vhs: VHSDetail, onSaved: @escaping () -> Void) {
         self.vhs = vhs
@@ -35,10 +38,11 @@ struct VHSEditView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Info") {
+                Section("Details") {
                     TextField("Title", text: $title)
                     TextField("Director", text: $director)
                     TextField("Year", value: $year, format: .number.grouping(.never))
+                        .keyboardType(.numberPad)
                     TextField("Genre", text: $genre)
                 }
 
@@ -61,11 +65,43 @@ struct VHSEditView: View {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { Task { await save() } }
-                        .disabled(title.isEmpty || isSaving)
+                    if isSaving {
+                        ProgressView()
+                    } else {
+                        Button("Save") { Task { await save() } }
+                            .fontWeight(.semibold)
+                            .disabled(title.isEmpty)
+                    }
+                }
+            }
+            .alert("Error", isPresented: $showingErrorAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(errorAlert ?? "An unknown error occurred")
+            }
+        }
+        .overlay {
+            if isSaving {
+                ZStack {
+                    Color.black.opacity(0.2)
+                        .ignoresSafeArea()
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .controlSize(.large)
+                        Text("Saving changes...")
+                            .font(.headline)
+                        if !savingStatus.isEmpty {
+                            Text(savingStatus)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(28)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
                 }
             }
         }
+        .interactiveDismissDisabled(isSaving)
     }
     
     private func save() async {
@@ -75,9 +111,11 @@ struct VHSEditView: View {
             // Upload new cover image if selected
             var finalCoverUrl: String? = coverURL.isEmpty ? nil : coverURL
             if let image = selectedCoverImage {
+                savingStatus = "Uploading cover image..."
                 finalCoverUrl = try await ImageUploadService.shared.upload(image)
             }
 
+            savingStatus = "Saving changes..."
             let response = try await MediaClosetAPIClient.shared.updateMovie(
                 id: vhs.id,
                 title: title,
@@ -92,10 +130,18 @@ struct VHSEditView: View {
                 dismiss()
             } else {
                 let errorMsg = response.error ?? "Unknown error"
+                #if DEBUG
                 print("[VHSEditView] Failed to update movie: \(errorMsg)")
+                #endif
+                errorAlert = errorMsg
+                showingErrorAlert = true
             }
         } catch {
+            #if DEBUG
             print("[VHSEditView] Update VHS error:", error)
+            #endif
+            errorAlert = "Failed to save: \(error.localizedDescription)"
+            showingErrorAlert = true
         }
 
         isSaving = false

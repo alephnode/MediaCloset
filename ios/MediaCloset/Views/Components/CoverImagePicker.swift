@@ -52,8 +52,12 @@ struct CoverImagePicker: View {
                     placeholderContent
                 }
             }
-            .frame(height: 180)
+            .frame(height: 200)
             .clipShape(RoundedRectangle(cornerRadius: 12))
+            .contentShape(RoundedRectangle(cornerRadius: 12))
+            .onTapGesture {
+                showingActionSheet = true
+            }
 
             // Actions
             HStack(spacing: 12) {
@@ -110,11 +114,11 @@ struct CoverImagePicker: View {
     private var placeholderContent: some View {
         VStack(spacing: 8) {
             Image(systemName: "photo.on.rectangle.angled")
-                .font(.system(size: 32))
-                .foregroundStyle(.secondary)
-            Text("No cover image")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(.system(size: 36))
+                .foregroundStyle(.tertiary)
+            Text("Tap to add a cover image")
+                .font(.subheadline)
+                .foregroundStyle(.tertiary)
         }
     }
 }

@@ -16,6 +16,7 @@ struct RecordDetailView: View {
             if let obj = recordJSON {
                 VStack(alignment: .leading, spacing: 16) {
                     // Large album art spanning across the view with padding
+                    Spacer().frame(height: 8)
                     CachedAsyncImage(url: URL(string: obj["cover_url"] as? String ?? "")) { phase in
                         switch phase {
                         case .empty:
@@ -113,7 +114,6 @@ struct RecordDetailView: View {
                 ProgressView()
             }
         }
-        .navigationTitle("Details")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Edit") { showEdit = true }
