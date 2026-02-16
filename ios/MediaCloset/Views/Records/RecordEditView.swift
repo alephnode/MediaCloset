@@ -16,7 +16,7 @@ struct RecordEditView: View {
     @State private var artist = ""
     @State private var album = ""
     @State private var year: Int? = nil
-    @State private var colorVariantsCSV = ""   // comma-separated in the UI
+    @State private var colorVariantsArray: [String] = []
     @State private var genresCSV = ""   // comma-separated in the UI
     @State private var notes = ""
     @State private var coverURL = ""
@@ -31,7 +31,7 @@ struct RecordEditView: View {
                     TextField("Artist", text: $artist)
                     TextField("Album", text: $album)
                     TextField("Year", value: $year, format: .number.grouping(.never))
-                    TextField("Color variants (comma-separated)", text: $colorVariantsCSV)
+                    ColorVariantTagEditor(variants: $colorVariantsArray)
                 }
                 Section("Metadata") {
                     TextField("Genres (comma-separated)", text: $genresCSV)
@@ -69,9 +69,7 @@ struct RecordEditView: View {
             artist = record.artist
             album  = record.album
             year   = record.year
-            if let colorVariants = record.colorVariants {
-                colorVariantsCSV = colorVariants.joined(separator: ", ")
-            }
+            colorVariantsArray = record.colorVariants ?? []
             coverURL = record.coverURL ?? ""
             notes = "" // Not returned by API
             if let genres = record.genres {
@@ -87,11 +85,8 @@ struct RecordEditView: View {
         isSaving = true
         defer { isSaving = false }
 
-        // Convert comma-separated values to arrays
-        let colorVariantsArray: [String]? = colorVariantsCSV.isEmpty ? nil : colorVariantsCSV
-            .split(separator: ",")
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.isEmpty }
+        // Use tag editor array directly; convert genres from CSV
+        let colorVariants: [String]? = colorVariantsArray.isEmpty ? nil : colorVariantsArray
 
         let genresArray: [String]? = genresCSV.isEmpty ? nil : genresCSV
             .split(separator: ",")
@@ -105,7 +100,7 @@ struct RecordEditView: View {
                 album: album,
                 year: year,
                 label: nil, // Not editable in this view
-                colorVariants: colorVariantsArray,
+                colorVariants: colorVariants,
                 genres: genresArray,
                 coverUrl: coverURL.isEmpty ? nil : coverURL
             )

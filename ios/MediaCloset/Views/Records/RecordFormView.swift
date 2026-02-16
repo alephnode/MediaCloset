@@ -11,7 +11,7 @@ struct RecordFormView: View {
     @State private var artist = ""
     @State private var album = ""
     @State private var year: Int? = nil
-    @State private var colorVariants = ""
+    @State private var colorVariantsArray: [String] = []
     @State private var genres = ""
     @State private var tracks: [TrackRow] = []
     @State private var isSaving = false
@@ -69,7 +69,7 @@ struct RecordFormView: View {
                     TextField("Artist", text: $artist)
                     TextField("Album", text: $album)
                     TextField("Year", value: $year, formatter: NumberFormatter())
-                    TextField("Color variants (comma-separated, e.g. Clear, Red)", text: $colorVariants)
+                    ColorVariantTagEditor(variants: $colorVariantsArray)
                     TextField("Genres (comma-separated)", text: $genres)
                 }
                 Section("Tracks") {
@@ -131,11 +131,8 @@ struct RecordFormView: View {
         isSaving = true
 
         do {
-            // Convert comma-separated values to arrays
-            let colorVariantsArray: [String]? = colorVariants.isEmpty ? nil : colorVariants
-                .split(separator: ",")
-                .map { $0.trimmingCharacters(in: .whitespaces) }
-                .filter { !$0.isEmpty }
+            // Use tag editor array directly; convert genres from CSV
+            let colorVariants: [String]? = colorVariantsArray.isEmpty ? nil : colorVariantsArray
 
             let genresArray: [String]? = genres.isEmpty ? nil : genres
                 .split(separator: ",")
@@ -148,7 +145,7 @@ struct RecordFormView: View {
                 album: album,
                 year: year,
                 label: nil,
-                colorVariants: colorVariantsArray,
+                colorVariants: colorVariants,
                 genres: genresArray
             )
 

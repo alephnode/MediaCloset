@@ -21,11 +21,23 @@ struct RecordListView: View {
                             VStack(alignment: .leading) {
                                 Text("\(item.artist)").font(.headline)
                                 Text("\(item.album)").font(.subheadline)
-                                Text([item.year?.description, item.colorVariants.isEmpty ? nil : item.colorVariants.joined(separator: ", ")]
-                                     .compactMap { $0 }
-                                     .joined(separator: " · "))
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
+                                HStack(spacing: 4) {
+                                    if let year = item.year {
+                                        Text(year.description)
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    if !item.colorVariants.isEmpty {
+                                        if item.year != nil {
+                                            Text("·")
+                                                .font(.subheadline)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                        ForEach(item.colorVariants, id: \.self) { variant in
+                                            ColorSwatch(variant: variant, diameter: 10)
+                                        }
+                                    }
+                                }
                                 if !item.genres.isEmpty {
                                     Text(item.genres.joined(separator: ", "))
                                         .font(.caption)

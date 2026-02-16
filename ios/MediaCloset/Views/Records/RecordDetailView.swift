@@ -66,9 +66,11 @@ struct RecordDetailView: View {
                 }
 
                 if let colorVariants = obj["color_variants"] as? [String], !colorVariants.isEmpty {
-                    Text("Color: \(colorVariants.joined(separator: ", "))")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    WrappingHStack(spacing: 6) {
+                        ForEach(colorVariants, id: \.self) { variant in
+                            ColorVariantBadge(variant: variant)
+                        }
+                    }
                 }
 
                 if let notes = obj["notes"] as? String, !notes.isEmpty {
