@@ -87,6 +87,28 @@ func main() {
 
 	authService := services.NewAuthService(hasuraClient, emailService, cfg.JWTSecret, cfg.IsDevelopment())
 
+	// S3 service for image uploads (optional)
+	var s3Service *services.S3Service
+	if cfg.S3Bucket != "" && cfg.S3URLPrefix != "" && cfg.AWSAccessKeyID != "" && cfg.AWSSecretAccessKey != "" {
+		var err error
+		s3Service, err = services.NewS3Service(
+			context.Background(),
+			cfg.AWSRegion,
+			cfg.AWSAccessKeyID,
+			cfg.AWSSecretAccessKey,
+			cfg.S3Bucket,
+			cfg.S3URLPrefix,
+		)
+		if err != nil {
+			log.Printf("Warning: Failed to initialize S3 service: %v", err)
+			log.Println("Image uploads will not be available")
+		} else {
+			log.Printf("S3 image upload enabled (bucket: %s)", cfg.S3Bucket)
+		}
+	} else if !cfg.IsDevelopment() {
+		log.Println("Warning: S3 not configured, image uploads will not be available")
+	}
+
 	// JWT authentication middleware (user authentication)
 	r.Use(custommw.JWTAuth(authService))
 
@@ -99,6 +121,7 @@ func main() {
 		BarcodeService:  barcodeService,
 		HasuraClient:    hasuraClient,
 		AuthService:     authService,
+		S3Service:       s3Service,
 		RateLimiter:     rateLimiter,
 		ServerStartTime: startTime,
 	}

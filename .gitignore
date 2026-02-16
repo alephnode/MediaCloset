@@ -185,3 +185,6 @@ api/vendor/
 # Go test coverage
 api/coverage.txt
 api/coverage.html
+
+# Plans
+.cursor/plans

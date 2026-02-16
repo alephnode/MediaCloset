@@ -21,6 +21,7 @@ type Resolver struct {
 	BarcodeService  *services.BarcodeService
 	HasuraClient    *services.HasuraClient
 	AuthService     *services.AuthService
+	S3Service       *services.S3Service
 	RateLimiter     *ratelimit.ServiceLimiter
 	ServerStartTime time.Time
 }

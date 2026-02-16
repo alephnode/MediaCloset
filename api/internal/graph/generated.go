@@ -94,6 +94,11 @@ type ComplexityRoot struct {
 		Version func(childComplexity int) int
 	}
 
+	ImageUploadURL struct {
+		ImageURL  func(childComplexity int) int
+		UploadURL func(childComplexity int) int
+	}
+
 	Movie struct {
 		CoverURL  func(childComplexity int) int
 		CreatedAt func(childComplexity int) int
@@ -121,14 +126,15 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		DeleteAlbum      func(childComplexity int, id string) int
-		DeleteMovie      func(childComplexity int, id string) int
-		RequestLoginCode func(childComplexity int, email string) int
-		SaveAlbum        func(childComplexity int, input model.SaveAlbumInput) int
-		SaveMovie        func(childComplexity int, input model.SaveMovieInput) int
-		UpdateAlbum      func(childComplexity int, id string, input model.UpdateAlbumInput) int
-		UpdateMovie      func(childComplexity int, id string, input model.UpdateMovieInput) int
-		VerifyLoginCode  func(childComplexity int, email string, code string) int
+		DeleteAlbum           func(childComplexity int, id string) int
+		DeleteMovie           func(childComplexity int, id string) int
+		RequestImageUploadURL func(childComplexity int, contentType string) int
+		RequestLoginCode      func(childComplexity int, email string) int
+		SaveAlbum             func(childComplexity int, input model.SaveAlbumInput) int
+		SaveMovie             func(childComplexity int, input model.SaveMovieInput) int
+		UpdateAlbum           func(childComplexity int, id string, input model.UpdateAlbumInput) int
+		UpdateMovie           func(childComplexity int, id string, input model.UpdateMovieInput) int
+		VerifyLoginCode       func(childComplexity int, email string, code string) int
 	}
 
 	PageInfo struct {
@@ -239,6 +245,7 @@ type MutationResolver interface {
 	SaveAlbum(ctx context.Context, input model.SaveAlbumInput) (*model.SaveAlbumResponse, error)
 	UpdateAlbum(ctx context.Context, id string, input model.UpdateAlbumInput) (*model.UpdateAlbumResponse, error)
 	DeleteAlbum(ctx context.Context, id string) (*model.DeleteResponse, error)
+	RequestImageUploadURL(ctx context.Context, contentType string) (*model.ImageUploadURL, error)
 }
 type QueryResolver interface {
 	MovieByTitle(ctx context.Context, title string, director *string, year *int) (*model.MovieData, error)
@@ -458,6 +465,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Health.Version(childComplexity), true
 
+	case "ImageUploadURL.imageUrl":
+		if e.complexity.ImageUploadURL.ImageURL == nil {
+			break
+		}
+
+		return e.complexity.ImageUploadURL.ImageURL(childComplexity), true
+	case "ImageUploadURL.uploadUrl":
+		if e.complexity.ImageUploadURL.UploadURL == nil {
+			break
+		}
+
+		return e.complexity.ImageUploadURL.UploadURL(childComplexity), true
+
 	case "Movie.coverUrl":
 		if e.complexity.Movie.CoverURL == nil {
 			break
@@ -585,6 +605,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteMovie(childComplexity, args["id"].(string)), true
+	case "Mutation.requestImageUploadURL":
+		if e.complexity.Mutation.RequestImageUploadURL == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_requestImageUploadURL_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RequestImageUploadURL(childComplexity, args["contentType"].(string)), true
 	case "Mutation.requestLoginCode":
 		if e.complexity.Mutation.RequestLoginCode == nil {
 			break
@@ -1240,6 +1271,17 @@ func (ec *executionContext) field_Mutation_deleteMovie_args(ctx context.Context,
 		return nil, err
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_requestImageUploadURL_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "contentType", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["contentType"] = arg0
 	return args, nil
 }
 
@@ -2430,6 +2472,64 @@ func (ec *executionContext) fieldContext_Health_uptime(_ context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _ImageUploadURL_uploadUrl(ctx context.Context, field graphql.CollectedField, obj *model.ImageUploadURL) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ImageUploadURL_uploadUrl,
+		func(ctx context.Context) (any, error) {
+			return obj.UploadURL, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ImageUploadURL_uploadUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ImageUploadURL",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ImageUploadURL_imageUrl(ctx context.Context, field graphql.CollectedField, obj *model.ImageUploadURL) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ImageUploadURL_imageUrl,
+		func(ctx context.Context) (any, error) {
+			return obj.ImageURL, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ImageUploadURL_imageUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ImageUploadURL",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Movie_id(ctx context.Context, field graphql.CollectedField, obj *model.Movie) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3335,6 +3435,53 @@ func (ec *executionContext) fieldContext_Mutation_deleteAlbum(ctx context.Contex
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteAlbum_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_requestImageUploadURL(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_requestImageUploadURL,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().RequestImageUploadURL(ctx, fc.Args["contentType"].(string))
+		},
+		nil,
+		ec.marshalNImageUploadURL2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐImageUploadURL,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_requestImageUploadURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "uploadUrl":
+				return ec.fieldContext_ImageUploadURL_uploadUrl(ctx, field)
+			case "imageUrl":
+				return ec.fieldContext_ImageUploadURL_imageUrl(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ImageUploadURL", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_requestImageUploadURL_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -7836,6 +7983,50 @@ func (ec *executionContext) _Health(ctx context.Context, sel ast.SelectionSet, o
 	return out
 }
 
+var imageUploadURLImplementors = []string{"ImageUploadURL"}
+
+func (ec *executionContext) _ImageUploadURL(ctx context.Context, sel ast.SelectionSet, obj *model.ImageUploadURL) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, imageUploadURLImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ImageUploadURL")
+		case "uploadUrl":
+			out.Values[i] = ec._ImageUploadURL_uploadUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "imageUrl":
+			out.Values[i] = ec._ImageUploadURL_imageUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var movieImplementors = []string{"Movie"}
 
 func (ec *executionContext) _Movie(ctx context.Context, sel ast.SelectionSet, obj *model.Movie) graphql.Marshaler {
@@ -8061,6 +8252,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "deleteAlbum":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteAlbum(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "requestImageUploadURL":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_requestImageUploadURL(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -9454,6 +9652,20 @@ func (ec *executionContext) marshalNHealth2ᚖmediaclosetᚋapiᚋinternalᚋgra
 		return graphql.Null
 	}
 	return ec._Health(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNImageUploadURL2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐImageUploadURL(ctx context.Context, sel ast.SelectionSet, v model.ImageUploadURL) graphql.Marshaler {
+	return ec._ImageUploadURL(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNImageUploadURL2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐImageUploadURL(ctx context.Context, sel ast.SelectionSet, v *model.ImageUploadURL) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ImageUploadURL(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v any) (int, error) {

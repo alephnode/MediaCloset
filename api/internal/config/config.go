@@ -29,6 +29,10 @@ type Config struct {
 	AWSSecretAccessKey string
 	AWSSESFromEmail    string // Verified sender email in SES
 
+	// AWS S3 Image Uploads
+	S3Bucket    string
+	S3URLPrefix string // Public URL base, e.g. https://bucket.s3.amazonaws.com
+
 	// Feature flags
 	EnableCache     bool
 	EnableRateLimit bool
@@ -82,6 +86,8 @@ func Load() *Config {
 		AWSAccessKeyID:     viper.GetString("AWS_ACCESS_KEY_ID"),
 		AWSSecretAccessKey: viper.GetString("AWS_SECRET_ACCESS_KEY"),
 		AWSSESFromEmail:    viper.GetString("AWS_SES_FROM_EMAIL"),
+		S3Bucket:           viper.GetString("S3_BUCKET"),
+		S3URLPrefix:        viper.GetString("S3_URL_PREFIX"),
 		EnableCache:        viper.GetBool("ENABLE_CACHE"),
 		EnableRateLimit:    viper.GetBool("ENABLE_RATE_LIMIT"),
 

@@ -21,6 +21,7 @@ struct RecordFormView: View {
     @State private var showBarcodeResult = false
     @State private var errorAlert: String? = nil
     @State private var showingErrorAlert = false
+    @State private var selectedCoverImage: UIImage? = nil
 
     var onSaved: () -> Void
 
@@ -65,6 +66,10 @@ struct RecordFormView: View {
                     }
                 }
                 
+                Section("Cover Image") {
+                    CoverImagePicker(existingURL: nil, selectedImage: $selectedCoverImage)
+                }
+
                 Section("Main") {
                     TextField("Artist", text: $artist)
                     TextField("Album", text: $album)
@@ -114,7 +119,7 @@ struct RecordFormView: View {
                             Text("Saving album...")
                                 .font(.headline)
                                 .foregroundColor(.white)
-                            Text("Fetching album art")
+                            Text(selectedCoverImage != nil ? "Uploading cover image" : "Fetching album art")
                                 .font(.caption)
                                 .foregroundColor(.white.opacity(0.8))
                         }
@@ -131,6 +136,12 @@ struct RecordFormView: View {
         isSaving = true
 
         do {
+            // Upload cover image if the user selected one
+            var coverUrl: String? = nil
+            if let image = selectedCoverImage {
+                coverUrl = try await ImageUploadService.shared.upload(image)
+            }
+
             // Use tag editor array directly; convert genres from CSV
             let colorVariants: [String]? = colorVariantsArray.isEmpty ? nil : colorVariantsArray
 
@@ -139,14 +150,15 @@ struct RecordFormView: View {
                 .map { $0.trimmingCharacters(in: .whitespaces) }
                 .filter { !$0.isEmpty }
 
-            // Use MediaCloset API to save the album (it will auto-fetch the cover)
+            // Use MediaCloset API to save the album (auto-fetches cover if none provided)
             let response = try await MediaClosetAPIClient.shared.saveAlbum(
                 artist: artist,
                 album: album,
                 year: year,
                 label: nil,
                 colorVariants: colorVariants,
-                genres: genresArray
+                genres: genresArray,
+                coverUrl: coverUrl
             )
 
             if response.success {

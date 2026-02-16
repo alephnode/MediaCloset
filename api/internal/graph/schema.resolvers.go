@@ -648,6 +648,39 @@ func (r *mutationResolver) DeleteAlbum(ctx context.Context, id string) (*model.D
 	}, nil
 }
 
+// RequestImageUploadURL is the resolver for the requestImageUploadURL field.
+func (r *mutationResolver) RequestImageUploadURL(ctx context.Context, contentType string) (*model.ImageUploadURL, error) {
+	// Require authentication
+	userInfo, ok := custommw.GetUserFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("authentication required")
+	}
+
+	// Validate content type
+	validTypes := map[string]bool{
+		"image/jpeg": true,
+		"image/png":  true,
+		"image/webp": true,
+	}
+	if !validTypes[contentType] {
+		return nil, fmt.Errorf("unsupported content type: %s (must be image/jpeg, image/png, or image/webp)", contentType)
+	}
+
+	if r.S3Service == nil {
+		return nil, fmt.Errorf("image upload is not configured")
+	}
+
+	uploadURL, imageURL, err := r.S3Service.GenerateUploadURL(ctx, userInfo.UserID, contentType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate upload URL: %w", err)
+	}
+
+	return &model.ImageUploadURL{
+		UploadURL: uploadURL,
+		ImageURL:  imageURL,
+	}, nil
+}
+
 // MovieByTitle is the resolver for the movieByTitle field.
 func (r *queryResolver) MovieByTitle(ctx context.Context, title string, director *string, year *int) (*model.MovieData, error) {
 	return r.OMDBService.SearchMovie(ctx, title, director, year)

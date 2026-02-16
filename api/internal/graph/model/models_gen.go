@@ -56,6 +56,11 @@ type Health struct {
 	Uptime  int    `json:"uptime"`
 }
 
+type ImageUploadURL struct {
+	UploadURL string `json:"uploadUrl"`
+	ImageURL  string `json:"imageUrl"`
+}
+
 type Movie struct {
 	ID        string  `json:"id"`
 	Title     string  `json:"title"`

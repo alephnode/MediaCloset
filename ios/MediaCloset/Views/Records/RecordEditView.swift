@@ -20,6 +20,7 @@ struct RecordEditView: View {
     @State private var genresCSV = ""   // comma-separated in the UI
     @State private var notes = ""
     @State private var coverURL = ""
+    @State private var selectedCoverImage: UIImage? = nil
 
     @State private var isLoading = false
     @State private var isSaving = false
@@ -33,9 +34,12 @@ struct RecordEditView: View {
                     TextField("Year", value: $year, format: .number.grouping(.never))
                     ColorVariantTagEditor(variants: $colorVariantsArray)
                 }
+                Section("Cover Image") {
+                    CoverImagePicker(existingURL: coverURL.isEmpty ? nil : coverURL, selectedImage: $selectedCoverImage)
+                }
+
                 Section("Metadata") {
                     TextField("Genres (comma-separated)", text: $genresCSV)
-                    TextField("Cover URL (optional)", text: $coverURL)
                     TextField("Notes", text: $notes, axis: .vertical)
                         .lineLimit(3...6)
                 }
@@ -85,6 +89,17 @@ struct RecordEditView: View {
         isSaving = true
         defer { isSaving = false }
 
+        // Upload new cover image if selected
+        var finalCoverUrl: String? = coverURL.isEmpty ? nil : coverURL
+        if let image = selectedCoverImage {
+            do {
+                finalCoverUrl = try await ImageUploadService.shared.upload(image)
+            } catch {
+                print("[RecordEditView] Image upload failed: \(error)")
+                return
+            }
+        }
+
         // Use tag editor array directly; convert genres from CSV
         let colorVariants: [String]? = colorVariantsArray.isEmpty ? nil : colorVariantsArray
 
@@ -102,7 +117,7 @@ struct RecordEditView: View {
                 label: nil, // Not editable in this view
                 colorVariants: colorVariants,
                 genres: genresArray,
-                coverUrl: coverURL.isEmpty ? nil : coverURL
+                coverUrl: finalCoverUrl
             )
 
             if response.success {

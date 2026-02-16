@@ -1107,6 +1107,42 @@ final class MediaClosetAPIClient {
         return response.userMoviesPaginated
     }
 
+    // MARK: - Image Upload
+
+    /// Response from requestImageUploadURL mutation
+    struct ImageUploadURLResponse: Decodable {
+        let uploadUrl: String
+        let imageUrl: String
+    }
+
+    /// Requests a presigned S3 URL for uploading a cover image
+    /// - Parameter contentType: The MIME type of the image (e.g. "image/jpeg")
+    /// - Returns: ImageUploadURLResponse with the presigned upload URL and final public image URL
+    func requestImageUploadURL(contentType: String) async throws -> ImageUploadURLResponse {
+        struct Response: Decodable {
+            let requestImageUploadURL: ImageUploadURLResponse
+        }
+
+        let query = """
+        mutation RequestImageUploadURL($contentType: String!) {
+          requestImageUploadURL(contentType: $contentType) {
+            uploadUrl
+            imageUrl
+          }
+        }
+        """
+
+        let variables: [String: Any] = ["contentType": contentType]
+
+        let response: Response = try await execute(
+            operationName: "RequestImageUploadURL",
+            query: query,
+            variables: variables
+        )
+
+        return response.requestImageUploadURL
+    }
+
     // MARK: - App Version Config
 
     /// Response type for app version configuration

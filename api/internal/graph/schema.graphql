@@ -108,6 +108,15 @@ type Mutation {
 
   # Delete album/record
   deleteAlbum(id: String!): DeleteResponse!
+
+  # Request a presigned URL for uploading a cover image to S3
+  requestImageUploadURL(contentType: String!): ImageUploadURL!
+}
+
+# Presigned URL response for image uploads
+type ImageUploadURL {
+  uploadUrl: String!
+  imageUrl: String!
 }
 
 type MovieData {

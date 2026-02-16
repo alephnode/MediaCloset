@@ -16,6 +16,7 @@ struct VHSFormView: View {
     @State private var year: Int? = nil
     @State private var genre = ""
     @State private var coverURL = ""
+    @State private var selectedCoverImage: UIImage? = nil
     @State private var isSaving = false
     @State private var isFetchingData = false
     @State private var showingBarcodeScanner = false
@@ -50,8 +51,12 @@ struct VHSFormView: View {
                 TextField("Genre", text: $genre)
             }
             
-            Section("Cover Art") {
-                TextField("Cover URL (optional)", text: $coverURL)
+            Section("Cover Image") {
+                CoverImagePicker(
+                    existingURL: coverURL.isEmpty ? nil : coverURL,
+                    selectedImage: $selectedCoverImage
+                )
+
                 Button("Fetch Movie Data") {
                     Task { await fetchMovieData() }
                 }
@@ -79,16 +84,16 @@ struct VHSFormView: View {
                 ZStack {
                     Color.black.opacity(0.3)
                         .ignoresSafeArea()
-                    VStack(spacing: 16) {
-                        ProgressView()
-                            .scaleEffect(1.2)
-                        Text("Saving movie...")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                        Text("Fetching movie poster")
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.8))
-                    }
+                        VStack(spacing: 16) {
+                            ProgressView()
+                                .scaleEffect(1.2)
+                            Text("Saving movie...")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            Text(selectedCoverImage != nil ? "Uploading cover image" : "Fetching movie poster")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.8))
+                        }
                     .padding()
                     .background(Color.black.opacity(0.7))
                     .cornerRadius(12)
@@ -123,13 +128,19 @@ struct VHSFormView: View {
         isSaving = true
 
         do {
-            // Use MediaCloset API to save the movie (it will auto-fetch the poster)
+            // Upload cover image if the user selected one
+            var finalCoverUrl: String? = coverURL.isEmpty ? nil : coverURL
+            if let image = selectedCoverImage {
+                finalCoverUrl = try await ImageUploadService.shared.upload(image)
+            }
+
+            // Use MediaCloset API to save the movie (auto-fetches poster if none provided)
             let response = try await MediaClosetAPIClient.shared.saveMovie(
                 title: title,
                 director: director.isEmpty ? nil : director,
                 year: year,
                 genre: genre.isEmpty ? nil : genre,
-                coverUrl: coverURL.isEmpty ? nil : coverURL
+                coverUrl: finalCoverUrl
             )
 
             if response.success {

@@ -18,6 +18,7 @@ struct VHSEditView: View {
     @State private var genre: String
     @State private var notes: String
     @State private var coverURL: String
+    @State private var selectedCoverImage: UIImage? = nil
     @State private var isSaving = false
     
     init(vhs: VHSDetail, onSaved: @escaping () -> Void) {
@@ -41,8 +42,11 @@ struct VHSEditView: View {
                     TextField("Genre", text: $genre)
                 }
 
-                Section("Cover Art") {
-                    TextField("Cover URL (optional)", text: $coverURL)
+                Section("Cover Image") {
+                    CoverImagePicker(
+                        existingURL: coverURL.isEmpty ? nil : coverURL,
+                        selectedImage: $selectedCoverImage
+                    )
                 }
 
                 Section("Notes") {
@@ -68,13 +72,19 @@ struct VHSEditView: View {
         isSaving = true
 
         do {
+            // Upload new cover image if selected
+            var finalCoverUrl: String? = coverURL.isEmpty ? nil : coverURL
+            if let image = selectedCoverImage {
+                finalCoverUrl = try await ImageUploadService.shared.upload(image)
+            }
+
             let response = try await MediaClosetAPIClient.shared.updateMovie(
                 id: vhs.id,
                 title: title,
                 director: director.isEmpty ? nil : director,
                 year: year,
                 genre: genre.isEmpty ? nil : genre,
-                coverUrl: coverURL.isEmpty ? nil : coverURL
+                coverUrl: finalCoverUrl
             )
 
             if response.success {
