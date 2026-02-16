@@ -14,47 +14,57 @@ struct VHSListView: View {
     var body: some View {
         NavigationStack {
             List {
-                ForEach(vm.items) { item in
-                    NavigationLink(value: item) {
-                        HStack(spacing: 12) {
-                            AsyncCover(url: item.coverUrl)
-                            VStack(alignment: .leading) {
-                                Text(item.title).font(.headline)
-                                Text([
-                                    (item.director?.isEmpty == false ? item.director : nil),
-                                    item.year.map(String.init),
-                                    item.genre
-                                ].compactMap { $0 }.joined(separator: " · "))
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                if vm.isLoading && vm.items.isEmpty {
+                    // Skeleton loading state
+                    ForEach(0..<8, id: \.self) { index in
+                        SkeletonVHSRow(index: index)
+                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    }
+                    .listRowSeparator(.hidden)
+                } else {
+                    ForEach(vm.items) { item in
+                        NavigationLink(value: item) {
+                            HStack(spacing: 12) {
+                                AsyncCover(url: item.coverUrl)
+                                VStack(alignment: .leading) {
+                                    Text(item.title).font(.headline)
+                                    Text([
+                                        (item.director?.isEmpty == false ? item.director : nil),
+                                        item.year.map(String.init),
+                                        item.genre
+                                    ].compactMap { $0 }.joined(separator: " · "))
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                        .onAppear {
+                            if vm.shouldLoadMore(currentItem: item) {
+                                Task { await vm.loadMore() }
                             }
                         }
                     }
-                    .onAppear {
-                        if vm.shouldLoadMore(currentItem: item) {
-                            Task { await vm.loadMore() }
+                    .onDelete { indexSet in
+                        Task {
+                            for i in indexSet { await vm.delete(id: vm.items[i].id) }
                         }
                     }
-                }
-                .onDelete { indexSet in
-                    Task {
-                        for i in indexSet { await vm.delete(id: vm.items[i].id) }
-                    }
-                }
 
-                // Loading indicator at bottom
-                if vm.isLoadingMore {
-                    HStack {
-                        Spacer()
-                        ProgressView()
-                            .padding()
-                        Spacer()
+                    // Loading indicator at bottom for infinite scroll
+                    if vm.isLoadingMore {
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                                .padding()
+                            Spacer()
+                        }
+                        .listRowSeparator(.hidden)
                     }
-                    .listRowSeparator(.hidden)
                 }
             }
+            .animation(.default, value: vm.items.isEmpty)
             .refreshable {
-                await vm.loadInitial()
+                await vm.refresh()
             }
             .searchable(text: $searchText)
             .onChange(of: searchText) { _, newValue in
@@ -62,9 +72,7 @@ struct VHSListView: View {
                 vm.searchChanged()
             }
             .overlay {
-                if vm.isLoading && vm.items.isEmpty {
-                    ProgressView()
-                } else if let errorMessage = vm.errorMessage, vm.items.isEmpty {
+                if let errorMessage = vm.errorMessage, vm.items.isEmpty {
                     VStack(spacing: 16) {
                         Image(systemName: "exclamationmark.triangle")
                             .font(.largeTitle)

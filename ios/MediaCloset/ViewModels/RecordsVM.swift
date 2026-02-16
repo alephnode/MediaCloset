@@ -24,10 +24,12 @@ final class RecordsVM: ObservableObject {
     private var totalCount = 0
     private var currentOffset = 0
     private let pageSize = 25
+    private var hasLoadedOnce = false
 
     // MARK: - Debounce
     private var searchDebounceTask: Task<Void, Never>?
     private let debounceDelay: UInt64 = 300_000_000 // 300ms in nanoseconds
+    private let skeletonMinDuration: UInt64 = 800_000_000 // 800ms in nanoseconds
 
     init() {
         // Listen for app becoming active to retry loading if there was a configuration error
@@ -49,12 +51,17 @@ final class RecordsVM: ObservableObject {
 
     // MARK: - Public Methods
 
-    /// Performs initial load or refresh - clears existing data and fetches first page
+    /// First call shows skeleton + fetches. Subsequent calls silently refresh in the background.
     func load() async {
+        if hasLoadedOnce {
+            await refresh()
+            return
+        }
+        hasLoadedOnce = true
         await loadInitial()
     }
 
-    /// Loads the first page of data (used for initial load and pull-to-refresh)
+    /// Loads the first page of data, clearing existing items (shows skeleton state).
     func loadInitial() async {
         isLoading = true
         errorMessage = nil
@@ -66,6 +73,25 @@ final class RecordsVM: ObservableObject {
 
         defer { isLoading = false }
 
+        // Run fetch and minimum delay in parallel so the skeleton
+        // is visible long enough to feel intentional, not flashy.
+        async let fetch: () = fetchFirstPage()
+        async let minDelay: () = Task.sleep(nanoseconds: skeletonMinDuration)
+        _ = await (fetch, try? minDelay)
+    }
+
+    /// Refreshes data without clearing existing items (for pull-to-refresh).
+    /// Keeps the current list visible while new data loads in the background.
+    func refresh() async {
+        guard !isLoading else { return }
+        errorMessage = nil
+        currentOffset = 0
+        hasNextPage = true
+
+        await fetchFirstPage()
+    }
+
+    private func fetchFirstPage() async {
         do {
             let searchTerm = search.isEmpty ? nil : search
             let connection = try await MediaClosetAPIClient.shared.fetchAlbumsPaginated(
