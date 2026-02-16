@@ -403,18 +403,31 @@ func (r *mutationResolver) SaveAlbum(ctx context.Context, input model.SaveAlbumI
 			recordID = id
 		}
 
-		// Update the existing record's cover URL if we fetched a new one and it doesn't have one
+		// Update the existing record with any new information from the input
+		updates := map[string]interface{}{}
+
+		// Update cover URL if we fetched a new one and the existing record doesn't have one
 		existingCoverURL, _ := existingRecord["cover_url"].(string)
 		if coverURL != "" && existingCoverURL == "" {
-			updates := map[string]interface{}{
-				"cover_url": coverURL,
-			}
+			updates["cover_url"] = coverURL
+		}
+
+		// Update color variants if provided in the input
+		if len(input.ColorVariants) > 0 {
+			updates["color_variants"] = input.ColorVariants
+		}
+
+		// Update genres if provided in the input
+		if len(input.Genres) > 0 {
+			updates["genres"] = input.Genres
+		}
+
+		if len(updates) > 0 {
 			_, err := r.HasuraClient.UpdateAlbum(ctx, recordID, updates)
 			if err != nil {
-				// Log the error but don't fail - the album was still found
-				fmt.Printf("[SaveAlbum] Failed to update cover URL for existing album '%s - %s': %v\n", input.Artist, input.Album, err)
+				fmt.Printf("[SaveAlbum] Failed to update existing album '%s - %s': %v\n", input.Artist, input.Album, err)
 			} else {
-				fmt.Printf("[SaveAlbum] Updated cover URL for existing album '%s - %s'\n", input.Artist, input.Album)
+				fmt.Printf("[SaveAlbum] Updated existing album '%s - %s'\n", input.Artist, input.Album)
 			}
 		}
 	} else {
