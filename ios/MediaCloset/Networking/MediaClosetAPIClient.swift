@@ -304,8 +304,9 @@ final class MediaClosetAPIClient {
     ///   - colorVariants: Optional color variants array
     ///   - genres: Optional genres array
     ///   - coverUrl: Optional cover URL (will be auto-fetched if not provided)
+    ///   - size: Optional vinyl record size in inches (7, 10, 12, or custom)
     /// - Returns: SaveAlbumResponse with success status and saved album data
-    func saveAlbum(artist: String, album: String, year: Int? = nil, label: String? = nil, colorVariants: [String]? = nil, genres: [String]? = nil, coverUrl: String? = nil) async throws -> SaveAlbumResponse {
+    func saveAlbum(artist: String, album: String, year: Int? = nil, label: String? = nil, colorVariants: [String]? = nil, genres: [String]? = nil, coverUrl: String? = nil, size: Int? = nil) async throws -> SaveAlbumResponse {
         struct Response: Decodable {
             let saveAlbum: SaveAlbumResponse
         }
@@ -323,6 +324,7 @@ final class MediaClosetAPIClient {
               color_variants
               genres
               coverUrl
+              size
             }
             error
           }
@@ -347,6 +349,9 @@ final class MediaClosetAPIClient {
         }
         if let coverUrl = coverUrl {
             input["coverUrl"] = coverUrl
+        }
+        if let size = size {
+            input["size"] = size
         }
 
         let variables: [String: Any] = ["input": input]
@@ -376,6 +381,7 @@ final class MediaClosetAPIClient {
         let color_variants: [String]?
         let genres: [String]?
         let coverUrl: String?
+        let size: Int?
 
         // Convenience computed property for Swift naming conventions
         var coverURL: String? { coverUrl }
@@ -513,6 +519,7 @@ final class MediaClosetAPIClient {
         let color_variants: [String]?
         let genres: [String]?
         let coverUrl: String?
+        let size: Int?
         let createdAt: String?
         let updatedAt: String?
 
@@ -579,6 +586,7 @@ final class MediaClosetAPIClient {
             color_variants
             genres
             coverUrl
+            size
             createdAt
             updatedAt
           }
@@ -649,6 +657,7 @@ final class MediaClosetAPIClient {
             color_variants
             genres
             coverUrl
+            size
             createdAt
             updatedAt
           }
@@ -747,8 +756,9 @@ final class MediaClosetAPIClient {
     ///   - colorVariants: Optional new color variants array
     ///   - genres: Optional new genres array
     ///   - coverUrl: Optional new cover URL
+    ///   - size: Optional vinyl record size in inches (7, 10, 12, or custom)
     /// - Returns: UpdateAlbumResponse with success status and updated album data
-    func updateAlbum(id: String, artist: String? = nil, album: String? = nil, year: Int? = nil, label: String? = nil, colorVariants: [String]? = nil, genres: [String]? = nil, coverUrl: String? = nil) async throws -> UpdateAlbumResponse {
+    func updateAlbum(id: String, artist: String? = nil, album: String? = nil, year: Int? = nil, label: String? = nil, colorVariants: [String]? = nil, genres: [String]? = nil, coverUrl: String? = nil, size: Int? = nil) async throws -> UpdateAlbumResponse {
         struct Response: Decodable {
             let updateAlbum: UpdateAlbumResponse
         }
@@ -766,6 +776,7 @@ final class MediaClosetAPIClient {
               color_variants
               genres
               coverUrl
+              size
               createdAt
               updatedAt
             }
@@ -795,6 +806,9 @@ final class MediaClosetAPIClient {
         }
         if let coverUrl = coverUrl {
             input["coverUrl"] = coverUrl
+        }
+        if let size = size {
+            input["size"] = size
         }
 
         let variables: [String: Any] = [
@@ -1214,6 +1228,7 @@ final class MediaClosetAPIClient {
               color_variants
               genres
               coverUrl
+              size
               createdAt
               updatedAt
             }

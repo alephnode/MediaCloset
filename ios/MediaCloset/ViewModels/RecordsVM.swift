@@ -110,7 +110,8 @@ final class RecordsVM: ObservableObject {
                     year: album.year,
                     colorVariants: album.colorVariants,
                     genres: album.genres ?? [],
-                    coverUrl: album.coverUrl
+                    coverUrl: album.coverUrl,
+                    size: album.size
                 )
             }
 
@@ -152,7 +153,8 @@ final class RecordsVM: ObservableObject {
                     year: album.year,
                     colorVariants: album.colorVariants,
                     genres: album.genres ?? [],
-                    coverUrl: album.coverUrl
+                    coverUrl: album.coverUrl,
+                    size: album.size
                 )
             }
 

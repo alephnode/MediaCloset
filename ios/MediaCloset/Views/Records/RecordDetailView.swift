@@ -53,11 +53,21 @@ struct RecordDetailView: View {
                         Text("\(obj["album"] as? String ?? "")")
                             .font(.title2)
 
-                        if let y = normalizedYear(from: obj["year"]) {
-                            // fixes formatting with commas
-                            Text(y, format: .number.grouping(.never))
-                                .font(.headline)
-                                .foregroundStyle(.secondary)
+                        HStack(spacing: 8) {
+                            if let y = normalizedYear(from: obj["year"]) {
+                                Text(y, format: .number.grouping(.never))
+                                    .font(.headline)
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            if let size = obj["size"] as? Int {
+                                Text("·")
+                                    .font(.headline)
+                                    .foregroundStyle(.secondary)
+                                Text("\(size)\"")
+                                    .font(.headline)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
 
                 if let genres = obj["genres"] as? [String], !genres.isEmpty {
@@ -147,6 +157,9 @@ struct RecordDetailView: View {
                 }
                 if let colorVariants = album.colorVariants {
                     dict["color_variants"] = colorVariants
+                }
+                if let size = album.size {
+                    dict["size"] = size
                 }
                 if let coverURL = album.coverURL {
                     dict["cover_url"] = coverURL

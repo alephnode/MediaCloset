@@ -56,6 +56,7 @@ type ComplexityRoot struct {
 		Genres        func(childComplexity int) int
 		ID            func(childComplexity int) int
 		Label         func(childComplexity int) int
+		Size          func(childComplexity int) int
 		UpdatedAt     func(childComplexity int) int
 		Year          func(childComplexity int) int
 	}
@@ -189,6 +190,7 @@ type ComplexityRoot struct {
 		Genres        func(childComplexity int) int
 		ID            func(childComplexity int) int
 		Label         func(childComplexity int) int
+		Size          func(childComplexity int) int
 		Year          func(childComplexity int) int
 	}
 
@@ -333,6 +335,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Album.Label(childComplexity), true
+	case "Album.size":
+		if e.complexity.Album.Size == nil {
+			break
+		}
+
+		return e.complexity.Album.Size(childComplexity), true
 	case "Album.updatedAt":
 		if e.complexity.Album.UpdatedAt == nil {
 			break
@@ -959,6 +967,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.SavedAlbum.Label(childComplexity), true
+	case "SavedAlbum.size":
+		if e.complexity.SavedAlbum.Size == nil {
+			break
+		}
+
+		return e.complexity.SavedAlbum.Size(childComplexity), true
 	case "SavedAlbum.year":
 		if e.complexity.SavedAlbum.Year == nil {
 			break
@@ -1827,6 +1841,35 @@ func (ec *executionContext) fieldContext_Album_coverUrl(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _Album_size(ctx context.Context, field graphql.CollectedField, obj *model.Album) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Album_size,
+		func(ctx context.Context) (any, error) {
+			return obj.Size, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Album_size(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Album",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Album_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Album) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1925,6 +1968,8 @@ func (ec *executionContext) fieldContext_AlbumConnection_items(_ context.Context
 				return ec.fieldContext_Album_genres(ctx, field)
 			case "coverUrl":
 				return ec.fieldContext_Album_coverUrl(ctx, field)
+			case "size":
+				return ec.fieldContext_Album_size(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Album_createdAt(ctx, field)
 			case "updatedAt":
@@ -3878,6 +3923,8 @@ func (ec *executionContext) fieldContext_Query_album(ctx context.Context, field 
 				return ec.fieldContext_Album_genres(ctx, field)
 			case "coverUrl":
 				return ec.fieldContext_Album_coverUrl(ctx, field)
+			case "size":
+				return ec.fieldContext_Album_size(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Album_createdAt(ctx, field)
 			case "updatedAt":
@@ -3987,6 +4034,8 @@ func (ec *executionContext) fieldContext_Query_albums(_ context.Context, field g
 				return ec.fieldContext_Album_genres(ctx, field)
 			case "coverUrl":
 				return ec.fieldContext_Album_coverUrl(ctx, field)
+			case "size":
+				return ec.fieldContext_Album_size(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Album_createdAt(ctx, field)
 			case "updatedAt":
@@ -4196,6 +4245,8 @@ func (ec *executionContext) fieldContext_Query_userAlbums(ctx context.Context, f
 				return ec.fieldContext_Album_genres(ctx, field)
 			case "coverUrl":
 				return ec.fieldContext_Album_coverUrl(ctx, field)
+			case "size":
+				return ec.fieldContext_Album_size(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Album_createdAt(ctx, field)
 			case "updatedAt":
@@ -4681,6 +4732,8 @@ func (ec *executionContext) fieldContext_SaveAlbumResponse_album(_ context.Conte
 				return ec.fieldContext_SavedAlbum_genres(ctx, field)
 			case "coverUrl":
 				return ec.fieldContext_SavedAlbum_coverUrl(ctx, field)
+			case "size":
+				return ec.fieldContext_SavedAlbum_size(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SavedAlbum", field.Name)
 		},
@@ -5079,6 +5132,35 @@ func (ec *executionContext) fieldContext_SavedAlbum_coverUrl(_ context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _SavedAlbum_size(ctx context.Context, field graphql.CollectedField, obj *model.SavedAlbum) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SavedAlbum_size,
+		func(ctx context.Context) (any, error) {
+			return obj.Size, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SavedAlbum_size(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SavedAlbum",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _SavedMovie_id(ctx context.Context, field graphql.CollectedField, obj *model.SavedMovie) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5409,6 +5491,8 @@ func (ec *executionContext) fieldContext_UpdateAlbumResponse_album(_ context.Con
 				return ec.fieldContext_Album_genres(ctx, field)
 			case "coverUrl":
 				return ec.fieldContext_Album_coverUrl(ctx, field)
+			case "size":
+				return ec.fieldContext_Album_size(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Album_createdAt(ctx, field)
 			case "updatedAt":
@@ -5757,6 +5841,8 @@ func (ec *executionContext) fieldContext_User_albums(_ context.Context, field gr
 				return ec.fieldContext_Album_genres(ctx, field)
 			case "coverUrl":
 				return ec.fieldContext_Album_coverUrl(ctx, field)
+			case "size":
+				return ec.fieldContext_Album_size(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Album_createdAt(ctx, field)
 			case "updatedAt":
@@ -7392,7 +7478,7 @@ func (ec *executionContext) unmarshalInputSaveAlbumInput(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"artist", "album", "year", "label", "color_variants", "genres", "coverUrl"}
+	fieldsInOrder := [...]string{"artist", "album", "year", "label", "color_variants", "genres", "coverUrl", "size"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -7448,6 +7534,13 @@ func (ec *executionContext) unmarshalInputSaveAlbumInput(ctx context.Context, ob
 				return it, err
 			}
 			it.CoverURL = data
+		case "size":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("size"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Size = data
 		}
 	}
 
@@ -7554,7 +7647,7 @@ func (ec *executionContext) unmarshalInputUpdateAlbumInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"artist", "album", "year", "label", "color_variants", "genres", "coverUrl"}
+	fieldsInOrder := [...]string{"artist", "album", "year", "label", "color_variants", "genres", "coverUrl", "size"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -7610,6 +7703,13 @@ func (ec *executionContext) unmarshalInputUpdateAlbumInput(ctx context.Context, 
 				return it, err
 			}
 			it.CoverURL = data
+		case "size":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("size"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Size = data
 		}
 	}
 
@@ -7715,6 +7815,8 @@ func (ec *executionContext) _Album(ctx context.Context, sel ast.SelectionSet, ob
 			out.Values[i] = ec._Album_genres(ctx, field, obj)
 		case "coverUrl":
 			out.Values[i] = ec._Album_coverUrl(ctx, field, obj)
+		case "size":
+			out.Values[i] = ec._Album_size(ctx, field, obj)
 		case "createdAt":
 			out.Values[i] = ec._Album_createdAt(ctx, field, obj)
 		case "updatedAt":
@@ -8880,6 +8982,8 @@ func (ec *executionContext) _SavedAlbum(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = ec._SavedAlbum_genres(ctx, field, obj)
 		case "coverUrl":
 			out.Values[i] = ec._SavedAlbum_coverUrl(ctx, field, obj)
+		case "size":
+			out.Values[i] = ec._SavedAlbum_size(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

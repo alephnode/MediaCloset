@@ -18,6 +18,7 @@ type Album struct {
 	ColorVariants []string `json:"color_variants,omitempty"`
 	Genres        []string `json:"genres,omitempty"`
 	CoverURL      *string  `json:"coverUrl,omitempty"`
+	Size          *int     `json:"size,omitempty"`
 	CreatedAt     *string  `json:"createdAt,omitempty"`
 	UpdatedAt     *string  `json:"updatedAt,omitempty"`
 }
@@ -117,6 +118,7 @@ type SaveAlbumInput struct {
 	ColorVariants []string `json:"color_variants,omitempty"`
 	Genres        []string `json:"genres,omitempty"`
 	CoverURL      *string  `json:"coverUrl,omitempty"`
+	Size          *int     `json:"size,omitempty"`
 }
 
 type SaveAlbumResponse struct {
@@ -150,6 +152,7 @@ type SavedAlbum struct {
 	ColorVariants []string `json:"color_variants,omitempty"`
 	Genres        []string `json:"genres,omitempty"`
 	CoverURL      *string  `json:"coverUrl,omitempty"`
+	Size          *int     `json:"size,omitempty"`
 }
 
 type SavedMovie struct {
@@ -180,6 +183,7 @@ type UpdateAlbumInput struct {
 	ColorVariants []string `json:"color_variants,omitempty"`
 	Genres        []string `json:"genres,omitempty"`
 	CoverURL      *string  `json:"coverUrl,omitempty"`
+	Size          *int     `json:"size,omitempty"`
 }
 
 type UpdateAlbumResponse struct {

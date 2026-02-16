@@ -145,6 +145,7 @@ func (h *HasuraClient) InsertRecord(ctx context.Context, record map[string]inter
 				color_variants
 				genres
 				cover_url
+				size
 			}
 		}
 	`
@@ -290,6 +291,7 @@ func (h *HasuraClient) GetAllAlbums(ctx context.Context) ([]map[string]interface
 				color_variants
 				genres
 				cover_url
+				size
 				created_at
 				updated_at
 			}
@@ -342,6 +344,7 @@ func (h *HasuraClient) GetAlbumsByUserID(ctx context.Context, userID string) ([]
 					color_variants
 					genres
 					cover_url
+					size
 					created_at
 					updated_at
 				}
@@ -443,6 +446,7 @@ func (h *HasuraClient) GetAlbumByID(ctx context.Context, id string) (map[string]
 				color_variants
 				genres
 				cover_url
+				size
 				created_at
 				updated_at
 			}
@@ -534,6 +538,7 @@ func (h *HasuraClient) UpdateAlbum(ctx context.Context, id string, updates map[s
 				color_variants
 				genres
 				cover_url
+				size
 				created_at
 				updated_at
 			}
@@ -635,6 +640,7 @@ func (h *HasuraClient) FindRecordByArtistAlbum(ctx context.Context, artist strin
 				color_variants
 				genres
 				cover_url
+				size
 				created_at
 				updated_at
 			}
@@ -992,6 +998,7 @@ func (h *HasuraClient) GetAlbumsByUserIDPaginated(ctx context.Context, userID st
 					color_variants
 					genres
 					cover_url
+					size
 					created_at
 					updated_at
 				}

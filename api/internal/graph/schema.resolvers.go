@@ -422,6 +422,11 @@ func (r *mutationResolver) SaveAlbum(ctx context.Context, input model.SaveAlbumI
 			updates["genres"] = input.Genres
 		}
 
+		// Update size if provided in the input
+		if input.Size != nil {
+			updates["size"] = *input.Size
+		}
+
 		if len(updates) > 0 {
 			_, err := r.HasuraClient.UpdateAlbum(ctx, recordID, updates)
 			if err != nil {
@@ -448,6 +453,9 @@ func (r *mutationResolver) SaveAlbum(ctx context.Context, input model.SaveAlbumI
 		}
 		if len(input.Genres) > 0 {
 			record["genres"] = input.Genres
+		}
+		if input.Size != nil {
+			record["size"] = *input.Size
 		}
 		if coverURL != "" {
 			record["cover_url"] = coverURL
@@ -486,6 +494,7 @@ func (r *mutationResolver) SaveAlbum(ctx context.Context, input model.SaveAlbumI
 			ColorVariants: input.ColorVariants,
 			Genres:        input.Genres,
 			CoverURL:      &coverURL,
+			Size:          input.Size,
 		},
 	}, nil
 }
@@ -555,6 +564,9 @@ func (r *mutationResolver) UpdateAlbum(ctx context.Context, id string, input mod
 	if input.CoverURL != nil {
 		updates["cover_url"] = *input.CoverURL
 	}
+	if input.Size != nil {
+		updates["size"] = *input.Size
+	}
 
 	// Update in Hasura
 	albumData, err := r.HasuraClient.UpdateAlbum(ctx, id, updates)
@@ -607,6 +619,10 @@ func (r *mutationResolver) UpdateAlbum(ctx context.Context, id string, input mod
 	}
 	if coverURL, ok := albumData["cover_url"].(string); ok {
 		albumModel.CoverURL = &coverURL
+	}
+	if size, ok := albumData["size"].(float64); ok {
+		sizeInt := int(size)
+		albumModel.Size = &sizeInt
 	}
 	if createdAt, ok := albumData["created_at"].(string); ok {
 		albumModel.CreatedAt = &createdAt
@@ -808,6 +824,10 @@ func (r *queryResolver) Album(ctx context.Context, id string) (*model.Album, err
 	if coverURL, ok := albumData["cover_url"].(string); ok {
 		album.CoverURL = &coverURL
 	}
+	if size, ok := albumData["size"].(float64); ok {
+		sizeInt := int(size)
+		album.Size = &sizeInt
+	}
 	if createdAt, ok := albumData["created_at"].(string); ok {
 		album.CreatedAt = &createdAt
 	}
@@ -923,6 +943,10 @@ func (r *queryResolver) Albums(ctx context.Context) ([]*model.Album, error) {
 		}
 		if coverURL, ok := a["cover_url"].(string); ok {
 			album.CoverURL = &coverURL
+		}
+		if size, ok := a["size"].(float64); ok {
+			sizeInt := int(size)
+			album.Size = &sizeInt
 		}
 		if createdAt, ok := a["created_at"].(string); ok {
 			album.CreatedAt = &createdAt
@@ -1087,6 +1111,10 @@ func (r *queryResolver) UserAlbums(ctx context.Context, userID string) ([]*model
 		if coverURL, ok := a["cover_url"].(string); ok {
 			album.CoverURL = &coverURL
 		}
+		if size, ok := a["size"].(float64); ok {
+			sizeInt := int(size)
+			album.Size = &sizeInt
+		}
 		if createdAt, ok := a["created_at"].(string); ok {
 			album.CreatedAt = &createdAt
 		}
@@ -1239,6 +1267,10 @@ func (r *queryResolver) UserAlbumsPaginated(ctx context.Context, userID string, 
 		}
 		if coverURL, ok := a["cover_url"].(string); ok {
 			album.CoverURL = &coverURL
+		}
+		if size, ok := a["size"].(float64); ok {
+			sizeInt := int(size)
+			album.Size = &sizeInt
 		}
 		if createdAt, ok := a["created_at"].(string); ok {
 			album.CreatedAt = &createdAt

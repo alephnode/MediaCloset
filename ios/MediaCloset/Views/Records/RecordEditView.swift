@@ -16,6 +16,8 @@ struct RecordEditView: View {
     @State private var artist = ""
     @State private var album = ""
     @State private var year: Int? = nil
+    @State private var selectedSizeOption: VinylSizeOption = .twelve
+    @State private var customSizeText = ""
     @State private var colorVariantsArray: [String] = []
     @State private var genresCSV = ""   // comma-separated in the UI
     @State private var notes = ""
@@ -37,6 +39,20 @@ struct RecordEditView: View {
                     TextField("Year", value: $year, format: .number.grouping(.never))
                         .keyboardType(.numberPad)
                     ColorVariantTagEditor(variants: $colorVariantsArray)
+                }
+
+                Section("Vinyl Size") {
+                    Picker("Size", selection: $selectedSizeOption) {
+                        ForEach(VinylSizeOption.allCases) { option in
+                            Text(option.displayName).tag(option)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+
+                    if selectedSizeOption == .other {
+                        TextField("Size (inches)", text: $customSizeText)
+                            .keyboardType(.numberPad)
+                    }
                 }
 
                 Section("Cover Image") {
@@ -113,6 +129,13 @@ struct RecordEditView: View {
             colorVariantsArray = record.colorVariants ?? []
             coverURL = record.coverURL ?? ""
             notes = "" // Not returned by API
+
+            // Populate size picker from existing data
+            let sizeOption = VinylSizeOption.from(size: record.size)
+            selectedSizeOption = sizeOption
+            if sizeOption == .other, let size = record.size {
+                customSizeText = "\(size)"
+            }
             if let genres = record.genres {
                 genresCSV = genres.joined(separator: ", ")
             }
@@ -152,6 +175,14 @@ struct RecordEditView: View {
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
 
+        // Resolve vinyl size from picker
+        let resolvedSize: Int? = {
+            if selectedSizeOption == .other {
+                return Int(customSizeText)
+            }
+            return selectedSizeOption.inches
+        }()
+
         do {
             let response = try await MediaClosetAPIClient.shared.updateAlbum(
                 id: recordId,
@@ -161,7 +192,8 @@ struct RecordEditView: View {
                 label: nil,
                 colorVariants: colorVariants,
                 genres: genresArray,
-                coverUrl: finalCoverUrl
+                coverUrl: finalCoverUrl,
+                size: resolvedSize
             )
 
             if response.success {

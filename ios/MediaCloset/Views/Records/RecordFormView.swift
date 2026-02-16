@@ -11,6 +11,8 @@ struct RecordFormView: View {
     @State private var artist = ""
     @State private var album = ""
     @State private var year: Int? = nil
+    @State private var selectedSizeOption: VinylSizeOption = .twelve
+    @State private var customSizeText = ""
     @State private var colorVariantsArray: [String] = []
     @State private var genres = ""
     @State private var tracks: [TrackRow] = []
@@ -78,6 +80,20 @@ struct RecordFormView: View {
                         .keyboardType(.numberPad)
                     ColorVariantTagEditor(variants: $colorVariantsArray)
                     TextField("Genres (comma-separated)", text: $genres)
+                }
+
+                Section("Vinyl Size") {
+                    Picker("Size", selection: $selectedSizeOption) {
+                        ForEach(VinylSizeOption.allCases) { option in
+                            Text(option.displayName).tag(option)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+
+                    if selectedSizeOption == .other {
+                        TextField("Size (inches)", text: $customSizeText)
+                            .keyboardType(.numberPad)
+                    }
                 }
 
                 Section("Cover Image") {
@@ -178,6 +194,14 @@ struct RecordFormView: View {
                 .map { $0.trimmingCharacters(in: .whitespaces) }
                 .filter { !$0.isEmpty }
 
+            // Resolve vinyl size from picker
+            let resolvedSize: Int? = {
+                if selectedSizeOption == .other {
+                    return Int(customSizeText)
+                }
+                return selectedSizeOption.inches
+            }()
+
             // Use MediaCloset API to save the album (auto-fetches cover if none provided)
             let response = try await MediaClosetAPIClient.shared.saveAlbum(
                 artist: artist,
@@ -186,7 +210,8 @@ struct RecordFormView: View {
                 label: nil,
                 colorVariants: colorVariants,
                 genres: genresArray,
-                coverUrl: coverUrl
+                coverUrl: coverUrl,
+                size: resolvedSize
             )
 
             if response.success {

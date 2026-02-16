@@ -72,10 +72,52 @@ struct AlbumConnection: Codable {
         let color_variants: [String]?
         let genres: [String]?
         let coverUrl: String?
+        let size: Int?
         let createdAt: String?
         let updatedAt: String?
 
         var colorVariants: [String] { color_variants ?? [] }
+    }
+}
+
+// MARK: - Vinyl Size
+
+/// Preset vinyl record sizes for the picker UI
+enum VinylSizeOption: String, CaseIterable, Identifiable {
+    case seven = "7"
+    case ten = "10"
+    case twelve = "12"
+    case other = "Other"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .seven: return "7\""
+        case .ten: return "10\""
+        case .twelve: return "12\""
+        case .other: return "Other"
+        }
+    }
+
+    var inches: Int? {
+        switch self {
+        case .seven: return 7
+        case .ten: return 10
+        case .twelve: return 12
+        case .other: return nil
+        }
+    }
+
+    /// Determines which option matches a given size value
+    static func from(size: Int?) -> VinylSizeOption {
+        switch size {
+        case 7: return .seven
+        case 10: return .ten
+        case 12: return .twelve
+        case .some: return .other
+        case .none: return .twelve // default
+        }
     }
 }
 
@@ -89,6 +131,7 @@ struct RecordListItem: Identifiable, Hashable {
     let colorVariants: [String];
     let genres: [String];
     let coverUrl: String?
+    let size: Int?
 }
 
 struct VHSListItem: Identifiable, Hashable {
