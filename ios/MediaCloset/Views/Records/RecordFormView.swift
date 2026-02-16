@@ -15,6 +15,7 @@ struct RecordFormView: View {
     @State private var genres = ""
     @State private var tracks: [TrackRow] = []
     @State private var isSaving = false
+    @State private var savingStatus = ""
     @State private var showingBarcodeScanner = false
     @State private var isFetchingBarcodeData = false
     @State private var barcodeErrorMessage: String? = nil
@@ -119,7 +120,7 @@ struct RecordFormView: View {
                             Text("Saving album...")
                                 .font(.headline)
                                 .foregroundColor(.white)
-                            Text(selectedCoverImage != nil ? "Uploading cover image" : "Fetching album art")
+                            Text(savingStatus)
                                 .font(.caption)
                                 .foregroundColor(.white.opacity(0.8))
                         }
@@ -139,8 +140,11 @@ struct RecordFormView: View {
             // Upload cover image if the user selected one
             var coverUrl: String? = nil
             if let image = selectedCoverImage {
+                savingStatus = "Uploading cover image..."
                 coverUrl = try await ImageUploadService.shared.upload(image)
             }
+
+            savingStatus = selectedCoverImage != nil ? "Saving album..." : "Fetching album art..."
 
             // Use tag editor array directly; convert genres from CSV
             let colorVariants: [String]? = colorVariantsArray.isEmpty ? nil : colorVariantsArray

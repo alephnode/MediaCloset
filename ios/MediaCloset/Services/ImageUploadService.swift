@@ -35,26 +35,36 @@ final class ImageUploadService {
     /// Uploads a UIImage to S3 and returns the permanent public URL.
     /// The image is resized to max 1200px and compressed to JPEG under 500 KB.
     func upload(_ image: UIImage) async throws -> String {
+        print("[ImageUploadService] Step 1/4: Resizing image...")
         let resized = resize(image, maxDimension: maxDimension)
 
+        print("[ImageUploadService] Step 2/4: Compressing to JPEG...")
         guard let data = compressToJPEG(resized, maxBytes: maxBytes) else {
             throw ImageUploadError.compressionFailed
         }
+        print("[ImageUploadService] Compressed: \(data.count) bytes (\(data.count / 1024) KB)")
 
-        #if DEBUG
-        print("[ImageUploadService] Compressed image: \(data.count) bytes (\(data.count / 1024) KB)")
-        #endif
-
-        let uploadInfo = try await MediaClosetAPIClient.shared.requestImageUploadURL(contentType: "image/jpeg")
+        print("[ImageUploadService] Step 3/4: Requesting presigned URL from backend...")
+        let uploadInfo: MediaClosetAPIClient.ImageUploadURLResponse
+        do {
+            uploadInfo = try await MediaClosetAPIClient.shared.requestImageUploadURL(contentType: "image/jpeg")
+        } catch {
+            print("[ImageUploadService] Failed to get presigned URL: \(error)")
+            throw error
+        }
+        print("[ImageUploadService] Got presigned URL, imageUrl will be: \(uploadInfo.imageUrl)")
 
         guard let uploadURL = URL(string: uploadInfo.uploadUrl) else {
+            print("[ImageUploadService] Invalid upload URL: \(uploadInfo.uploadUrl)")
             throw ImageUploadError.invalidResponse
         }
 
+        print("[ImageUploadService] Step 4/4: Uploading \(data.count) bytes to S3...")
         var request = URLRequest(url: uploadURL)
         request.httpMethod = "PUT"
         request.setValue("image/jpeg", forHTTPHeaderField: "Content-Type")
         request.setValue("\(data.count)", forHTTPHeaderField: "Content-Length")
+        request.timeoutInterval = 30
 
         let (_, response) = try await URLSession.shared.upload(for: request, from: data)
 
@@ -63,13 +73,11 @@ final class ImageUploadService {
         }
 
         guard (200...299).contains(httpResponse.statusCode) else {
+            print("[ImageUploadService] S3 upload failed with status: \(httpResponse.statusCode)")
             throw ImageUploadError.uploadFailed(statusCode: httpResponse.statusCode)
         }
 
-        #if DEBUG
-        print("[ImageUploadService] Upload successful: \(uploadInfo.imageUrl)")
-        #endif
-
+        print("[ImageUploadService] Upload complete: \(uploadInfo.imageUrl)")
         return uploadInfo.imageUrl
     }
 

@@ -18,6 +18,7 @@ struct VHSFormView: View {
     @State private var coverURL = ""
     @State private var selectedCoverImage: UIImage? = nil
     @State private var isSaving = false
+    @State private var savingStatus = ""
     @State private var isFetchingData = false
     @State private var showingBarcodeScanner = false
     @State private var isFetchingBarcodeData = false
@@ -90,7 +91,7 @@ struct VHSFormView: View {
                             Text("Saving movie...")
                                 .font(.headline)
                                 .foregroundColor(.white)
-                            Text(selectedCoverImage != nil ? "Uploading cover image" : "Fetching movie poster")
+                            Text(savingStatus)
                                 .font(.caption)
                                 .foregroundColor(.white.opacity(0.8))
                         }
@@ -131,8 +132,11 @@ struct VHSFormView: View {
             // Upload cover image if the user selected one
             var finalCoverUrl: String? = coverURL.isEmpty ? nil : coverURL
             if let image = selectedCoverImage {
+                savingStatus = "Uploading cover image..."
                 finalCoverUrl = try await ImageUploadService.shared.upload(image)
             }
+
+            savingStatus = selectedCoverImage != nil ? "Saving movie..." : "Fetching movie poster..."
 
             // Use MediaCloset API to save the movie (auto-fetches poster if none provided)
             let response = try await MediaClosetAPIClient.shared.saveMovie(
