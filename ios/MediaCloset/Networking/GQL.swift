@@ -123,4 +123,53 @@ enum GQL {
     }
     """
 
+    // CASSETTE LIST
+    static let queryCassetteList = """
+    query CassetteList($pattern: String = "%%", $limit: Int = 50, $offset: Int = 0) {
+      cassettes(
+        where: {
+          _or: [
+            { artist: { _ilike: $pattern } },
+            { album:  { _ilike: $pattern } }
+          ]
+        },
+        limit: $limit,
+        offset: $offset,
+        order_by: [{ artist: asc }, { year: asc }]
+      ) {
+        id artist album year genres cover_url tape_type
+      }
+    }
+    """
+
+    // CASSETTE DETAIL
+    static let cassetteDetail = """
+    query CassetteDetail($id: uuid!) {
+      cassettes_by_pk(id: $id) {
+        id
+        artist
+        album
+        label
+        year
+        genres
+        cover_url
+        tape_type
+      }
+    }
+    """
+
+    // CASSETTE INSERT
+    static let insertCassette = """
+    mutation InsertCassette($object: cassettes_insert_input!) {
+      insert_cassettes_one(object: $object) { id }
+    }
+    """
+
+    // CASSETTE UPDATE
+    static let updateCassette = """
+    mutation UpdateCassette($id: uuid!, $set: cassettes_set_input!) {
+      update_cassettes_by_pk(pk_columns: {id: $id}, _set: $set) { id }
+    }
+    """
+
 }

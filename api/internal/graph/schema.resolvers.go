@@ -677,6 +677,295 @@ func (r *mutationResolver) DeleteAlbum(ctx context.Context, id string) (*model.D
 	}, nil
 }
 
+// SaveCassette is the resolver for the saveCassette field.
+func (r *mutationResolver) SaveCassette(ctx context.Context, input model.SaveCassetteInput) (*model.SaveCassetteResponse, error) {
+	userInfo, ok := custommw.GetUserFromContext(ctx)
+	if !ok {
+		return &model.SaveCassetteResponse{
+			Success: false,
+			Error:   &[]string{"Authentication required"}[0],
+		}, nil
+	}
+
+	if input.Artist == "" {
+		return &model.SaveCassetteResponse{
+			Success: false,
+			Error:   &[]string{"Artist is required"}[0],
+		}, nil
+	}
+	if input.Album == "" {
+		return &model.SaveCassetteResponse{
+			Success: false,
+			Error:   &[]string{"Album is required"}[0],
+		}, nil
+	}
+
+	if input.Year != nil {
+		year := *input.Year
+		if year < 1800 || year > 2100 {
+			return &model.SaveCassetteResponse{
+				Success: false,
+				Error:   &[]string{"Year must be between 1800 and 2100"}[0],
+			}, nil
+		}
+	}
+
+	coverURL := ""
+	if input.CoverURL != nil && *input.CoverURL != "" {
+		coverURL = *input.CoverURL
+	} else {
+		albumData, err := r.MusicBrainz.SearchAlbum(ctx, input.Artist, input.Album)
+		if err != nil {
+			fmt.Printf("[SaveCassette] Failed to fetch cover for '%s - %s': %v\n", input.Artist, input.Album, err)
+		} else if albumData != nil && albumData.CoverURL != nil {
+			coverURL = *albumData.CoverURL
+			fmt.Printf("[SaveCassette] Auto-fetched cover for '%s - %s' from %s\n", input.Artist, input.Album, albumData.Source)
+		} else {
+			fmt.Printf("[SaveCassette] No cover found for '%s - %s'\n", input.Artist, input.Album)
+		}
+	}
+
+	var cassetteID string
+	existingCassette, err := r.HasuraClient.FindCassetteByArtistAlbum(ctx, input.Artist, input.Album)
+	if err != nil {
+		return &model.SaveCassetteResponse{
+			Success: false,
+			Error:   &[]string{fmt.Sprintf("Failed to check for existing cassette: %v", err)}[0],
+		}, nil
+	}
+
+	if existingCassette != nil {
+		if id, ok := existingCassette["id"].(string); ok {
+			cassetteID = id
+		}
+
+		updates := map[string]interface{}{}
+		existingCoverURL, _ := existingCassette["cover_url"].(string)
+		if coverURL != "" && existingCoverURL == "" {
+			updates["cover_url"] = coverURL
+		}
+		if len(input.Genres) > 0 {
+			updates["genres"] = input.Genres
+		}
+		if input.TapeType != nil {
+			updates["tape_type"] = *input.TapeType
+		}
+
+		if len(updates) > 0 {
+			_, err := r.HasuraClient.UpdateCassette(ctx, cassetteID, updates)
+			if err != nil {
+				fmt.Printf("[SaveCassette] Failed to update existing cassette '%s - %s': %v\n", input.Artist, input.Album, err)
+			}
+		}
+	} else {
+		cassette := map[string]interface{}{
+			"artist": input.Artist,
+			"album":  input.Album,
+		}
+
+		if input.Year != nil {
+			cassette["year"] = *input.Year
+		}
+		if input.Label != nil {
+			cassette["label"] = *input.Label
+		}
+		if len(input.Genres) > 0 {
+			cassette["genres"] = input.Genres
+		}
+		if input.TapeType != nil {
+			cassette["tape_type"] = *input.TapeType
+		}
+		if coverURL != "" {
+			cassette["cover_url"] = coverURL
+		}
+
+		createdID, err := r.HasuraClient.InsertCassette(ctx, cassette)
+		if err != nil {
+			return &model.SaveCassetteResponse{
+				Success: false,
+				Error:   &[]string{fmt.Sprintf("Failed to create cassette: %v", err)}[0],
+			}, nil
+		}
+		cassetteID = createdID
+	}
+
+	err = r.HasuraClient.LinkCassetteToUser(ctx, userInfo.UserID, cassetteID)
+	if err != nil {
+		return &model.SaveCassetteResponse{
+			Success: false,
+			Error:   &[]string{fmt.Sprintf("Failed to add cassette to collection: %v", err)}[0],
+		}, nil
+	}
+
+	return &model.SaveCassetteResponse{
+		Success: true,
+		Cassette: &model.SavedCassette{
+			ID:       0,
+			Artist:   input.Artist,
+			Album:    input.Album,
+			Year:     input.Year,
+			Label:    input.Label,
+			Genres:   input.Genres,
+			CoverURL: &coverURL,
+			TapeType: input.TapeType,
+		},
+	}, nil
+}
+
+// UpdateCassette is the resolver for the updateCassette field.
+func (r *mutationResolver) UpdateCassette(ctx context.Context, id string, input model.UpdateCassetteInput) (*model.UpdateCassetteResponse, error) {
+	userInfo, ok := custommw.GetUserFromContext(ctx)
+	if !ok {
+		return &model.UpdateCassetteResponse{
+			Success: false,
+			Error:   &[]string{"Authentication required"}[0],
+		}, nil
+	}
+
+	owns, err := r.HasuraClient.CheckCassetteOwnership(ctx, userInfo.UserID, id)
+	if err != nil {
+		return &model.UpdateCassetteResponse{
+			Success: false,
+			Error:   &[]string{fmt.Sprintf("Failed to check ownership: %v", err)}[0],
+		}, nil
+	}
+	if !owns {
+		return &model.UpdateCassetteResponse{
+			Success: false,
+			Error:   &[]string{"Not authorized to update this cassette"}[0],
+		}, nil
+	}
+
+	cassette, err := r.HasuraClient.GetCassetteByID(ctx, id)
+	if err != nil {
+		return &model.UpdateCassetteResponse{
+			Success: false,
+			Error:   &[]string{fmt.Sprintf("Failed to fetch cassette: %v", err)}[0],
+		}, nil
+	}
+	if cassette == nil {
+		return &model.UpdateCassetteResponse{
+			Success: false,
+			Error:   &[]string{"Cassette not found"}[0],
+		}, nil
+	}
+
+	updates := make(map[string]interface{})
+
+	if input.Artist != nil {
+		updates["artist"] = *input.Artist
+	}
+	if input.Album != nil {
+		updates["album"] = *input.Album
+	}
+	if input.Year != nil {
+		updates["year"] = *input.Year
+	}
+	if input.Label != nil {
+		updates["label"] = *input.Label
+	}
+	if len(input.Genres) > 0 {
+		updates["genres"] = input.Genres
+	}
+	if input.CoverURL != nil {
+		updates["cover_url"] = *input.CoverURL
+	}
+	if input.TapeType != nil {
+		updates["tape_type"] = *input.TapeType
+	}
+
+	cassetteData, err := r.HasuraClient.UpdateCassette(ctx, id, updates)
+	if err != nil {
+		return &model.UpdateCassetteResponse{
+			Success: false,
+			Error:   &[]string{fmt.Sprintf("Failed to update cassette: %v", err)}[0],
+		}, nil
+	}
+
+	cassetteModel := &model.Cassette{}
+	if cassetteID, ok := cassetteData["id"].(string); ok {
+		cassetteModel.ID = cassetteID
+	}
+	if artist, ok := cassetteData["artist"].(string); ok {
+		cassetteModel.Artist = artist
+	}
+	if albumName, ok := cassetteData["album"].(string); ok {
+		cassetteModel.Album = albumName
+	}
+	if year, ok := cassetteData["year"].(float64); ok {
+		yearInt := int(year)
+		cassetteModel.Year = &yearInt
+	}
+	if label, ok := cassetteData["label"].(string); ok {
+		cassetteModel.Label = &label
+	}
+	if genres, ok := cassetteData["genres"].([]interface{}); ok {
+		genreStrs := make([]string, 0, len(genres))
+		for _, g := range genres {
+			if genreStr, ok := g.(string); ok {
+				genreStrs = append(genreStrs, genreStr)
+			}
+		}
+		if len(genreStrs) > 0 {
+			cassetteModel.Genres = genreStrs
+		}
+	}
+	if coverURL, ok := cassetteData["cover_url"].(string); ok {
+		cassetteModel.CoverURL = &coverURL
+	}
+	if tapeType, ok := cassetteData["tape_type"].(string); ok {
+		cassetteModel.TapeType = &tapeType
+	}
+	if createdAt, ok := cassetteData["created_at"].(string); ok {
+		cassetteModel.CreatedAt = &createdAt
+	}
+	if updatedAt, ok := cassetteData["updated_at"].(string); ok {
+		cassetteModel.UpdatedAt = &updatedAt
+	}
+
+	return &model.UpdateCassetteResponse{
+		Success:  true,
+		Cassette: cassetteModel,
+	}, nil
+}
+
+// DeleteCassette is the resolver for the deleteCassette field.
+func (r *mutationResolver) DeleteCassette(ctx context.Context, id string) (*model.DeleteResponse, error) {
+	userInfo, ok := custommw.GetUserFromContext(ctx)
+	if !ok {
+		return &model.DeleteResponse{
+			Success: false,
+			Error:   &[]string{"Authentication required"}[0],
+		}, nil
+	}
+
+	owns, err := r.HasuraClient.CheckCassetteOwnership(ctx, userInfo.UserID, id)
+	if err != nil {
+		return &model.DeleteResponse{
+			Success: false,
+			Error:   &[]string{fmt.Sprintf("Failed to check ownership: %v", err)}[0],
+		}, nil
+	}
+	if !owns {
+		return &model.DeleteResponse{
+			Success: false,
+			Error:   &[]string{"Not authorized to remove this cassette from your collection"}[0],
+		}, nil
+	}
+
+	err = r.HasuraClient.UnlinkCassetteFromUser(ctx, userInfo.UserID, id)
+	if err != nil {
+		return &model.DeleteResponse{
+			Success: false,
+			Error:   &[]string{fmt.Sprintf("Failed to delete cassette: %v", err)}[0],
+		}, nil
+	}
+
+	return &model.DeleteResponse{
+		Success: true,
+	}, nil
+}
+
 // RequestImageUploadURL is the resolver for the requestImageUploadURL field.
 func (r *mutationResolver) RequestImageUploadURL(ctx context.Context, contentType string) (*model.ImageUploadURL, error) {
 	// Require authentication
@@ -836,6 +1125,70 @@ func (r *queryResolver) Album(ctx context.Context, id string) (*model.Album, err
 	}
 
 	return album, nil
+}
+
+// CassetteByArtistAndTitle is the resolver for the cassetteByArtistAndTitle field.
+func (r *queryResolver) CassetteByArtistAndTitle(ctx context.Context, artist string, album string) (*model.AlbumData, error) {
+	return r.MusicBrainz.SearchAlbum(ctx, artist, album)
+}
+
+// CassetteByBarcode is the resolver for the cassetteByBarcode field.
+func (r *queryResolver) CassetteByBarcode(ctx context.Context, barcode string) (*model.AlbumData, error) {
+	return r.BarcodeService.LookupAlbum(ctx, barcode)
+}
+
+// Cassette is the resolver for the cassette field.
+func (r *queryResolver) Cassette(ctx context.Context, id string) (*model.Cassette, error) {
+	cassetteData, err := r.HasuraClient.GetCassetteByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch cassette: %w", err)
+	}
+	if cassetteData == nil {
+		return nil, nil
+	}
+
+	cassette := &model.Cassette{}
+	if cassetteID, ok := cassetteData["id"].(string); ok {
+		cassette.ID = cassetteID
+	}
+	if artist, ok := cassetteData["artist"].(string); ok {
+		cassette.Artist = artist
+	}
+	if albumName, ok := cassetteData["album"].(string); ok {
+		cassette.Album = albumName
+	}
+	if year, ok := cassetteData["year"].(float64); ok {
+		yearInt := int(year)
+		cassette.Year = &yearInt
+	}
+	if label, ok := cassetteData["label"].(string); ok {
+		cassette.Label = &label
+	}
+	if genres, ok := cassetteData["genres"].([]interface{}); ok {
+		genreStrs := make([]string, 0, len(genres))
+		for _, g := range genres {
+			if genreStr, ok := g.(string); ok {
+				genreStrs = append(genreStrs, genreStr)
+			}
+		}
+		if len(genreStrs) > 0 {
+			cassette.Genres = genreStrs
+		}
+	}
+	if coverURL, ok := cassetteData["cover_url"].(string); ok {
+		cassette.CoverURL = &coverURL
+	}
+	if tapeType, ok := cassetteData["tape_type"].(string); ok {
+		cassette.TapeType = &tapeType
+	}
+	if createdAt, ok := cassetteData["created_at"].(string); ok {
+		cassette.CreatedAt = &createdAt
+	}
+	if updatedAt, ok := cassetteData["updated_at"].(string); ok {
+		cassette.UpdatedAt = &updatedAt
+	}
+
+	return cassette, nil
 }
 
 // Movies is the resolver for the movies field.
@@ -1128,6 +1481,63 @@ func (r *queryResolver) UserAlbums(ctx context.Context, userID string) ([]*model
 	return albums, nil
 }
 
+// UserCassettes is the resolver for the userCassettes field.
+func (r *queryResolver) UserCassettes(ctx context.Context, userID string) ([]*model.Cassette, error) {
+	cassettesData, err := r.HasuraClient.GetCassettesByUserID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch cassettes: %w", err)
+	}
+
+	cassettes := make([]*model.Cassette, 0, len(cassettesData))
+	for _, c := range cassettesData {
+		cassette := &model.Cassette{}
+
+		if id, ok := c["id"].(string); ok {
+			cassette.ID = id
+		}
+		if artist, ok := c["artist"].(string); ok {
+			cassette.Artist = artist
+		}
+		if albumName, ok := c["album"].(string); ok {
+			cassette.Album = albumName
+		}
+		if year, ok := c["year"].(float64); ok {
+			yearInt := int(year)
+			cassette.Year = &yearInt
+		}
+		if label, ok := c["label"].(string); ok {
+			cassette.Label = &label
+		}
+		if genres, ok := c["genres"].([]interface{}); ok {
+			genreStrs := make([]string, 0, len(genres))
+			for _, g := range genres {
+				if genreStr, ok := g.(string); ok {
+					genreStrs = append(genreStrs, genreStr)
+				}
+			}
+			if len(genreStrs) > 0 {
+				cassette.Genres = genreStrs
+			}
+		}
+		if coverURL, ok := c["cover_url"].(string); ok {
+			cassette.CoverURL = &coverURL
+		}
+		if tapeType, ok := c["tape_type"].(string); ok {
+			cassette.TapeType = &tapeType
+		}
+		if createdAt, ok := c["created_at"].(string); ok {
+			cassette.CreatedAt = &createdAt
+		}
+		if updatedAt, ok := c["updated_at"].(string); ok {
+			cassette.UpdatedAt = &updatedAt
+		}
+
+		cassettes = append(cassettes, cassette)
+	}
+
+	return cassettes, nil
+}
+
 // UserMoviesPaginated is the resolver for the userMoviesPaginated field.
 func (r *queryResolver) UserMoviesPaginated(ctx context.Context, userID string, pagination *model.PaginationInput, sort *model.SortInput, search *string) (*model.MovieConnection, error) {
 	// Default pagination values
@@ -1287,6 +1697,85 @@ func (r *queryResolver) UserAlbumsPaginated(ctx context.Context, userID string, 
 
 	return &model.AlbumConnection{
 		Items: albums,
+		PageInfo: &model.PageInfo{
+			HasNextPage: hasNextPage,
+			TotalCount:  result.TotalCount,
+		},
+	}, nil
+}
+
+// UserCassettesPaginated is the resolver for the userCassettesPaginated field.
+func (r *queryResolver) UserCassettesPaginated(ctx context.Context, userID string, pagination *model.PaginationInput, sort *model.SortInput, search *string) (*model.CassetteConnection, error) {
+	limit := 25
+	offset := 0
+	if pagination != nil {
+		limit = pagination.Limit
+		offset = pagination.Offset
+	}
+
+	sortField := "CREATED_AT"
+	sortOrder := "DESC"
+	if sort != nil {
+		sortField = string(sort.Field)
+		sortOrder = string(sort.Order)
+	}
+
+	result, err := r.HasuraClient.GetCassettesByUserIDPaginated(ctx, userID, limit, offset, sortField, sortOrder, search)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch cassettes: %w", err)
+	}
+
+	cassettes := make([]*model.Cassette, 0, len(result.Items))
+	for _, c := range result.Items {
+		cassette := &model.Cassette{}
+
+		if id, ok := c["id"].(string); ok {
+			cassette.ID = id
+		}
+		if artist, ok := c["artist"].(string); ok {
+			cassette.Artist = artist
+		}
+		if albumName, ok := c["album"].(string); ok {
+			cassette.Album = albumName
+		}
+		if year, ok := c["year"].(float64); ok {
+			yearInt := int(year)
+			cassette.Year = &yearInt
+		}
+		if label, ok := c["label"].(string); ok {
+			cassette.Label = &label
+		}
+		if genres, ok := c["genres"].([]interface{}); ok {
+			genreStrs := make([]string, 0, len(genres))
+			for _, g := range genres {
+				if genreStr, ok := g.(string); ok {
+					genreStrs = append(genreStrs, genreStr)
+				}
+			}
+			if len(genreStrs) > 0 {
+				cassette.Genres = genreStrs
+			}
+		}
+		if coverURL, ok := c["cover_url"].(string); ok {
+			cassette.CoverURL = &coverURL
+		}
+		if tapeType, ok := c["tape_type"].(string); ok {
+			cassette.TapeType = &tapeType
+		}
+		if createdAt, ok := c["created_at"].(string); ok {
+			cassette.CreatedAt = &createdAt
+		}
+		if updatedAt, ok := c["updated_at"].(string); ok {
+			cassette.UpdatedAt = &updatedAt
+		}
+
+		cassettes = append(cassettes, cassette)
+	}
+
+	hasNextPage := offset+len(cassettes) < result.TotalCount
+
+	return &model.CassetteConnection{
+		Items: cassettes,
 		PageInfo: &model.PageInfo{
 			HasNextPage: hasNextPage,
 			TotalCount:  result.TotalCount,

@@ -84,6 +84,24 @@ type ComplexityRoot struct {
 		UpdateMessage     func(childComplexity int) int
 	}
 
+	Cassette struct {
+		Album     func(childComplexity int) int
+		Artist    func(childComplexity int) int
+		CoverURL  func(childComplexity int) int
+		CreatedAt func(childComplexity int) int
+		Genres    func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Label     func(childComplexity int) int
+		TapeType  func(childComplexity int) int
+		UpdatedAt func(childComplexity int) int
+		Year      func(childComplexity int) int
+	}
+
+	CassetteConnection struct {
+		Items    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
 	DeleteResponse struct {
 		Error   func(childComplexity int) int
 		Success func(childComplexity int) int
@@ -128,12 +146,15 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		DeleteAlbum           func(childComplexity int, id string) int
+		DeleteCassette        func(childComplexity int, id string) int
 		DeleteMovie           func(childComplexity int, id string) int
 		RequestImageUploadURL func(childComplexity int, contentType string) int
 		RequestLoginCode      func(childComplexity int, email string) int
 		SaveAlbum             func(childComplexity int, input model.SaveAlbumInput) int
+		SaveCassette          func(childComplexity int, input model.SaveCassetteInput) int
 		SaveMovie             func(childComplexity int, input model.SaveMovieInput) int
 		UpdateAlbum           func(childComplexity int, id string, input model.UpdateAlbumInput) int
+		UpdateCassette        func(childComplexity int, id string, input model.UpdateCassetteInput) int
 		UpdateMovie           func(childComplexity int, id string, input model.UpdateMovieInput) int
 		VerifyLoginCode       func(childComplexity int, email string, code string) int
 	}
@@ -144,22 +165,27 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Album                 func(childComplexity int, id string) int
-		AlbumByArtistAndTitle func(childComplexity int, artist string, album string) int
-		AlbumByBarcode        func(childComplexity int, barcode string) int
-		Albums                func(childComplexity int) int
-		AppVersionConfig      func(childComplexity int) int
-		Health                func(childComplexity int) int
-		Me                    func(childComplexity int) int
-		Movie                 func(childComplexity int, id string) int
-		MovieByBarcode        func(childComplexity int, barcode string) int
-		MovieByTitle          func(childComplexity int, title string, director *string, year *int) int
-		Movies                func(childComplexity int) int
-		User                  func(childComplexity int, id string) int
-		UserAlbums            func(childComplexity int, userID string) int
-		UserAlbumsPaginated   func(childComplexity int, userID string, pagination *model.PaginationInput, sort *model.SortInput, search *string) int
-		UserMovies            func(childComplexity int, userID string) int
-		UserMoviesPaginated   func(childComplexity int, userID string, pagination *model.PaginationInput, sort *model.SortInput, search *string) int
+		Album                    func(childComplexity int, id string) int
+		AlbumByArtistAndTitle    func(childComplexity int, artist string, album string) int
+		AlbumByBarcode           func(childComplexity int, barcode string) int
+		Albums                   func(childComplexity int) int
+		AppVersionConfig         func(childComplexity int) int
+		Cassette                 func(childComplexity int, id string) int
+		CassetteByArtistAndTitle func(childComplexity int, artist string, album string) int
+		CassetteByBarcode        func(childComplexity int, barcode string) int
+		Health                   func(childComplexity int) int
+		Me                       func(childComplexity int) int
+		Movie                    func(childComplexity int, id string) int
+		MovieByBarcode           func(childComplexity int, barcode string) int
+		MovieByTitle             func(childComplexity int, title string, director *string, year *int) int
+		Movies                   func(childComplexity int) int
+		User                     func(childComplexity int, id string) int
+		UserAlbums               func(childComplexity int, userID string) int
+		UserAlbumsPaginated      func(childComplexity int, userID string, pagination *model.PaginationInput, sort *model.SortInput, search *string) int
+		UserCassettes            func(childComplexity int, userID string) int
+		UserCassettesPaginated   func(childComplexity int, userID string, pagination *model.PaginationInput, sort *model.SortInput, search *string) int
+		UserMovies               func(childComplexity int, userID string) int
+		UserMoviesPaginated      func(childComplexity int, userID string, pagination *model.PaginationInput, sort *model.SortInput, search *string) int
 	}
 
 	RequestLoginCodeResponse struct {
@@ -173,6 +199,13 @@ type ComplexityRoot struct {
 		Error   func(childComplexity int) int
 		ID      func(childComplexity int) int
 		Success func(childComplexity int) int
+	}
+
+	SaveCassetteResponse struct {
+		Cassette func(childComplexity int) int
+		Error    func(childComplexity int) int
+		ID       func(childComplexity int) int
+		Success  func(childComplexity int) int
 	}
 
 	SaveMovieResponse struct {
@@ -192,6 +225,17 @@ type ComplexityRoot struct {
 		Label         func(childComplexity int) int
 		Size          func(childComplexity int) int
 		Year          func(childComplexity int) int
+	}
+
+	SavedCassette struct {
+		Album    func(childComplexity int) int
+		Artist   func(childComplexity int) int
+		CoverURL func(childComplexity int) int
+		Genres   func(childComplexity int) int
+		ID       func(childComplexity int) int
+		Label    func(childComplexity int) int
+		TapeType func(childComplexity int) int
+		Year     func(childComplexity int) int
 	}
 
 	SavedMovie struct {
@@ -215,6 +259,12 @@ type ComplexityRoot struct {
 		Success func(childComplexity int) int
 	}
 
+	UpdateCassetteResponse struct {
+		Cassette func(childComplexity int) int
+		Error    func(childComplexity int) int
+		Success  func(childComplexity int) int
+	}
+
 	UpdateMovieResponse struct {
 		Error   func(childComplexity int) int
 		Movie   func(childComplexity int) int
@@ -223,6 +273,7 @@ type ComplexityRoot struct {
 
 	User struct {
 		Albums    func(childComplexity int) int
+		Cassettes func(childComplexity int) int
 		CreatedAt func(childComplexity int) int
 		Email     func(childComplexity int) int
 		ID        func(childComplexity int) int
@@ -247,6 +298,9 @@ type MutationResolver interface {
 	SaveAlbum(ctx context.Context, input model.SaveAlbumInput) (*model.SaveAlbumResponse, error)
 	UpdateAlbum(ctx context.Context, id string, input model.UpdateAlbumInput) (*model.UpdateAlbumResponse, error)
 	DeleteAlbum(ctx context.Context, id string) (*model.DeleteResponse, error)
+	SaveCassette(ctx context.Context, input model.SaveCassetteInput) (*model.SaveCassetteResponse, error)
+	UpdateCassette(ctx context.Context, id string, input model.UpdateCassetteInput) (*model.UpdateCassetteResponse, error)
+	DeleteCassette(ctx context.Context, id string) (*model.DeleteResponse, error)
 	RequestImageUploadURL(ctx context.Context, contentType string) (*model.ImageUploadURL, error)
 }
 type QueryResolver interface {
@@ -256,14 +310,19 @@ type QueryResolver interface {
 	AlbumByArtistAndTitle(ctx context.Context, artist string, album string) (*model.AlbumData, error)
 	AlbumByBarcode(ctx context.Context, barcode string) (*model.AlbumData, error)
 	Album(ctx context.Context, id string) (*model.Album, error)
+	CassetteByArtistAndTitle(ctx context.Context, artist string, album string) (*model.AlbumData, error)
+	CassetteByBarcode(ctx context.Context, barcode string) (*model.AlbumData, error)
+	Cassette(ctx context.Context, id string) (*model.Cassette, error)
 	Movies(ctx context.Context) ([]*model.Movie, error)
 	Albums(ctx context.Context) ([]*model.Album, error)
 	Me(ctx context.Context) (*model.User, error)
 	User(ctx context.Context, id string) (*model.User, error)
 	UserMovies(ctx context.Context, userID string) ([]*model.Movie, error)
 	UserAlbums(ctx context.Context, userID string) ([]*model.Album, error)
+	UserCassettes(ctx context.Context, userID string) ([]*model.Cassette, error)
 	UserMoviesPaginated(ctx context.Context, userID string, pagination *model.PaginationInput, sort *model.SortInput, search *string) (*model.MovieConnection, error)
 	UserAlbumsPaginated(ctx context.Context, userID string, pagination *model.PaginationInput, sort *model.SortInput, search *string) (*model.AlbumConnection, error)
+	UserCassettesPaginated(ctx context.Context, userID string, pagination *model.PaginationInput, sort *model.SortInput, search *string) (*model.CassetteConnection, error)
 	Health(ctx context.Context) (*model.Health, error)
 	AppVersionConfig(ctx context.Context) (*model.AppVersionConfig, error)
 }
@@ -441,6 +500,80 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.AppVersionConfig.UpdateMessage(childComplexity), true
 
+	case "Cassette.album":
+		if e.complexity.Cassette.Album == nil {
+			break
+		}
+
+		return e.complexity.Cassette.Album(childComplexity), true
+	case "Cassette.artist":
+		if e.complexity.Cassette.Artist == nil {
+			break
+		}
+
+		return e.complexity.Cassette.Artist(childComplexity), true
+	case "Cassette.coverUrl":
+		if e.complexity.Cassette.CoverURL == nil {
+			break
+		}
+
+		return e.complexity.Cassette.CoverURL(childComplexity), true
+	case "Cassette.createdAt":
+		if e.complexity.Cassette.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.Cassette.CreatedAt(childComplexity), true
+	case "Cassette.genres":
+		if e.complexity.Cassette.Genres == nil {
+			break
+		}
+
+		return e.complexity.Cassette.Genres(childComplexity), true
+	case "Cassette.id":
+		if e.complexity.Cassette.ID == nil {
+			break
+		}
+
+		return e.complexity.Cassette.ID(childComplexity), true
+	case "Cassette.label":
+		if e.complexity.Cassette.Label == nil {
+			break
+		}
+
+		return e.complexity.Cassette.Label(childComplexity), true
+	case "Cassette.tapeType":
+		if e.complexity.Cassette.TapeType == nil {
+			break
+		}
+
+		return e.complexity.Cassette.TapeType(childComplexity), true
+	case "Cassette.updatedAt":
+		if e.complexity.Cassette.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.Cassette.UpdatedAt(childComplexity), true
+	case "Cassette.year":
+		if e.complexity.Cassette.Year == nil {
+			break
+		}
+
+		return e.complexity.Cassette.Year(childComplexity), true
+
+	case "CassetteConnection.items":
+		if e.complexity.CassetteConnection.Items == nil {
+			break
+		}
+
+		return e.complexity.CassetteConnection.Items(childComplexity), true
+	case "CassetteConnection.pageInfo":
+		if e.complexity.CassetteConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.CassetteConnection.PageInfo(childComplexity), true
+
 	case "DeleteResponse.error":
 		if e.complexity.DeleteResponse.Error == nil {
 			break
@@ -602,6 +735,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteAlbum(childComplexity, args["id"].(string)), true
+	case "Mutation.deleteCassette":
+		if e.complexity.Mutation.DeleteCassette == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteCassette_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteCassette(childComplexity, args["id"].(string)), true
 	case "Mutation.deleteMovie":
 		if e.complexity.Mutation.DeleteMovie == nil {
 			break
@@ -646,6 +790,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.SaveAlbum(childComplexity, args["input"].(model.SaveAlbumInput)), true
+	case "Mutation.saveCassette":
+		if e.complexity.Mutation.SaveCassette == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_saveCassette_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SaveCassette(childComplexity, args["input"].(model.SaveCassetteInput)), true
 	case "Mutation.saveMovie":
 		if e.complexity.Mutation.SaveMovie == nil {
 			break
@@ -668,6 +823,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateAlbum(childComplexity, args["id"].(string), args["input"].(model.UpdateAlbumInput)), true
+	case "Mutation.updateCassette":
+		if e.complexity.Mutation.UpdateCassette == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateCassette_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateCassette(childComplexity, args["id"].(string), args["input"].(model.UpdateCassetteInput)), true
 	case "Mutation.updateMovie":
 		if e.complexity.Mutation.UpdateMovie == nil {
 			break
@@ -749,6 +915,39 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.AppVersionConfig(childComplexity), true
+	case "Query.cassette":
+		if e.complexity.Query.Cassette == nil {
+			break
+		}
+
+		args, err := ec.field_Query_cassette_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Cassette(childComplexity, args["id"].(string)), true
+	case "Query.cassetteByArtistAndTitle":
+		if e.complexity.Query.CassetteByArtistAndTitle == nil {
+			break
+		}
+
+		args, err := ec.field_Query_cassetteByArtistAndTitle_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CassetteByArtistAndTitle(childComplexity, args["artist"].(string), args["album"].(string)), true
+	case "Query.cassetteByBarcode":
+		if e.complexity.Query.CassetteByBarcode == nil {
+			break
+		}
+
+		args, err := ec.field_Query_cassetteByBarcode_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CassetteByBarcode(childComplexity, args["barcode"].(string)), true
 	case "Query.health":
 		if e.complexity.Query.Health == nil {
 			break
@@ -833,6 +1032,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.UserAlbumsPaginated(childComplexity, args["userId"].(string), args["pagination"].(*model.PaginationInput), args["sort"].(*model.SortInput), args["search"].(*string)), true
+	case "Query.userCassettes":
+		if e.complexity.Query.UserCassettes == nil {
+			break
+		}
+
+		args, err := ec.field_Query_userCassettes_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.UserCassettes(childComplexity, args["userId"].(string)), true
+	case "Query.userCassettesPaginated":
+		if e.complexity.Query.UserCassettesPaginated == nil {
+			break
+		}
+
+		args, err := ec.field_Query_userCassettesPaginated_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.UserCassettesPaginated(childComplexity, args["userId"].(string), args["pagination"].(*model.PaginationInput), args["sort"].(*model.SortInput), args["search"].(*string)), true
 	case "Query.userMovies":
 		if e.complexity.Query.UserMovies == nil {
 			break
@@ -899,6 +1120,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.SaveAlbumResponse.Success(childComplexity), true
+
+	case "SaveCassetteResponse.cassette":
+		if e.complexity.SaveCassetteResponse.Cassette == nil {
+			break
+		}
+
+		return e.complexity.SaveCassetteResponse.Cassette(childComplexity), true
+	case "SaveCassetteResponse.error":
+		if e.complexity.SaveCassetteResponse.Error == nil {
+			break
+		}
+
+		return e.complexity.SaveCassetteResponse.Error(childComplexity), true
+	case "SaveCassetteResponse.id":
+		if e.complexity.SaveCassetteResponse.ID == nil {
+			break
+		}
+
+		return e.complexity.SaveCassetteResponse.ID(childComplexity), true
+	case "SaveCassetteResponse.success":
+		if e.complexity.SaveCassetteResponse.Success == nil {
+			break
+		}
+
+		return e.complexity.SaveCassetteResponse.Success(childComplexity), true
 
 	case "SaveMovieResponse.error":
 		if e.complexity.SaveMovieResponse.Error == nil {
@@ -980,6 +1226,55 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.SavedAlbum.Year(childComplexity), true
 
+	case "SavedCassette.album":
+		if e.complexity.SavedCassette.Album == nil {
+			break
+		}
+
+		return e.complexity.SavedCassette.Album(childComplexity), true
+	case "SavedCassette.artist":
+		if e.complexity.SavedCassette.Artist == nil {
+			break
+		}
+
+		return e.complexity.SavedCassette.Artist(childComplexity), true
+	case "SavedCassette.coverUrl":
+		if e.complexity.SavedCassette.CoverURL == nil {
+			break
+		}
+
+		return e.complexity.SavedCassette.CoverURL(childComplexity), true
+	case "SavedCassette.genres":
+		if e.complexity.SavedCassette.Genres == nil {
+			break
+		}
+
+		return e.complexity.SavedCassette.Genres(childComplexity), true
+	case "SavedCassette.id":
+		if e.complexity.SavedCassette.ID == nil {
+			break
+		}
+
+		return e.complexity.SavedCassette.ID(childComplexity), true
+	case "SavedCassette.label":
+		if e.complexity.SavedCassette.Label == nil {
+			break
+		}
+
+		return e.complexity.SavedCassette.Label(childComplexity), true
+	case "SavedCassette.tapeType":
+		if e.complexity.SavedCassette.TapeType == nil {
+			break
+		}
+
+		return e.complexity.SavedCassette.TapeType(childComplexity), true
+	case "SavedCassette.year":
+		if e.complexity.SavedCassette.Year == nil {
+			break
+		}
+
+		return e.complexity.SavedCassette.Year(childComplexity), true
+
 	case "SavedMovie.coverUrl":
 		if e.complexity.SavedMovie.CoverURL == nil {
 			break
@@ -1055,6 +1350,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.UpdateAlbumResponse.Success(childComplexity), true
 
+	case "UpdateCassetteResponse.cassette":
+		if e.complexity.UpdateCassetteResponse.Cassette == nil {
+			break
+		}
+
+		return e.complexity.UpdateCassetteResponse.Cassette(childComplexity), true
+	case "UpdateCassetteResponse.error":
+		if e.complexity.UpdateCassetteResponse.Error == nil {
+			break
+		}
+
+		return e.complexity.UpdateCassetteResponse.Error(childComplexity), true
+	case "UpdateCassetteResponse.success":
+		if e.complexity.UpdateCassetteResponse.Success == nil {
+			break
+		}
+
+		return e.complexity.UpdateCassetteResponse.Success(childComplexity), true
+
 	case "UpdateMovieResponse.error":
 		if e.complexity.UpdateMovieResponse.Error == nil {
 			break
@@ -1080,6 +1394,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.User.Albums(childComplexity), true
+	case "User.cassettes":
+		if e.complexity.User.Cassettes == nil {
+			break
+		}
+
+		return e.complexity.User.Cassettes(childComplexity), true
 	case "User.createdAt":
 		if e.complexity.User.CreatedAt == nil {
 			break
@@ -1146,9 +1466,11 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputPaginationInput,
 		ec.unmarshalInputSaveAlbumInput,
+		ec.unmarshalInputSaveCassetteInput,
 		ec.unmarshalInputSaveMovieInput,
 		ec.unmarshalInputSortInput,
 		ec.unmarshalInputUpdateAlbumInput,
+		ec.unmarshalInputUpdateCassetteInput,
 		ec.unmarshalInputUpdateMovieInput,
 	)
 	first := true
@@ -1277,6 +1599,17 @@ func (ec *executionContext) field_Mutation_deleteAlbum_args(ctx context.Context,
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_deleteCassette_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_deleteMovie_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1321,6 +1654,17 @@ func (ec *executionContext) field_Mutation_saveAlbum_args(ctx context.Context, r
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_saveCassette_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNSaveCassetteInput2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSaveCassetteInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_saveMovie_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1341,6 +1685,22 @@ func (ec *executionContext) field_Mutation_updateAlbum_args(ctx context.Context,
 	}
 	args["id"] = arg0
 	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateAlbumInput2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐUpdateAlbumInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateCassette_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateCassetteInput2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐUpdateCassetteInput)
 	if err != nil {
 		return nil, err
 	}
@@ -1429,6 +1789,44 @@ func (ec *executionContext) field_Query_album_args(ctx context.Context, rawArgs 
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_cassetteByArtistAndTitle_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "artist", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["artist"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "album", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["album"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_cassetteByBarcode_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "barcode", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["barcode"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_cassette_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_movieByBarcode_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1499,6 +1897,43 @@ func (ec *executionContext) field_Query_userAlbumsPaginated_args(ctx context.Con
 }
 
 func (ec *executionContext) field_Query_userAlbums_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "userId", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["userId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_userCassettesPaginated_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "userId", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["userId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "pagination", ec.unmarshalOPaginationInput2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐPaginationInput)
+	if err != nil {
+		return nil, err
+	}
+	args["pagination"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "sort", ec.unmarshalOSortInput2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSortInput)
+	if err != nil {
+		return nil, err
+	}
+	args["sort"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "search", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["search"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_userCassettes_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "userId", ec.unmarshalNString2string)
@@ -2367,6 +2802,382 @@ func (ec *executionContext) fieldContext_AppVersionConfig_storeURL(_ context.Con
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Cassette_id(ctx context.Context, field graphql.CollectedField, obj *model.Cassette) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Cassette_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Cassette_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Cassette",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Cassette_artist(ctx context.Context, field graphql.CollectedField, obj *model.Cassette) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Cassette_artist,
+		func(ctx context.Context) (any, error) {
+			return obj.Artist, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Cassette_artist(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Cassette",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Cassette_album(ctx context.Context, field graphql.CollectedField, obj *model.Cassette) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Cassette_album,
+		func(ctx context.Context) (any, error) {
+			return obj.Album, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Cassette_album(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Cassette",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Cassette_year(ctx context.Context, field graphql.CollectedField, obj *model.Cassette) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Cassette_year,
+		func(ctx context.Context) (any, error) {
+			return obj.Year, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Cassette_year(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Cassette",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Cassette_label(ctx context.Context, field graphql.CollectedField, obj *model.Cassette) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Cassette_label,
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Cassette_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Cassette",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Cassette_genres(ctx context.Context, field graphql.CollectedField, obj *model.Cassette) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Cassette_genres,
+		func(ctx context.Context) (any, error) {
+			return obj.Genres, nil
+		},
+		nil,
+		ec.marshalOString2ᚕstringᚄ,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Cassette_genres(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Cassette",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Cassette_coverUrl(ctx context.Context, field graphql.CollectedField, obj *model.Cassette) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Cassette_coverUrl,
+		func(ctx context.Context) (any, error) {
+			return obj.CoverURL, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Cassette_coverUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Cassette",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Cassette_tapeType(ctx context.Context, field graphql.CollectedField, obj *model.Cassette) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Cassette_tapeType,
+		func(ctx context.Context) (any, error) {
+			return obj.TapeType, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Cassette_tapeType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Cassette",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Cassette_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Cassette) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Cassette_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Cassette_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Cassette",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Cassette_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.Cassette) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Cassette_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Cassette_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Cassette",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CassetteConnection_items(ctx context.Context, field graphql.CollectedField, obj *model.CassetteConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CassetteConnection_items,
+		func(ctx context.Context) (any, error) {
+			return obj.Items, nil
+		},
+		nil,
+		ec.marshalNCassette2ᚕᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐCassetteᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CassetteConnection_items(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CassetteConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Cassette_id(ctx, field)
+			case "artist":
+				return ec.fieldContext_Cassette_artist(ctx, field)
+			case "album":
+				return ec.fieldContext_Cassette_album(ctx, field)
+			case "year":
+				return ec.fieldContext_Cassette_year(ctx, field)
+			case "label":
+				return ec.fieldContext_Cassette_label(ctx, field)
+			case "genres":
+				return ec.fieldContext_Cassette_genres(ctx, field)
+			case "coverUrl":
+				return ec.fieldContext_Cassette_coverUrl(ctx, field)
+			case "tapeType":
+				return ec.fieldContext_Cassette_tapeType(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Cassette_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Cassette_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Cassette", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CassetteConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.CassetteConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CassetteConnection_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CassetteConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CassetteConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_PageInfo_totalCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
 		},
 	}
 	return fc, nil
@@ -3486,6 +4297,153 @@ func (ec *executionContext) fieldContext_Mutation_deleteAlbum(ctx context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_saveCassette(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_saveCassette,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().SaveCassette(ctx, fc.Args["input"].(model.SaveCassetteInput))
+		},
+		nil,
+		ec.marshalNSaveCassetteResponse2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSaveCassetteResponse,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_saveCassette(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_SaveCassetteResponse_success(ctx, field)
+			case "id":
+				return ec.fieldContext_SaveCassetteResponse_id(ctx, field)
+			case "cassette":
+				return ec.fieldContext_SaveCassetteResponse_cassette(ctx, field)
+			case "error":
+				return ec.fieldContext_SaveCassetteResponse_error(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SaveCassetteResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_saveCassette_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateCassette(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateCassette,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().UpdateCassette(ctx, fc.Args["id"].(string), fc.Args["input"].(model.UpdateCassetteInput))
+		},
+		nil,
+		ec.marshalNUpdateCassetteResponse2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐUpdateCassetteResponse,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateCassette(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_UpdateCassetteResponse_success(ctx, field)
+			case "cassette":
+				return ec.fieldContext_UpdateCassetteResponse_cassette(ctx, field)
+			case "error":
+				return ec.fieldContext_UpdateCassetteResponse_error(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateCassetteResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateCassette_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteCassette(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteCassette,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().DeleteCassette(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		ec.marshalNDeleteResponse2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐDeleteResponse,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteCassette(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_DeleteResponse_success(ctx, field)
+			case "error":
+				return ec.fieldContext_DeleteResponse_error(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeleteResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteCassette_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_requestImageUploadURL(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3947,6 +4905,187 @@ func (ec *executionContext) fieldContext_Query_album(ctx context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_cassetteByArtistAndTitle(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_cassetteByArtistAndTitle,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().CassetteByArtistAndTitle(ctx, fc.Args["artist"].(string), fc.Args["album"].(string))
+		},
+		nil,
+		ec.marshalOAlbumData2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐAlbumData,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_cassetteByArtistAndTitle(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "artist":
+				return ec.fieldContext_AlbumData_artist(ctx, field)
+			case "album":
+				return ec.fieldContext_AlbumData_album(ctx, field)
+			case "year":
+				return ec.fieldContext_AlbumData_year(ctx, field)
+			case "label":
+				return ec.fieldContext_AlbumData_label(ctx, field)
+			case "genres":
+				return ec.fieldContext_AlbumData_genres(ctx, field)
+			case "coverUrl":
+				return ec.fieldContext_AlbumData_coverUrl(ctx, field)
+			case "tracks":
+				return ec.fieldContext_AlbumData_tracks(ctx, field)
+			case "source":
+				return ec.fieldContext_AlbumData_source(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AlbumData", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_cassetteByArtistAndTitle_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_cassetteByBarcode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_cassetteByBarcode,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().CassetteByBarcode(ctx, fc.Args["barcode"].(string))
+		},
+		nil,
+		ec.marshalOAlbumData2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐAlbumData,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_cassetteByBarcode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "artist":
+				return ec.fieldContext_AlbumData_artist(ctx, field)
+			case "album":
+				return ec.fieldContext_AlbumData_album(ctx, field)
+			case "year":
+				return ec.fieldContext_AlbumData_year(ctx, field)
+			case "label":
+				return ec.fieldContext_AlbumData_label(ctx, field)
+			case "genres":
+				return ec.fieldContext_AlbumData_genres(ctx, field)
+			case "coverUrl":
+				return ec.fieldContext_AlbumData_coverUrl(ctx, field)
+			case "tracks":
+				return ec.fieldContext_AlbumData_tracks(ctx, field)
+			case "source":
+				return ec.fieldContext_AlbumData_source(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AlbumData", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_cassetteByBarcode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_cassette(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_cassette,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().Cassette(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		ec.marshalOCassette2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐCassette,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_cassette(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Cassette_id(ctx, field)
+			case "artist":
+				return ec.fieldContext_Cassette_artist(ctx, field)
+			case "album":
+				return ec.fieldContext_Cassette_album(ctx, field)
+			case "year":
+				return ec.fieldContext_Cassette_year(ctx, field)
+			case "label":
+				return ec.fieldContext_Cassette_label(ctx, field)
+			case "genres":
+				return ec.fieldContext_Cassette_genres(ctx, field)
+			case "coverUrl":
+				return ec.fieldContext_Cassette_coverUrl(ctx, field)
+			case "tapeType":
+				return ec.fieldContext_Cassette_tapeType(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Cassette_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Cassette_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Cassette", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_cassette_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_movies(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4083,6 +5222,8 @@ func (ec *executionContext) fieldContext_Query_me(_ context.Context, field graph
 				return ec.fieldContext_User_movies(ctx, field)
 			case "albums":
 				return ec.fieldContext_User_albums(ctx, field)
+			case "cassettes":
+				return ec.fieldContext_User_cassettes(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -4127,6 +5268,8 @@ func (ec *executionContext) fieldContext_Query_user(ctx context.Context, field g
 				return ec.fieldContext_User_movies(ctx, field)
 			case "albums":
 				return ec.fieldContext_User_albums(ctx, field)
+			case "cassettes":
+				return ec.fieldContext_User_cassettes(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -4269,6 +5412,69 @@ func (ec *executionContext) fieldContext_Query_userAlbums(ctx context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_userCassettes(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_userCassettes,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().UserCassettes(ctx, fc.Args["userId"].(string))
+		},
+		nil,
+		ec.marshalNCassette2ᚕᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐCassetteᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_userCassettes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Cassette_id(ctx, field)
+			case "artist":
+				return ec.fieldContext_Cassette_artist(ctx, field)
+			case "album":
+				return ec.fieldContext_Cassette_album(ctx, field)
+			case "year":
+				return ec.fieldContext_Cassette_year(ctx, field)
+			case "label":
+				return ec.fieldContext_Cassette_label(ctx, field)
+			case "genres":
+				return ec.fieldContext_Cassette_genres(ctx, field)
+			case "coverUrl":
+				return ec.fieldContext_Cassette_coverUrl(ctx, field)
+			case "tapeType":
+				return ec.fieldContext_Cassette_tapeType(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Cassette_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Cassette_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Cassette", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_userCassettes_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_userMoviesPaginated(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4357,6 +5563,53 @@ func (ec *executionContext) fieldContext_Query_userAlbumsPaginated(ctx context.C
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_userAlbumsPaginated_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_userCassettesPaginated(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_userCassettesPaginated,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Query().UserCassettesPaginated(ctx, fc.Args["userId"].(string), fc.Args["pagination"].(*model.PaginationInput), fc.Args["sort"].(*model.SortInput), fc.Args["search"].(*string))
+		},
+		nil,
+		ec.marshalNCassetteConnection2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐCassetteConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_userCassettesPaginated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "items":
+				return ec.fieldContext_CassetteConnection_items(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_CassetteConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CassetteConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_userCassettesPaginated_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -4770,6 +6023,140 @@ func (ec *executionContext) fieldContext_SaveAlbumResponse_error(_ context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _SaveCassetteResponse_success(ctx context.Context, field graphql.CollectedField, obj *model.SaveCassetteResponse) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SaveCassetteResponse_success,
+		func(ctx context.Context) (any, error) {
+			return obj.Success, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SaveCassetteResponse_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SaveCassetteResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SaveCassetteResponse_id(ctx context.Context, field graphql.CollectedField, obj *model.SaveCassetteResponse) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SaveCassetteResponse_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SaveCassetteResponse_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SaveCassetteResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SaveCassetteResponse_cassette(ctx context.Context, field graphql.CollectedField, obj *model.SaveCassetteResponse) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SaveCassetteResponse_cassette,
+		func(ctx context.Context) (any, error) {
+			return obj.Cassette, nil
+		},
+		nil,
+		ec.marshalOSavedCassette2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSavedCassette,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SaveCassetteResponse_cassette(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SaveCassetteResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_SavedCassette_id(ctx, field)
+			case "artist":
+				return ec.fieldContext_SavedCassette_artist(ctx, field)
+			case "album":
+				return ec.fieldContext_SavedCassette_album(ctx, field)
+			case "year":
+				return ec.fieldContext_SavedCassette_year(ctx, field)
+			case "label":
+				return ec.fieldContext_SavedCassette_label(ctx, field)
+			case "genres":
+				return ec.fieldContext_SavedCassette_genres(ctx, field)
+			case "coverUrl":
+				return ec.fieldContext_SavedCassette_coverUrl(ctx, field)
+			case "tapeType":
+				return ec.fieldContext_SavedCassette_tapeType(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SavedCassette", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SaveCassetteResponse_error(ctx context.Context, field graphql.CollectedField, obj *model.SaveCassetteResponse) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SaveCassetteResponse_error,
+		func(ctx context.Context) (any, error) {
+			return obj.Error, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SaveCassetteResponse_error(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SaveCassetteResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _SaveMovieResponse_success(ctx context.Context, field graphql.CollectedField, obj *model.SaveMovieResponse) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5161,6 +6548,238 @@ func (ec *executionContext) fieldContext_SavedAlbum_size(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _SavedCassette_id(ctx context.Context, field graphql.CollectedField, obj *model.SavedCassette) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SavedCassette_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SavedCassette_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SavedCassette",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SavedCassette_artist(ctx context.Context, field graphql.CollectedField, obj *model.SavedCassette) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SavedCassette_artist,
+		func(ctx context.Context) (any, error) {
+			return obj.Artist, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SavedCassette_artist(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SavedCassette",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SavedCassette_album(ctx context.Context, field graphql.CollectedField, obj *model.SavedCassette) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SavedCassette_album,
+		func(ctx context.Context) (any, error) {
+			return obj.Album, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SavedCassette_album(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SavedCassette",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SavedCassette_year(ctx context.Context, field graphql.CollectedField, obj *model.SavedCassette) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SavedCassette_year,
+		func(ctx context.Context) (any, error) {
+			return obj.Year, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SavedCassette_year(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SavedCassette",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SavedCassette_label(ctx context.Context, field graphql.CollectedField, obj *model.SavedCassette) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SavedCassette_label,
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SavedCassette_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SavedCassette",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SavedCassette_genres(ctx context.Context, field graphql.CollectedField, obj *model.SavedCassette) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SavedCassette_genres,
+		func(ctx context.Context) (any, error) {
+			return obj.Genres, nil
+		},
+		nil,
+		ec.marshalOString2ᚕstringᚄ,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SavedCassette_genres(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SavedCassette",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SavedCassette_coverUrl(ctx context.Context, field graphql.CollectedField, obj *model.SavedCassette) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SavedCassette_coverUrl,
+		func(ctx context.Context) (any, error) {
+			return obj.CoverURL, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SavedCassette_coverUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SavedCassette",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SavedCassette_tapeType(ctx context.Context, field graphql.CollectedField, obj *model.SavedCassette) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SavedCassette_tapeType,
+		func(ctx context.Context) (any, error) {
+			return obj.TapeType, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SavedCassette_tapeType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SavedCassette",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _SavedMovie_id(ctx context.Context, field graphql.CollectedField, obj *model.SavedMovie) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5533,6 +7152,115 @@ func (ec *executionContext) fieldContext_UpdateAlbumResponse_error(_ context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _UpdateCassetteResponse_success(ctx context.Context, field graphql.CollectedField, obj *model.UpdateCassetteResponse) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UpdateCassetteResponse_success,
+		func(ctx context.Context) (any, error) {
+			return obj.Success, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UpdateCassetteResponse_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateCassetteResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateCassetteResponse_cassette(ctx context.Context, field graphql.CollectedField, obj *model.UpdateCassetteResponse) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UpdateCassetteResponse_cassette,
+		func(ctx context.Context) (any, error) {
+			return obj.Cassette, nil
+		},
+		nil,
+		ec.marshalOCassette2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐCassette,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_UpdateCassetteResponse_cassette(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateCassetteResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Cassette_id(ctx, field)
+			case "artist":
+				return ec.fieldContext_Cassette_artist(ctx, field)
+			case "album":
+				return ec.fieldContext_Cassette_album(ctx, field)
+			case "year":
+				return ec.fieldContext_Cassette_year(ctx, field)
+			case "label":
+				return ec.fieldContext_Cassette_label(ctx, field)
+			case "genres":
+				return ec.fieldContext_Cassette_genres(ctx, field)
+			case "coverUrl":
+				return ec.fieldContext_Cassette_coverUrl(ctx, field)
+			case "tapeType":
+				return ec.fieldContext_Cassette_tapeType(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Cassette_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Cassette_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Cassette", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateCassetteResponse_error(ctx context.Context, field graphql.CollectedField, obj *model.UpdateCassetteResponse) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UpdateCassetteResponse_error,
+		func(ctx context.Context) (any, error) {
+			return obj.Error, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_UpdateCassetteResponse_error(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateCassetteResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _UpdateMovieResponse_success(ctx context.Context, field graphql.CollectedField, obj *model.UpdateMovieResponse) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5854,6 +7582,57 @@ func (ec *executionContext) fieldContext_User_albums(_ context.Context, field gr
 	return fc, nil
 }
 
+func (ec *executionContext) _User_cassettes(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_User_cassettes,
+		func(ctx context.Context) (any, error) {
+			return obj.Cassettes, nil
+		},
+		nil,
+		ec.marshalNCassette2ᚕᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐCassetteᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_User_cassettes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Cassette_id(ctx, field)
+			case "artist":
+				return ec.fieldContext_Cassette_artist(ctx, field)
+			case "album":
+				return ec.fieldContext_Cassette_album(ctx, field)
+			case "year":
+				return ec.fieldContext_Cassette_year(ctx, field)
+			case "label":
+				return ec.fieldContext_Cassette_label(ctx, field)
+			case "genres":
+				return ec.fieldContext_Cassette_genres(ctx, field)
+			case "coverUrl":
+				return ec.fieldContext_Cassette_coverUrl(ctx, field)
+			case "tapeType":
+				return ec.fieldContext_Cassette_tapeType(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Cassette_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Cassette_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Cassette", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _VerifyLoginCodeResponse_success(ctx context.Context, field graphql.CollectedField, obj *model.VerifyLoginCodeResponse) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5948,6 +7727,8 @@ func (ec *executionContext) fieldContext_VerifyLoginCodeResponse_user(_ context.
 				return ec.fieldContext_User_movies(ctx, field)
 			case "albums":
 				return ec.fieldContext_User_albums(ctx, field)
+			case "cassettes":
+				return ec.fieldContext_User_cassettes(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -7547,6 +9328,75 @@ func (ec *executionContext) unmarshalInputSaveAlbumInput(ctx context.Context, ob
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSaveCassetteInput(ctx context.Context, obj any) (model.SaveCassetteInput, error) {
+	var it model.SaveCassetteInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"artist", "album", "year", "label", "genres", "coverUrl", "tapeType"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "artist":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("artist"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Artist = data
+		case "album":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("album"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Album = data
+		case "year":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("year"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Year = data
+		case "label":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("label"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Label = data
+		case "genres":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("genres"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Genres = data
+		case "coverUrl":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("coverUrl"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CoverURL = data
+		case "tapeType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tapeType"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TapeType = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputSaveMovieInput(ctx context.Context, obj any) (model.SaveMovieInput, error) {
 	var it model.SaveMovieInput
 	asMap := map[string]any{}
@@ -7710,6 +9560,75 @@ func (ec *executionContext) unmarshalInputUpdateAlbumInput(ctx context.Context, 
 				return it, err
 			}
 			it.Size = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateCassetteInput(ctx context.Context, obj any) (model.UpdateCassetteInput, error) {
+	var it model.UpdateCassetteInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"artist", "album", "year", "label", "genres", "coverUrl", "tapeType"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "artist":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("artist"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Artist = data
+		case "album":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("album"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Album = data
+		case "year":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("year"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Year = data
+		case "label":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("label"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Label = data
+		case "genres":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("genres"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Genres = data
+		case "coverUrl":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("coverUrl"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CoverURL = data
+		case "tapeType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tapeType"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TapeType = data
 		}
 	}
 
@@ -7969,6 +9888,113 @@ func (ec *executionContext) _AppVersionConfig(ctx context.Context, sel ast.Selec
 			}
 		case "storeURL":
 			out.Values[i] = ec._AppVersionConfig_storeURL(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var cassetteImplementors = []string{"Cassette"}
+
+func (ec *executionContext) _Cassette(ctx context.Context, sel ast.SelectionSet, obj *model.Cassette) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, cassetteImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Cassette")
+		case "id":
+			out.Values[i] = ec._Cassette_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "artist":
+			out.Values[i] = ec._Cassette_artist(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "album":
+			out.Values[i] = ec._Cassette_album(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "year":
+			out.Values[i] = ec._Cassette_year(ctx, field, obj)
+		case "label":
+			out.Values[i] = ec._Cassette_label(ctx, field, obj)
+		case "genres":
+			out.Values[i] = ec._Cassette_genres(ctx, field, obj)
+		case "coverUrl":
+			out.Values[i] = ec._Cassette_coverUrl(ctx, field, obj)
+		case "tapeType":
+			out.Values[i] = ec._Cassette_tapeType(ctx, field, obj)
+		case "createdAt":
+			out.Values[i] = ec._Cassette_createdAt(ctx, field, obj)
+		case "updatedAt":
+			out.Values[i] = ec._Cassette_updatedAt(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var cassetteConnectionImplementors = []string{"CassetteConnection"}
+
+func (ec *executionContext) _CassetteConnection(ctx context.Context, sel ast.SelectionSet, obj *model.CassetteConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, cassetteConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CassetteConnection")
+		case "items":
+			out.Values[i] = ec._CassetteConnection_items(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._CassetteConnection_pageInfo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -8358,6 +10384,27 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "saveCassette":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_saveCassette(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateCassette":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateCassette(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteCassette":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteCassette(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "requestImageUploadURL":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_requestImageUploadURL(ctx, field)
@@ -8565,6 +10612,63 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "cassetteByArtistAndTitle":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_cassetteByArtistAndTitle(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "cassetteByBarcode":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_cassetteByBarcode(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "cassette":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_cassette(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "movies":
 			field := field
 
@@ -8691,6 +10795,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "userCassettes":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_userCassettes(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "userMoviesPaginated":
 			field := field
 
@@ -8723,6 +10849,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_userAlbumsPaginated(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "userCassettesPaginated":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_userCassettesPaginated(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -8901,6 +11049,51 @@ func (ec *executionContext) _SaveAlbumResponse(ctx context.Context, sel ast.Sele
 	return out
 }
 
+var saveCassetteResponseImplementors = []string{"SaveCassetteResponse"}
+
+func (ec *executionContext) _SaveCassetteResponse(ctx context.Context, sel ast.SelectionSet, obj *model.SaveCassetteResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, saveCassetteResponseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SaveCassetteResponse")
+		case "success":
+			out.Values[i] = ec._SaveCassetteResponse_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "id":
+			out.Values[i] = ec._SaveCassetteResponse_id(ctx, field, obj)
+		case "cassette":
+			out.Values[i] = ec._SaveCassetteResponse_cassette(ctx, field, obj)
+		case "error":
+			out.Values[i] = ec._SaveCassetteResponse_error(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var saveMovieResponseImplementors = []string{"SaveMovieResponse"}
 
 func (ec *executionContext) _SaveMovieResponse(ctx context.Context, sel ast.SelectionSet, obj *model.SaveMovieResponse) graphql.Marshaler {
@@ -8984,6 +11177,65 @@ func (ec *executionContext) _SavedAlbum(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = ec._SavedAlbum_coverUrl(ctx, field, obj)
 		case "size":
 			out.Values[i] = ec._SavedAlbum_size(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var savedCassetteImplementors = []string{"SavedCassette"}
+
+func (ec *executionContext) _SavedCassette(ctx context.Context, sel ast.SelectionSet, obj *model.SavedCassette) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, savedCassetteImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SavedCassette")
+		case "id":
+			out.Values[i] = ec._SavedCassette_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "artist":
+			out.Values[i] = ec._SavedCassette_artist(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "album":
+			out.Values[i] = ec._SavedCassette_album(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "year":
+			out.Values[i] = ec._SavedCassette_year(ctx, field, obj)
+		case "label":
+			out.Values[i] = ec._SavedCassette_label(ctx, field, obj)
+		case "genres":
+			out.Values[i] = ec._SavedCassette_genres(ctx, field, obj)
+		case "coverUrl":
+			out.Values[i] = ec._SavedCassette_coverUrl(ctx, field, obj)
+		case "tapeType":
+			out.Values[i] = ec._SavedCassette_tapeType(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -9145,6 +11397,49 @@ func (ec *executionContext) _UpdateAlbumResponse(ctx context.Context, sel ast.Se
 	return out
 }
 
+var updateCassetteResponseImplementors = []string{"UpdateCassetteResponse"}
+
+func (ec *executionContext) _UpdateCassetteResponse(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateCassetteResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateCassetteResponseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateCassetteResponse")
+		case "success":
+			out.Values[i] = ec._UpdateCassetteResponse_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cassette":
+			out.Values[i] = ec._UpdateCassetteResponse_cassette(ctx, field, obj)
+		case "error":
+			out.Values[i] = ec._UpdateCassetteResponse_error(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var updateMovieResponseImplementors = []string{"UpdateMovieResponse"}
 
 func (ec *executionContext) _UpdateMovieResponse(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateMovieResponse) graphql.Marshaler {
@@ -9226,6 +11521,11 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "albums":
 			out.Values[i] = ec._User_albums(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cassettes":
+			out.Values[i] = ec._User_cassettes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -9730,6 +12030,74 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) marshalNCassette2ᚕᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐCassetteᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Cassette) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNCassette2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐCassette(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNCassette2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐCassette(ctx context.Context, sel ast.SelectionSet, v *model.Cassette) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Cassette(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNCassetteConnection2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐCassetteConnection(ctx context.Context, sel ast.SelectionSet, v model.CassetteConnection) graphql.Marshaler {
+	return ec._CassetteConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCassetteConnection2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐCassetteConnection(ctx context.Context, sel ast.SelectionSet, v *model.CassetteConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CassetteConnection(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNDeleteResponse2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐDeleteResponse(ctx context.Context, sel ast.SelectionSet, v model.DeleteResponse) graphql.Marshaler {
 	return ec._DeleteResponse(ctx, sel, &v)
 }
@@ -9899,6 +12267,25 @@ func (ec *executionContext) marshalNSaveAlbumResponse2ᚖmediaclosetᚋapiᚋint
 	return ec._SaveAlbumResponse(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNSaveCassetteInput2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSaveCassetteInput(ctx context.Context, v any) (model.SaveCassetteInput, error) {
+	res, err := ec.unmarshalInputSaveCassetteInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSaveCassetteResponse2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSaveCassetteResponse(ctx context.Context, sel ast.SelectionSet, v model.SaveCassetteResponse) graphql.Marshaler {
+	return ec._SaveCassetteResponse(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSaveCassetteResponse2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSaveCassetteResponse(ctx context.Context, sel ast.SelectionSet, v *model.SaveCassetteResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SaveCassetteResponse(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNSaveMovieInput2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSaveMovieInput(ctx context.Context, v any) (model.SaveMovieInput, error) {
 	res, err := ec.unmarshalInputSaveMovieInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -9981,6 +12368,25 @@ func (ec *executionContext) marshalNUpdateAlbumResponse2ᚖmediaclosetᚋapiᚋi
 		return graphql.Null
 	}
 	return ec._UpdateAlbumResponse(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUpdateCassetteInput2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐUpdateCassetteInput(ctx context.Context, v any) (model.UpdateCassetteInput, error) {
+	res, err := ec.unmarshalInputUpdateCassetteInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpdateCassetteResponse2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐUpdateCassetteResponse(ctx context.Context, sel ast.SelectionSet, v model.UpdateCassetteResponse) graphql.Marshaler {
+	return ec._UpdateCassetteResponse(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateCassetteResponse2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐUpdateCassetteResponse(ctx context.Context, sel ast.SelectionSet, v *model.UpdateCassetteResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateCassetteResponse(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateMovieInput2mediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐUpdateMovieInput(ctx context.Context, v any) (model.UpdateMovieInput, error) {
@@ -10313,6 +12719,13 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
+func (ec *executionContext) marshalOCassette2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐCassette(ctx context.Context, sel ast.SelectionSet, v *model.Cassette) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Cassette(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v any) (*int, error) {
 	if v == nil {
 		return nil, nil
@@ -10358,6 +12771,13 @@ func (ec *executionContext) marshalOSavedAlbum2ᚖmediaclosetᚋapiᚋinternal�
 		return graphql.Null
 	}
 	return ec._SavedAlbum(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOSavedCassette2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSavedCassette(ctx context.Context, sel ast.SelectionSet, v *model.SavedCassette) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._SavedCassette(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOSavedMovie2ᚖmediaclosetᚋapiᚋinternalᚋgraphᚋmodelᚐSavedMovie(ctx context.Context, sel ast.SelectionSet, v *model.SavedMovie) graphql.Marshaler {

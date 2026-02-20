@@ -21,20 +21,32 @@ struct WelcomeView: View {
                     // Icon (matches LaunchSplash)
                     ZStack {
                         RoundedRectangle(cornerRadius: 32, style: .continuous)
-                            .stroke(Color.primary, lineWidth: 6)
+                            .fill(Color.primary)
                             .frame(width: 128, height: 128)
                         
-                        ZStack {
-                            Circle()
-                                .stroke(Color.primary, lineWidth: 5)
-                                .frame(width: 96, height: 96)
-                            Circle()
+                        Circle()
+                            .fill(Color(.systemBackground))
+                            .frame(width: 102, height: 102)
+                        
+                        Circle()
+                            .stroke(Color.primary, lineWidth: 5)
+                            .frame(width: 96, height: 96)
+                        
+                        Circle()
+                            .stroke(Color.primary, lineWidth: 3)
+                            .frame(width: 40, height: 40)
+                        
+                        ForEach(0..<12) { i in
+                            RoundedRectangle(cornerRadius: 1)
                                 .fill(Color.primary)
-                                .frame(width: 10, height: 10)
-                            Rectangle()
-                                .fill(Color.primary)
-                                .frame(width: 88, height: 10)
+                                .frame(width: 10, height: 5)
+                                .offset(x: 24)
+                                .rotationEffect(.degrees(Double(i) * 30))
                         }
+                        
+                        Circle()
+                            .fill(Color.primary)
+                            .frame(width: 10, height: 10)
                     }
                     
                     Text("MediaCloset")

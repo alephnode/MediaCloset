@@ -81,6 +81,46 @@ struct SkeletonVHSRow: View {
     }
 }
 
+// MARK: - Skeleton Cassette Row
+
+/// Ghost row that mirrors the shape of a real CassetteListView row.
+struct SkeletonCassetteRow: View {
+    let index: Int
+
+    private var artistWidth: CGFloat {
+        [120, 100, 140, 110, 130, 95, 150, 108][index % 8]
+    }
+    private var albumWidth: CGFloat {
+        [170, 150, 190, 160, 145, 180, 155, 175][index % 8]
+    }
+    private var detailWidth: CGFloat {
+        [60, 80, 50, 70, 55, 90, 65, 75][index % 8]
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color(.systemGray5))
+                .frame(width: 60, height: 60)
+
+            VStack(alignment: .leading, spacing: 6) {
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color(.systemGray5))
+                    .frame(width: artistWidth, height: 15)
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color(.systemGray5))
+                    .frame(width: albumWidth, height: 13)
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color(.systemGray5))
+                    .frame(width: detailWidth, height: 11)
+            }
+
+            Spacer()
+        }
+        .modifier(SkeletonPulse())
+    }
+}
+
 // MARK: - Pulse Animation
 
 /// Subtle opacity pulse that fades skeleton rows between full and half opacity.

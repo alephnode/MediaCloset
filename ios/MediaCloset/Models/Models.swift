@@ -80,6 +80,36 @@ struct AlbumConnection: Codable {
     }
 }
 
+/// Paginated response wrapper for cassettes
+struct CassetteConnection: Codable {
+    let items: [CassetteItem]
+    let pageInfo: PageInfo
+
+    struct CassetteItem: Codable {
+        let id: String
+        let artist: String
+        let album: String
+        let year: Int?
+        let label: String?
+        let genres: [String]?
+        let coverUrl: String?
+        let tapeType: String?
+        let createdAt: String?
+        let updatedAt: String?
+    }
+}
+
+/// Tape type options for the cassette picker UI
+enum TapeTypeOption: String, CaseIterable, Identifiable {
+    case standard = "Standard"
+    case chrome = "Chrome (CrO₂)"
+    case metal = "Metal (Type IV)"
+    case ferrichrome = "Ferrichrome"
+
+    var id: String { rawValue }
+    var displayName: String { rawValue }
+}
+
 // MARK: - Vinyl Size
 
 /// Preset vinyl record sizes for the picker UI
@@ -141,6 +171,16 @@ struct VHSListItem: Identifiable, Hashable {
     let year: Int?;
     let genre: String?;
     let coverUrl: String?
+}
+
+struct CassetteListItem: Identifiable, Hashable {
+    let id: String
+    let artist: String
+    let album: String
+    let year: Int?
+    let genres: [String]
+    let coverUrl: String?
+    let tapeType: String?
 }
 
 struct TrackRow: Identifiable {

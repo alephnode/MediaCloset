@@ -40,6 +40,11 @@ type AlbumConnection {
   pageInfo: PageInfo!
 }
 
+type CassetteConnection {
+  items: [Cassette!]!
+  pageInfo: PageInfo!
+}
+
 type Query {
   # Movie/VHS lookups
   movieByTitle(title: String!, director: String, year: Int): MovieData
@@ -51,6 +56,11 @@ type Query {
   albumByBarcode(barcode: String!): AlbumData
   album(id: String!): Album  # Get album by ID
 
+  # Cassette lookups
+  cassetteByArtistAndTitle(artist: String!, album: String!): AlbumData
+  cassetteByBarcode(barcode: String!): AlbumData
+  cassette(id: String!): Cassette  # Get cassette by ID
+
   # List all movies/albums from database (filtered by authenticated user)
   # Legacy non-paginated queries (deprecated - use paginated versions)
   movies: [Movie!]! @deprecated(reason: "Use userMoviesPaginated instead")
@@ -60,9 +70,10 @@ type Query {
   me: User  # Get current authenticated user
   user(id: String!): User  # Get user by ID
 
-  # Get movies/albums for a specific user (legacy)
+  # Get movies/albums/cassettes for a specific user (legacy)
   userMovies(userId: String!): [Movie!]! @deprecated(reason: "Use userMoviesPaginated instead")
   userAlbums(userId: String!): [Album!]! @deprecated(reason: "Use userAlbumsPaginated instead")
+  userCassettes(userId: String!): [Cassette!]! @deprecated(reason: "Use userCassettesPaginated instead")
 
   # Paginated queries with search, sort, and filtering
   userMoviesPaginated(
@@ -78,6 +89,13 @@ type Query {
     sort: SortInput
     search: String
   ): AlbumConnection!
+
+  userCassettesPaginated(
+    userId: String!
+    pagination: PaginationInput
+    sort: SortInput
+    search: String
+  ): CassetteConnection!
 
   # Health check
   health: Health!
@@ -108,6 +126,15 @@ type Mutation {
 
   # Delete album/record
   deleteAlbum(id: String!): DeleteResponse!
+
+  # Save cassette (auto-fetches cover if missing)
+  saveCassette(input: SaveCassetteInput!): SaveCassetteResponse!
+
+  # Update existing cassette
+  updateCassette(id: String!, input: UpdateCassetteInput!): UpdateCassetteResponse!
+
+  # Delete cassette
+  deleteCassette(id: String!): DeleteResponse!
 
   # Request a presigned URL for uploading a cover image to S3
   requestImageUploadURL(contentType: String!): ImageUploadURL!
@@ -199,6 +226,26 @@ input UpdateAlbumInput {
   size: Int  # Vinyl record size in inches (7, 10, 12, or custom)
 }
 
+input SaveCassetteInput {
+  artist: String!
+  album: String!
+  year: Int
+  label: String
+  genres: [String!]
+  coverUrl: String
+  tapeType: String  # e.g. "Standard", "Chrome (CrO₂)", "Metal (Type IV)"
+}
+
+input UpdateCassetteInput {
+  artist: String
+  album: String
+  year: Int
+  label: String
+  genres: [String!]
+  coverUrl: String
+  tapeType: String
+}
+
 # Response types for mutations
 type SaveMovieResponse {
   success: Boolean!
@@ -223,6 +270,19 @@ type SaveAlbumResponse {
 type UpdateAlbumResponse {
   success: Boolean!
   album: Album
+  error: String
+}
+
+type SaveCassetteResponse {
+  success: Boolean!
+  id: Int
+  cassette: SavedCassette
+  error: String
+}
+
+type UpdateCassetteResponse {
+  success: Boolean!
+  cassette: Cassette
   error: String
 }
 
@@ -253,6 +313,17 @@ type SavedAlbum {
   size: Int
 }
 
+type SavedCassette {
+  id: Int!
+  artist: String!
+  album: String!
+  year: Int
+  label: String
+  genres: [String!]
+  coverUrl: String
+  tapeType: String
+}
+
 # User type
 type User {
   id: String!
@@ -261,6 +332,7 @@ type User {
   updatedAt: String!
   movies: [Movie!]!  # Movies in this user's collection
   albums: [Album!]!  # Albums in this user's collection
+  cassettes: [Cassette!]!  # Cassettes in this user's collection
 }
 
 # Database list types (from Hasura queries)
@@ -286,6 +358,19 @@ type Album {
   genres: [String!]
   coverUrl: String
   size: Int  # Vinyl record size in inches (7, 10, 12, or custom)
+  createdAt: String
+  updatedAt: String
+}
+
+type Cassette {
+  id: String!  # UUID from Hasura
+  artist: String!
+  album: String!
+  year: Int
+  label: String
+  genres: [String!]
+  coverUrl: String
+  tapeType: String  # Standard, Chrome, Metal, Ferrichrome
   createdAt: String
   updatedAt: String
 }

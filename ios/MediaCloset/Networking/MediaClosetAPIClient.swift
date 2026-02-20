@@ -1121,6 +1121,326 @@ final class MediaClosetAPIClient {
         return response.userMoviesPaginated
     }
 
+    // MARK: - Cassette Methods
+
+    /// Cassette record from database
+    struct Cassette: Decodable {
+        let id: String
+        let artist: String
+        let album: String
+        let year: Int?
+        let label: String?
+        let genres: [String]?
+        let coverUrl: String?
+        let tapeType: String?
+        let createdAt: String?
+        let updatedAt: String?
+
+        var coverURL: String? { coverUrl }
+    }
+
+    /// Response from saveCassette mutation
+    struct SaveCassetteResponse: Decodable {
+        let success: Bool
+        let cassette: SavedCassette?
+        let error: String?
+    }
+
+    struct SavedCassette: Decodable {
+        let id: Int
+        let artist: String
+        let album: String
+        let year: Int?
+        let label: String?
+        let genres: [String]?
+        let coverUrl: String?
+        let tapeType: String?
+
+        var coverURL: String? { coverUrl }
+    }
+
+    /// Response from updateCassette mutation
+    struct UpdateCassetteResponse: Decodable {
+        let success: Bool
+        let cassette: Cassette?
+        let error: String?
+    }
+
+    /// Saves a cassette to the database (auto-fetches cover if not provided)
+    func saveCassette(artist: String, album: String, year: Int? = nil, label: String? = nil, genres: [String]? = nil, coverUrl: String? = nil, tapeType: String? = nil) async throws -> SaveCassetteResponse {
+        struct Response: Decodable {
+            let saveCassette: SaveCassetteResponse
+        }
+
+        let query = """
+        mutation SaveCassette($input: SaveCassetteInput!) {
+          saveCassette(input: $input) {
+            success
+            cassette {
+              id
+              artist
+              album
+              year
+              label
+              genres
+              coverUrl
+              tapeType
+            }
+            error
+          }
+        }
+        """
+
+        var input: [String: Any] = [
+            "artist": artist,
+            "album": album
+        ]
+        if let year = year {
+            input["year"] = year
+        }
+        if let label = label {
+            input["label"] = label
+        }
+        if let genres = genres, !genres.isEmpty {
+            input["genres"] = genres
+        }
+        if let coverUrl = coverUrl {
+            input["coverUrl"] = coverUrl
+        }
+        if let tapeType = tapeType {
+            input["tapeType"] = tapeType
+        }
+
+        let variables: [String: Any] = ["input": input]
+
+        let response: Response = try await execute(
+            operationName: "SaveCassette",
+            query: query,
+            variables: variables
+        )
+
+        return response.saveCassette
+    }
+
+    /// Updates an existing cassette
+    func updateCassette(id: String, artist: String? = nil, album: String? = nil, year: Int? = nil, label: String? = nil, genres: [String]? = nil, coverUrl: String? = nil, tapeType: String? = nil) async throws -> UpdateCassetteResponse {
+        struct Response: Decodable {
+            let updateCassette: UpdateCassetteResponse
+        }
+
+        let query = """
+        mutation UpdateCassette($id: String!, $input: UpdateCassetteInput!) {
+          updateCassette(id: $id, input: $input) {
+            success
+            cassette {
+              id
+              artist
+              album
+              year
+              label
+              genres
+              coverUrl
+              tapeType
+              createdAt
+              updatedAt
+            }
+            error
+          }
+        }
+        """
+
+        var input: [String: Any] = [:]
+        if let artist = artist {
+            input["artist"] = artist
+        }
+        if let album = album {
+            input["album"] = album
+        }
+        if let year = year {
+            input["year"] = year
+        }
+        if let label = label {
+            input["label"] = label
+        }
+        if let genres = genres, !genres.isEmpty {
+            input["genres"] = genres
+        }
+        if let coverUrl = coverUrl {
+            input["coverUrl"] = coverUrl
+        }
+        if let tapeType = tapeType {
+            input["tapeType"] = tapeType
+        }
+
+        let variables: [String: Any] = [
+            "id": id,
+            "input": input
+        ]
+
+        let response: Response = try await execute(
+            operationName: "UpdateCassette",
+            query: query,
+            variables: variables
+        )
+
+        return response.updateCassette
+    }
+
+    /// Deletes a cassette by ID
+    func deleteCassette(id: String) async throws -> DeleteResponse {
+        struct Response: Decodable {
+            let deleteCassette: DeleteResponse
+        }
+
+        let query = """
+        mutation DeleteCassette($id: String!) {
+          deleteCassette(id: $id) {
+            success
+            error
+          }
+        }
+        """
+
+        let variables: [String: Any] = ["id": id]
+
+        let response: Response = try await execute(
+            operationName: "DeleteCassette",
+            query: query,
+            variables: variables
+        )
+
+        return response.deleteCassette
+    }
+
+    /// Fetches a single cassette by ID
+    func fetchCassette(id: String) async throws -> Cassette? {
+        struct Response: Decodable {
+            let cassette: Cassette?
+        }
+
+        let query = """
+        query GetCassette($id: String!) {
+          cassette(id: $id) {
+            id
+            artist
+            album
+            year
+            label
+            genres
+            coverUrl
+            tapeType
+            createdAt
+            updatedAt
+          }
+        }
+        """
+
+        let variables: [String: Any] = ["id": id]
+
+        let response: Response = try await execute(
+            operationName: "GetCassette",
+            query: query,
+            variables: variables
+        )
+
+        return response.cassette
+    }
+
+    /// Fetches cassettes for the current user with pagination, sorting, and search
+    func fetchCassettesPaginated(
+        limit: Int = 25,
+        offset: Int = 0,
+        sortField: SortField = .createdAt,
+        sortOrder: SortOrder = .desc,
+        search: String? = nil
+    ) async throws -> CassetteConnection {
+        guard let userId = TokenManager.shared.getUserId() else {
+            throw MediaClosetAPIError.notAuthenticated
+        }
+
+        struct Response: Decodable {
+            let userCassettesPaginated: CassetteConnection
+        }
+
+        let query = """
+        query GetUserCassettesPaginated($userId: String!, $pagination: PaginationInput, $sort: SortInput, $search: String) {
+          userCassettesPaginated(userId: $userId, pagination: $pagination, sort: $sort, search: $search) {
+            items {
+              id
+              artist
+              album
+              year
+              label
+              genres
+              coverUrl
+              tapeType
+              createdAt
+              updatedAt
+            }
+            pageInfo {
+              hasNextPage
+              totalCount
+            }
+          }
+        }
+        """
+
+        var variables: [String: Any] = [
+            "userId": userId,
+            "pagination": [
+                "limit": limit,
+                "offset": offset
+            ],
+            "sort": [
+                "field": sortField.rawValue,
+                "order": sortOrder.rawValue
+            ]
+        ]
+
+        if let search = search, !search.isEmpty {
+            variables["search"] = search
+        }
+
+        let response: Response = try await execute(
+            operationName: "GetUserCassettesPaginated",
+            query: query,
+            variables: variables
+        )
+
+        return response.userCassettesPaginated
+    }
+
+    /// Fetches cassette/album metadata by barcode (UPC) - reuses album barcode lookup
+    func fetchCassetteByBarcode(barcode: String) async throws -> AlbumData? {
+        struct Response: Decodable {
+            let cassetteByBarcode: AlbumData?
+        }
+
+        let query = """
+        query CassetteByBarcode($barcode: String!) {
+          cassetteByBarcode(barcode: $barcode) {
+            artist
+            album
+            year
+            label
+            genres
+            coverUrl
+            source
+          }
+        }
+        """
+
+        let variables: [String: Any] = ["barcode": barcode]
+
+        let response: Response = try await execute(
+            operationName: "CassetteByBarcode",
+            query: query,
+            variables: variables
+        )
+
+        return response.cassetteByBarcode
+    }
+
     // MARK: - Image Upload
 
     /// Response from requestImageUploadURL mutation

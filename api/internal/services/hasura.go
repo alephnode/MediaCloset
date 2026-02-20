@@ -1084,6 +1084,494 @@ func (h *HasuraClient) buildMovieOrderBy(sortField, sortOrder string) string {
 	}
 }
 
+// InsertCassette inserts a new cassette into Hasura
+func (h *HasuraClient) InsertCassette(ctx context.Context, cassette map[string]interface{}) (string, error) {
+	query := `
+		mutation InsertCassette($object: cassettes_insert_input!) {
+			insert_cassettes_one(object: $object) {
+				id
+				artist
+				album
+				year
+				label
+				genres
+				cover_url
+				tape_type
+			}
+		}
+	`
+
+	req := GraphQLRequest{
+		Query:         query,
+		OperationName: "InsertCassette",
+		Variables: map[string]interface{}{
+			"object": cassette,
+		},
+	}
+
+	resp, err := h.Execute(ctx, req)
+	if err != nil {
+		return "", err
+	}
+
+	if insertData, ok := resp.Data["insert_cassettes_one"].(map[string]interface{}); ok {
+		if id, ok := insertData["id"].(string); ok {
+			return id, nil
+		}
+	}
+
+	return "", fmt.Errorf("failed to extract cassette ID from response")
+}
+
+// GetAllCassettes fetches all cassettes from Hasura
+func (h *HasuraClient) GetAllCassettes(ctx context.Context) ([]map[string]interface{}, error) {
+	query := `
+		query GetAllCassettes {
+			cassettes(order_by: {created_at: desc}) {
+				id
+				artist
+				album
+				year
+				label
+				genres
+				cover_url
+				tape_type
+				created_at
+				updated_at
+			}
+		}
+	`
+
+	req := GraphQLRequest{
+		Query:         query,
+		OperationName: "GetAllCassettes",
+	}
+
+	resp, err := h.Execute(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+
+	cassettesData, ok := resp.Data["cassettes"]
+	if !ok {
+		return []map[string]interface{}{}, nil
+	}
+
+	cassettesList, ok := cassettesData.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("unexpected cassettes data type")
+	}
+
+	cassettes := make([]map[string]interface{}, 0, len(cassettesList))
+	for _, c := range cassettesList {
+		if cassette, ok := c.(map[string]interface{}); ok {
+			cassettes = append(cassettes, cassette)
+		}
+	}
+
+	return cassettes, nil
+}
+
+// GetCassettesByUserID fetches all cassettes for a specific user (via junction table)
+func (h *HasuraClient) GetCassettesByUserID(ctx context.Context, userID string) ([]map[string]interface{}, error) {
+	query := `
+		query GetCassettesByUserID($user_id: uuid!) {
+			user_cassettes(where: {user_id: {_eq: $user_id}}, order_by: {created_at: desc}) {
+				cassette {
+					id
+					artist
+					album
+					year
+					label
+					genres
+					cover_url
+					tape_type
+					created_at
+					updated_at
+				}
+			}
+		}
+	`
+
+	req := GraphQLRequest{
+		Query:         query,
+		OperationName: "GetCassettesByUserID",
+		Variables: map[string]interface{}{
+			"user_id": userID,
+		},
+	}
+
+	resp, err := h.Execute(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+
+	userCassettesData, ok := resp.Data["user_cassettes"]
+	if !ok {
+		return []map[string]interface{}{}, nil
+	}
+
+	userCassettesList, ok := userCassettesData.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("unexpected user_cassettes data type")
+	}
+
+	cassettes := make([]map[string]interface{}, 0, len(userCassettesList))
+	for _, entry := range userCassettesList {
+		if entryMap, ok := entry.(map[string]interface{}); ok {
+			if cassette, ok := entryMap["cassette"].(map[string]interface{}); ok {
+				cassettes = append(cassettes, cassette)
+			}
+		}
+	}
+
+	return cassettes, nil
+}
+
+// GetCassetteByID fetches a single cassette by ID from Hasura
+func (h *HasuraClient) GetCassetteByID(ctx context.Context, id string) (map[string]interface{}, error) {
+	query := `
+		query GetCassetteByID($id: uuid!) {
+			cassettes_by_pk(id: $id) {
+				id
+				artist
+				album
+				year
+				label
+				genres
+				cover_url
+				tape_type
+				created_at
+				updated_at
+			}
+		}
+	`
+
+	req := GraphQLRequest{
+		Query:         query,
+		OperationName: "GetCassetteByID",
+		Variables: map[string]interface{}{
+			"id": id,
+		},
+	}
+
+	resp, err := h.Execute(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+
+	cassetteData, ok := resp.Data["cassettes_by_pk"]
+	if !ok || cassetteData == nil {
+		return nil, nil
+	}
+
+	cassette, ok := cassetteData.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("unexpected cassette data type")
+	}
+
+	return cassette, nil
+}
+
+// UpdateCassette updates an existing cassette in Hasura
+func (h *HasuraClient) UpdateCassette(ctx context.Context, id string, updates map[string]interface{}) (map[string]interface{}, error) {
+	query := `
+		mutation UpdateCassette($id: uuid!, $updates: cassettes_set_input!) {
+			update_cassettes_by_pk(pk_columns: {id: $id}, _set: $updates) {
+				id
+				artist
+				album
+				year
+				label
+				genres
+				cover_url
+				tape_type
+				created_at
+				updated_at
+			}
+		}
+	`
+
+	req := GraphQLRequest{
+		Query:         query,
+		OperationName: "UpdateCassette",
+		Variables: map[string]interface{}{
+			"id":      id,
+			"updates": updates,
+		},
+	}
+
+	resp, err := h.Execute(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute mutation: %w", err)
+	}
+
+	cassetteData, ok := resp.Data["update_cassettes_by_pk"]
+	if !ok || cassetteData == nil {
+		return nil, fmt.Errorf("cassette not found or update failed")
+	}
+
+	cassette, ok := cassetteData.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("unexpected cassette data type")
+	}
+
+	return cassette, nil
+}
+
+// FindCassetteByArtistAlbum searches for an existing cassette by artist and album
+func (h *HasuraClient) FindCassetteByArtistAlbum(ctx context.Context, artist string, album string) (map[string]interface{}, error) {
+	query := fmt.Sprintf(`
+		query FindCassetteByArtistAlbum {
+			cassettes(where: {artist: {_eq: "%s"}, album: {_eq: "%s"}}, limit: 1) {
+				id
+				artist
+				album
+				year
+				label
+				genres
+				cover_url
+				tape_type
+				created_at
+				updated_at
+			}
+		}
+	`, artist, album)
+
+	req := GraphQLRequest{
+		Query:         query,
+		OperationName: "FindCassetteByArtistAlbum",
+	}
+
+	resp, err := h.Execute(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+
+	cassettesData, ok := resp.Data["cassettes"]
+	if !ok {
+		return nil, nil
+	}
+
+	cassettesList, ok := cassettesData.([]interface{})
+	if !ok || len(cassettesList) == 0 {
+		return nil, nil
+	}
+
+	if cassette, ok := cassettesList[0].(map[string]interface{}); ok {
+		return cassette, nil
+	}
+
+	return nil, nil
+}
+
+// LinkCassetteToUser adds a cassette to a user's collection via junction table
+func (h *HasuraClient) LinkCassetteToUser(ctx context.Context, userID string, cassetteID string) error {
+	query := `
+		mutation LinkCassetteToUser($user_id: uuid!, $cassette_id: uuid!) {
+			insert_user_cassettes_one(object: {
+				user_id: $user_id
+				cassette_id: $cassette_id
+			}) {
+				id
+			}
+		}
+	`
+
+	req := GraphQLRequest{
+		Query:         query,
+		OperationName: "LinkCassetteToUser",
+		Variables: map[string]interface{}{
+			"user_id":     userID,
+			"cassette_id": cassetteID,
+		},
+	}
+
+	_, err := h.Execute(ctx, req)
+	if err != nil {
+		if strings.Contains(err.Error(), "duplicate") || strings.Contains(err.Error(), "unique") {
+			return nil
+		}
+		return fmt.Errorf("failed to link cassette to user: %w", err)
+	}
+
+	return nil
+}
+
+// CheckCassetteOwnership checks if a user has a cassette in their collection
+func (h *HasuraClient) CheckCassetteOwnership(ctx context.Context, userID string, cassetteID string) (bool, error) {
+	query := `
+		query CheckCassetteOwnership($user_id: uuid!, $cassette_id: uuid!) {
+			user_cassettes(where: {user_id: {_eq: $user_id}, cassette_id: {_eq: $cassette_id}}, limit: 1) {
+				id
+			}
+		}
+	`
+
+	req := GraphQLRequest{
+		Query:         query,
+		OperationName: "CheckCassetteOwnership",
+		Variables: map[string]interface{}{
+			"user_id":     userID,
+			"cassette_id": cassetteID,
+		},
+	}
+
+	resp, err := h.Execute(ctx, req)
+	if err != nil {
+		return false, fmt.Errorf("failed to execute query: %w", err)
+	}
+
+	userCassettesData, ok := resp.Data["user_cassettes"]
+	if !ok {
+		return false, nil
+	}
+
+	userCassettesList, ok := userCassettesData.([]interface{})
+	if !ok || len(userCassettesList) == 0 {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+// UnlinkCassetteFromUser removes a cassette from a user's collection
+func (h *HasuraClient) UnlinkCassetteFromUser(ctx context.Context, userID string, cassetteID string) error {
+	query := `
+		mutation UnlinkCassetteFromUser($user_id: uuid!, $cassette_id: uuid!) {
+			delete_user_cassettes(where: {user_id: {_eq: $user_id}, cassette_id: {_eq: $cassette_id}}) {
+				affected_rows
+			}
+		}
+	`
+
+	req := GraphQLRequest{
+		Query:         query,
+		OperationName: "UnlinkCassetteFromUser",
+		Variables: map[string]interface{}{
+			"user_id":     userID,
+			"cassette_id": cassetteID,
+		},
+	}
+
+	_, err := h.Execute(ctx, req)
+	if err != nil {
+		return fmt.Errorf("failed to unlink cassette from user: %w", err)
+	}
+
+	return nil
+}
+
+// GetCassettesByUserIDPaginated fetches cassettes for a user with pagination, sorting, and search
+func (h *HasuraClient) GetCassettesByUserIDPaginated(ctx context.Context, userID string, limit, offset int, sortField, sortOrder string, search *string) (*PaginatedResult, error) {
+	orderByClause := h.buildCassetteOrderBy(sortField, sortOrder)
+
+	whereClause := fmt.Sprintf(`user_id: {_eq: $user_id}`)
+	if search != nil && *search != "" {
+		whereClause = fmt.Sprintf(`user_id: {_eq: $user_id}, _or: [{cassette: {artist: {_ilike: $search}}}, {cassette: {album: {_ilike: $search}}}]`)
+	}
+
+	query := fmt.Sprintf(`
+		query GetCassettesByUserIDPaginated($user_id: uuid!, $limit: Int!, $offset: Int!, $search: String) {
+			user_cassettes(
+				where: {%s}
+				limit: $limit
+				offset: $offset
+				order_by: %s
+			) {
+				cassette {
+					id
+					artist
+					album
+					year
+					label
+					genres
+					cover_url
+					tape_type
+					created_at
+					updated_at
+				}
+			}
+			user_cassettes_aggregate(where: {%s}) {
+				aggregate {
+					count
+				}
+			}
+		}
+	`, whereClause, orderByClause, whereClause)
+
+	variables := map[string]interface{}{
+		"user_id": userID,
+		"limit":   limit,
+		"offset":  offset,
+	}
+	if search != nil && *search != "" {
+		variables["search"] = "%" + *search + "%"
+	}
+
+	req := GraphQLRequest{
+		Query:         query,
+		OperationName: "GetCassettesByUserIDPaginated",
+		Variables:     variables,
+	}
+
+	resp, err := h.Execute(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+
+	userCassettesData, ok := resp.Data["user_cassettes"]
+	if !ok {
+		return &PaginatedResult{Items: []map[string]interface{}{}, TotalCount: 0}, nil
+	}
+
+	userCassettesList, ok := userCassettesData.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("unexpected user_cassettes data type")
+	}
+
+	cassettes := make([]map[string]interface{}, 0, len(userCassettesList))
+	for _, entry := range userCassettesList {
+		if entryMap, ok := entry.(map[string]interface{}); ok {
+			if cassette, ok := entryMap["cassette"].(map[string]interface{}); ok {
+				cassettes = append(cassettes, cassette)
+			}
+		}
+	}
+
+	totalCount := 0
+	if aggData, ok := resp.Data["user_cassettes_aggregate"].(map[string]interface{}); ok {
+		if agg, ok := aggData["aggregate"].(map[string]interface{}); ok {
+			if count, ok := agg["count"].(float64); ok {
+				totalCount = int(count)
+			}
+		}
+	}
+
+	return &PaginatedResult{Items: cassettes, TotalCount: totalCount}, nil
+}
+
+// buildCassetteOrderBy builds the order_by clause for cassette queries
+func (h *HasuraClient) buildCassetteOrderBy(sortField, sortOrder string) string {
+	order := "desc"
+	if sortOrder == "ASC" {
+		order = "asc"
+	}
+
+	switch sortField {
+	case "ARTIST":
+		return fmt.Sprintf(`{cassette: {artist: %s}}`, order)
+	case "TITLE":
+		return fmt.Sprintf(`{cassette: {album: %s}}`, order)
+	case "YEAR":
+		return fmt.Sprintf(`{cassette: {year: %s}}`, order)
+	case "CREATED_AT":
+		fallthrough
+	default:
+		return fmt.Sprintf(`{created_at: %s}`, order)
+	}
+}
+
 // buildAlbumOrderBy builds the order_by clause for album queries
 func (h *HasuraClient) buildAlbumOrderBy(sortField, sortOrder string) string {
 	order := "desc"

@@ -46,6 +46,24 @@ type AppVersionConfig struct {
 	StoreURL          string `json:"storeURL"`
 }
 
+type Cassette struct {
+	ID        string   `json:"id"`
+	Artist    string   `json:"artist"`
+	Album     string   `json:"album"`
+	Year      *int     `json:"year,omitempty"`
+	Label     *string  `json:"label,omitempty"`
+	Genres    []string `json:"genres,omitempty"`
+	CoverURL  *string  `json:"coverUrl,omitempty"`
+	TapeType  *string  `json:"tapeType,omitempty"`
+	CreatedAt *string  `json:"createdAt,omitempty"`
+	UpdatedAt *string  `json:"updatedAt,omitempty"`
+}
+
+type CassetteConnection struct {
+	Items    []*Cassette `json:"items"`
+	PageInfo *PageInfo   `json:"pageInfo"`
+}
+
 type DeleteResponse struct {
 	Success bool    `json:"success"`
 	Error   *string `json:"error,omitempty"`
@@ -128,6 +146,23 @@ type SaveAlbumResponse struct {
 	Error   *string     `json:"error,omitempty"`
 }
 
+type SaveCassetteInput struct {
+	Artist   string   `json:"artist"`
+	Album    string   `json:"album"`
+	Year     *int     `json:"year,omitempty"`
+	Label    *string  `json:"label,omitempty"`
+	Genres   []string `json:"genres,omitempty"`
+	CoverURL *string  `json:"coverUrl,omitempty"`
+	TapeType *string  `json:"tapeType,omitempty"`
+}
+
+type SaveCassetteResponse struct {
+	Success  bool           `json:"success"`
+	ID       *int           `json:"id,omitempty"`
+	Cassette *SavedCassette `json:"cassette,omitempty"`
+	Error    *string        `json:"error,omitempty"`
+}
+
 type SaveMovieInput struct {
 	Title    string  `json:"title"`
 	Director *string `json:"director,omitempty"`
@@ -153,6 +188,17 @@ type SavedAlbum struct {
 	Genres        []string `json:"genres,omitempty"`
 	CoverURL      *string  `json:"coverUrl,omitempty"`
 	Size          *int     `json:"size,omitempty"`
+}
+
+type SavedCassette struct {
+	ID       int      `json:"id"`
+	Artist   string   `json:"artist"`
+	Album    string   `json:"album"`
+	Year     *int     `json:"year,omitempty"`
+	Label    *string  `json:"label,omitempty"`
+	Genres   []string `json:"genres,omitempty"`
+	CoverURL *string  `json:"coverUrl,omitempty"`
+	TapeType *string  `json:"tapeType,omitempty"`
 }
 
 type SavedMovie struct {
@@ -192,6 +238,22 @@ type UpdateAlbumResponse struct {
 	Error   *string `json:"error,omitempty"`
 }
 
+type UpdateCassetteInput struct {
+	Artist   *string  `json:"artist,omitempty"`
+	Album    *string  `json:"album,omitempty"`
+	Year     *int     `json:"year,omitempty"`
+	Label    *string  `json:"label,omitempty"`
+	Genres   []string `json:"genres,omitempty"`
+	CoverURL *string  `json:"coverUrl,omitempty"`
+	TapeType *string  `json:"tapeType,omitempty"`
+}
+
+type UpdateCassetteResponse struct {
+	Success  bool      `json:"success"`
+	Cassette *Cassette `json:"cassette,omitempty"`
+	Error    *string   `json:"error,omitempty"`
+}
+
 type UpdateMovieInput struct {
 	Title    *string `json:"title,omitempty"`
 	Director *string `json:"director,omitempty"`
@@ -207,12 +269,13 @@ type UpdateMovieResponse struct {
 }
 
 type User struct {
-	ID        string   `json:"id"`
-	Email     string   `json:"email"`
-	CreatedAt string   `json:"createdAt"`
-	UpdatedAt string   `json:"updatedAt"`
-	Movies    []*Movie `json:"movies"`
-	Albums    []*Album `json:"albums"`
+	ID        string      `json:"id"`
+	Email     string      `json:"email"`
+	CreatedAt string      `json:"createdAt"`
+	UpdatedAt string      `json:"updatedAt"`
+	Movies    []*Movie    `json:"movies"`
+	Albums    []*Album    `json:"albums"`
+	Cassettes []*Cassette `json:"cassettes"`
 }
 
 type VerifyLoginCodeResponse struct {
