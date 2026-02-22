@@ -13,7 +13,7 @@ struct RootTabView: View {
                 .tabItem { Label("Records", systemImage: "opticaldisc") }
 
             CassetteListView()
-                .tabItem { Label("Cassettes", systemImage: "cassette") }
+                .tabItem { Label("Cassettes", systemImage: "waveform") }
 
             VHSListView()
                 .tabItem { Label("VHS", systemImage: "film") }
